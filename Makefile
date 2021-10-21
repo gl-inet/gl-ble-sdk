@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/cmake.mk
 define Package/libglble
 	SECTION:=base
 	CATEGORY:=gl-inet-ble
-	TITLE:=GL inet BLE driver library(debug only)
+	TITLE:=GL inet BLE driver library
 	DEPENDS:= +libuci +libpthread
 endef
 

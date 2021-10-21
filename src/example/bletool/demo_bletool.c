@@ -1,5 +1,5 @@
 /*****************************************************************************
- * @file  cli.c
+ * @file  demo_bletool.c
  * @brief CLI interface of BLE functions
  *******************************************************************************
  Copyright 2020 GL-iNet. https://www.gl-inet.com/
@@ -67,7 +67,7 @@ GL_RET cmd_enable(int argc, char **argv)
 	const char *temp=json_object_to_json_string(o);
 	printf("%s\n",temp);
 
-	//free(temp);
+	
 	json_object_put(o);
 	
 	return GL_SUCCESS;
@@ -91,7 +91,7 @@ GL_RET cmd_reset(int argc, char **argv)
 	const char *temp=json_object_to_json_string(o);
 	printf("%s\n",temp);
 
-	//free(temp);
+	
 	json_object_put(o);
 	
 	return GL_SUCCESS;
@@ -114,7 +114,7 @@ GL_RET cmd_local_address(int argc, char **argv)
 	const char *temp = json_object_to_json_string(o);
 	printf("%s\n",temp);
 
-	//free(temp);
+	
 	json_object_put(o);
 
 	return GL_SUCCESS;
@@ -145,7 +145,7 @@ GL_RET cmd_set_power(int argc, char **argv)
 	const char *temp = json_object_to_json_string(o);
 	printf("%s\n",temp);
 	
-	//free(temp);
+	
 	json_object_put(o);
 
 	return GL_SUCCESS;
@@ -185,7 +185,7 @@ GL_RET cmd_adv(int argc, char **argv)
 	const char *temp = json_object_to_json_string(o);
 	printf("%s\n",temp);
 
-	//free(temp);
+	
 	json_object_put(o);
 
 	return GL_SUCCESS;
@@ -218,7 +218,7 @@ GL_RET cmd_adv_data(int argc, char **argv)
 	const char *temp = json_object_to_json_string(o);
 	printf("%s\n",temp);	
 	
-	//free(temp);
+	
 	json_object_put(o);
 	return GL_SUCCESS;
 }
@@ -233,7 +233,7 @@ GL_RET cmd_adv_stop(int argc, char **argv)
 	const char *temp = json_object_to_json_string(o);
 	printf("%s\n",temp);
 
-	//free(temp);
+	
 	json_object_put(o);
 
 	return GL_SUCCESS;
@@ -279,7 +279,7 @@ GL_RET cmd_send_notify(int argc, char **argv)
 	const char *temp=json_object_to_json_string(o);
 	printf("%s\n",temp);	
 
-	//free(temp);
+	
 	json_object_put(o);
 
 	return GL_SUCCESS;
@@ -312,7 +312,7 @@ GL_RET cmd_discovery(int argc, char **argv)
 	const char *temp = json_object_to_json_string(o);
 	printf("%s\n",temp);
 
-	//free(temp);
+	
 	json_object_put(o);
 
 	start_discovery = true;
@@ -331,7 +331,7 @@ GL_RET cmd_stop(int argc, char **argv)
 	const char *temp = json_object_to_json_string(o);
 	printf("%s\n",temp);
 
-	//free(temp);
+	
 	json_object_put(o);
 
 	return GL_SUCCESS;
@@ -374,7 +374,7 @@ GL_RET cmd_connect(int argc, char **argv)
 	const char *temp=json_object_to_json_string(o);
 	printf("%s\n",temp);
 
-	//free(temp);
+	
 	json_object_put(o);
 
 	return GL_SUCCESS;
@@ -416,7 +416,7 @@ GL_RET cmd_disconnect(int argc, char **argv)
 	const char *temp = json_object_to_json_string(o);
 	printf("%s\n",temp);
 
-	//free(temp);
+	
 	json_object_put(o);
 
 	return GL_SUCCESS;
@@ -463,7 +463,7 @@ GL_RET cmd_get_rssi(int argc, char **argv)
 	const char *temp = json_object_to_json_string(o);
 	printf("%s\n",temp);
 
-	//free(temp);
+	
 	json_object_put(o);
 
 	return GL_SUCCESS;
@@ -525,7 +525,7 @@ GL_RET cmd_get_service(int argc, char **argv)
 	const char *temp = json_object_to_json_string(obj);
 	printf("%s\n",temp);
 
-	//free(temp);
+	
 	json_object_put(obj); 
 
 	return GL_SUCCESS;
@@ -590,7 +590,7 @@ GL_RET cmd_get_char(int argc, char **argv)
 	const char *temp = json_object_to_json_string(obj);
 	printf("%s\n",temp);
 
-	//free(temp);
+	
 	json_object_put(obj);
 
 	return GL_SUCCESS;
@@ -635,7 +635,7 @@ GL_RET cmd_set_notify(int argc, char **argv)
 	const char *temp = json_object_to_json_string(o);
 	printf("%s\n",temp);
 
-	//free(temp);
+	
 	json_object_put(o);
 
 	return GL_SUCCESS;
@@ -681,7 +681,7 @@ GL_RET cmd_read_value(int argc, char **argv)
 	const char *temp = json_object_to_json_string(o);
 	printf("%s\n",temp);
 
-	//free(temp);
+	
 	json_object_put(o);
 
 	return GL_SUCCESS;
@@ -729,7 +729,7 @@ GL_RET cmd_write_value(int argc, char **argv)
 	const char *temp = json_object_to_json_string(o);
 	printf("%s\n", temp);
 
-	//free(temp);
+	
 	json_object_put(o);
 
 	return GL_SUCCESS;
@@ -946,8 +946,7 @@ GL_RET cmd_stop_current_discovery(int argc, char **argv)
 	{
 		start_discovery = false;
 	}else{
-		printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-		printf("gl_ble_stop_discovery return %d\n", ret);
+		printf("gl_ble_stop_discovery error return %d\n", ret);
 		exit(0);
 	}
 
@@ -993,6 +992,7 @@ command_t command_list[] = {
 	{"read_value", cmd_read_value, "Read specified characteristic value"},
 	{"write_value", cmd_write_value, "Write characteristic value"},
 	{"test", cmd_test, "test"},
+	/* Hidden method */
 	{"q", cmd_stop_current_discovery, ""},
 	{NULL, NULL, 0}
 };
@@ -1041,6 +1041,7 @@ int main(int argc, char *argv[])
 	signal(SIGINT, sigal_hander);
 	signal(SIGQUIT, sigal_hander);
 	
+
 	readLineInit();
 	char* inputstr = NULL;
 

@@ -1,5 +1,5 @@
 /*****************************************************************************
- * @file  test.c
+ * @file  demo_bleScanner.c
  * @brief Start the BLE discovery and subscribe the BLE event
  *******************************************************************************
  Copyright 2020 GL-iNet. https://www.gl-inet.com/
