@@ -1,10 +1,5 @@
 # GL-Ble-SDK User Guide
 
-| Version | Changed Item  | Author  | Date       |
-| ------- | ------------- | ------- | ---------- |
-| 1.0.0   | First version | Feng.He | 2021.10.12 |
-
-
 
 ## What’s GL-Ble-SDK
 
