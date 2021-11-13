@@ -11,7 +11,7 @@ GL-Ble-SDK is developed and provided by GL-iNet Technology as a part of the iot 
 
 bletool is a cmd line tool for debug gl-ble module which bases on gl-ble-api. You can use it for quick controning and managing ble.
 
-For information on how to use zbtool, you can refer to the [Bletool User Guide](src/example/bletool/README.md).
+For information on how to use bletool, you can refer to the [Bletool User Guide](src/example/bletool/README.md).
 
 
 

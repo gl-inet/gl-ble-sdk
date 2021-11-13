@@ -12,4 +12,5 @@ set(CMAKE_C_FLAGS_RELEASE "-O3")
 
 add_subdirectory(./lib build/lib)
 add_subdirectory(./example/bleScanner build/bleScanner)
+add_subdirectory(./example/bleAdvertiser build/bleAdvertiser)
 add_subdirectory(./example/bletool build/bletool)
