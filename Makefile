@@ -43,6 +43,20 @@ define Package/gl-bleAdvertiser
 	DEPENDS:= +libjson-c +libglble
 endef
 
+define Package/gl-bleClient
+	SECTION:=base
+	CATEGORY:=gl-inet-ble
+	TITLE:=GL inet BLE Client
+	DEPENDS:= +libjson-c +libglble
+endef
+
+define Package/gl-bleService
+	SECTION:=base
+	CATEGORY:=gl-inet-ble
+	TITLE:=GL inet BLE Service
+	DEPENDS:= +libjson-c +libglble
+endef
+
 define Package/gl-bletool
 	SECTION:=base
 	CATEGORY:=gl-inet-ble
@@ -80,6 +94,16 @@ define Package/gl-bleAdvertiser/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/bleAdvertiser $(1)/usr/sbin/
 endef
 
+define Package/gl-bleClient/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/bleClient $(1)/usr/sbin/
+endef
+
+define Package/gl-bleService/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/bleService $(1)/usr/sbin/
+endef
+
 define Package/gl-bletool/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/bletool $(1)/usr/sbin/
@@ -88,4 +112,6 @@ endef
 $(eval $(call BuildPackage,libglble))
 $(eval $(call BuildPackage,gl-bleScanner))
 $(eval $(call BuildPackage,gl-bleAdvertiser))
+$(eval $(call BuildPackage,gl-bleClient))
+$(eval $(call BuildPackage,gl-bleService))
 $(eval $(call BuildPackage,gl-bletool))

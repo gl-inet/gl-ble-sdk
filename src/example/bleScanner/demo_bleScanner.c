@@ -32,7 +32,7 @@
 static void sigal_hander(int sig);
 static int ble_gap_cb(gl_ble_gap_event_t event, gl_ble_gap_data_t *data);
 static int ble_module_cb(gl_ble_module_event_t event, gl_ble_module_data_t *data);
-static int addr2str(BLE_MAC adr, char* str);
+static int addr2str(BLE_MAC adr, char *str);
 
 static bool module_work = false;
 
@@ -52,12 +52,12 @@ int main(int argc, char *argv[])
 
 	int phys = 1, interval = 16, window = 16, type = 0, mode = 1;
 	// get scanner param
-	if((argc != 1) && (argc != 6))
+	if ((argc != 1) && (argc != 6))
 	{
 		printf("param err!");
 		return GL_ERR_PARAM;
 	}
-	if(argc == 6)
+	if (argc == 6)
 	{
 		phys = atoi(argv[1]);
 		interval = atoi(argv[2]);
@@ -69,35 +69,34 @@ int main(int argc, char *argv[])
 	// init ble module
 	GL_RET ret;
 	ret = gl_ble_init();
-	if(GL_SUCCESS != ret)
+	if (GL_SUCCESS != ret)
 	{
 		printf("gl_ble_init failed: %d\n", ret);
 		exit(-1);
 	}
 
 	ret = gl_ble_subscribe(&ble_cb);
-	if(GL_SUCCESS != ret)
+	if (GL_SUCCESS != ret)
 	{
 		printf("gl_ble_subscribe failed: %d\n", ret);
 		exit(-1);
 	}
 
 	// wait for module reset
-	while(!module_work)
+	while (!module_work)
 	{
-		usleep(500000);
+		usleep(100000);
 	}
 
 	// start scan
 	ret = gl_ble_discovery(phys, interval, window, type, mode);
-	if(ret != GL_SUCCESS)
+	if (ret != GL_SUCCESS)
 	{
 		printf("Start ble discovery error!! Err code: %d\n", ret);
 		exit(-1);
 	}
-	
 
-	while(1)
+	while (1)
 	{
 		sleep(1000);
 	}
@@ -105,64 +104,74 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
-
-static int addr2str(BLE_MAC adr, char* str) 
+static int addr2str(BLE_MAC adr, char *str)
 {
-    sprintf(str, "%02x:%02x:%02x:%02x:%02x:%02x", adr[5], adr[4],
-            adr[3], adr[2], adr[1], adr[0]);
-    return 0;
+	sprintf(str, "%02x:%02x:%02x:%02x:%02x:%02x", adr[5], adr[4],
+			adr[3], adr[2], adr[1], adr[0]);
+	return 0;
 }
-
 
 static int ble_gap_cb(gl_ble_gap_event_t event, gl_ble_gap_data_t *data)
 {
 	char address[BLE_MAC_LEN] = {0};
 	switch (event)
 	{
-		case GAP_BLE_SCAN_RESULT_EVT:
-		{
-			addr2str(data->scan_rst.address, address);
+	case GAP_BLE_SCAN_RESULT_EVT:
+	{
+		addr2str(data->scan_rst.address, address);
 
-			// json format
-			json_object* o = NULL;
-			o = json_object_new_object();
-			json_object_object_add(o, "type", json_object_new_string("scan_result"));
-			json_object_object_add(o, "mac", json_object_new_string(address));
-			json_object_object_add(o, "address_type", json_object_new_int(data->scan_rst.ble_addr_type));
-			json_object_object_add(o, "rssi", json_object_new_int(data->scan_rst.rssi));
-			json_object_object_add(o, "packet_type", json_object_new_int(data->scan_rst.packet_type));
-			json_object_object_add(o, "bonding", json_object_new_int(data->scan_rst.bonding));
-			json_object_object_add(o, "data", json_object_new_string(data->scan_rst.ble_adv));
-			const char *temp = json_object_to_json_string(o);
-			printf("%s\n",temp);
+		// json format
+		json_object *o = NULL;
+		o = json_object_new_object();
+		json_object_object_add(o, "type", json_object_new_string("scan_result"));
+		json_object_object_add(o, "mac", json_object_new_string(address));
+		json_object_object_add(o, "address_type", json_object_new_int(data->scan_rst.ble_addr_type));
+		json_object_object_add(o, "rssi", json_object_new_int(data->scan_rst.rssi));
+		json_object_object_add(o, "packet_type", json_object_new_int(data->scan_rst.packet_type));
+		json_object_object_add(o, "bonding", json_object_new_int(data->scan_rst.bonding));
+		json_object_object_add(o, "data", json_object_new_string(data->scan_rst.ble_adv));
+		const char *temp = json_object_to_json_string(o);
+		printf("%s\n", temp);
 
-			json_object_put(o);
-			break;
-		}
-		default:
-			break;
+		json_object_put(o);
+		break;
+	}
+	default:
+		break;
 	}
 
 	return 0;
 }
-
 
 static int ble_module_cb(gl_ble_module_event_t event, gl_ble_module_data_t *data)
 {
 	switch (event)
 	{
-		case MODULE_BLE_SYSTEM_BOOT_EVT:
-		{
-			module_work = true;
-			break;
-		}
-		default:
-			break;
+	case MODULE_BLE_SYSTEM_BOOT_EVT:
+	{
+		module_work = true;
+		json_object *o = NULL;
+		o = json_object_new_object();
+		json_object_object_add(o, "type", json_object_new_string("module_start"));
+		json_object_object_add(o, "major", json_object_new_int(data->system_boot_data.major));
+		json_object_object_add(o, "minor", json_object_new_int(data->system_boot_data.minor));
+		json_object_object_add(o, "patch", json_object_new_int(data->system_boot_data.patch));
+		json_object_object_add(o, "build", json_object_new_int(data->system_boot_data.build));
+		json_object_object_add(o, "bootloader", json_object_new_int(data->system_boot_data.bootloader));
+		json_object_object_add(o, "hw", json_object_new_int(data->system_boot_data.hw));
+		json_object_object_add(o, "ble_hash", json_object_new_string(data->system_boot_data.ble_hash));
+		const char *temp = json_object_to_json_string(o);
+		printf("MODULE_CB_MSG >> %s\n", temp);
+
+		json_object_put(o);
+		break;
+	}
+	default:
+		break;
 	}
 
 	return 0;
 }
-
 
 static void sigal_hander(int sig)
 {
@@ -172,5 +181,5 @@ static void sigal_hander(int sig)
 	gl_ble_unsubscribe();
 	gl_ble_destroy();
 
-    exit(0);
+	exit(0);
 }

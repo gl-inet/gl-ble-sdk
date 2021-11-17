@@ -25,6 +25,7 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <sys/ioctl.h>
+#include <pthread.h>
 
 #include "gl_uart.h"
 
@@ -394,4 +395,106 @@ static int32_t uartCloseSerial(int32_t handle)
   }
 
   return ret;
+}
+
+int32_t setRtsStu(char stu)
+{
+  int32_t status;
+
+  if (ioctl(serialHandle, TIOCMGET, &status) == -1)
+  {
+    goto error;
+  }
+
+  if (!stu)
+  {
+    status |= TIOCM_RTS;
+  }
+  else
+  {
+    status &= ~TIOCM_RTS;
+  }
+
+  if (ioctl(serialHandle, TIOCMSET, &status) == -1)
+  {
+    goto error;
+  }
+
+  return 0;
+
+/* Failure */
+error:
+  return -1;
+}
+
+int32_t setDtrStu(char stu)
+{
+  int32_t status;
+
+  if (ioctl(serialHandle, TIOCMGET, &status) == -1)
+  {
+    goto error;
+  }
+
+  if (!stu)
+  {
+    status |= TIOCM_DTR;
+  }
+  else
+  {
+    status &= ~TIOCM_DTR;
+  }
+
+  if (ioctl(serialHandle, TIOCMSET, &status) == -1)
+  {
+    goto error;
+  }
+
+  return 0;
+
+/* Failure */
+error:
+  return -1;
+}
+
+int32_t getDsrStu(void)
+{
+  int32_t status;
+
+  if (ioctl(serialHandle, TIOCMGET, &status) == -1)
+  {
+    goto error;
+  }
+
+  status &= TIOCM_DSR;
+
+  if (status == TIOCM_DSR)
+    return 1;
+  else
+    return 0;
+
+/* Failure */
+error:
+  return -1;
+}
+
+int32_t getCtsStu(void)
+{
+  int32_t status;
+
+  if (ioctl(serialHandle, TIOCMGET, &status) == -1)
+  {
+    goto error;
+  }
+
+  status &= TIOCM_CTS;
+
+  if (status == TIOCM_CTS)
+    return 1;
+  else
+    return 0;
+
+/* Failure */
+error:
+  return -1;
 }

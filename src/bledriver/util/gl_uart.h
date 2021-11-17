@@ -77,4 +77,10 @@ int32_t uartTx(uint32_t dataLength, uint8_t* data);
 
 int32_t uartCacheClean(void);
 
+int32_t setRtsStu(char stu);
+int32_t setDtrStu(char stu);
+
+int32_t getDsrStu(void);
+int32_t getCtsStu(void);
+
 #endif

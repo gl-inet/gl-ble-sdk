@@ -33,7 +33,7 @@ opkg install gl-bleAdvertiser_1.0.0_mipsel_24kc.ipk
 ### Using
 
 ```shell
-bleAdvertiser [phys:1] [interval_min:160] [interval_max:160] [discover:2] [adv_conn:2] [flag:0] [data:NULL]
+bleAdvertiser [phys:1] [interval_min:160] [interval_max:160] [discover:2] [adv_conn:2] [data0:NULL] [data1:NULL]
 	-> phys: The PHY on which the advertising packets are transmitted on. Now only support LE 1M PHY.
 				1: LE 1M PHY, 4: LE Coded PHY.
 	-> interval_min : Minimum advertising interval. Value in units of 0.625 ms
@@ -57,11 +57,8 @@ bleAdvertiser [phys:1] [interval_min:160] [interval_max:160] [discover:2] [adv_c
                        scan requests).
                      4: Undirected connectable non-scannable. This mode can
                        only be used in extended advertising PDUs.
-	-> flag : Adv data flag. This value selects if the data is intended for advertising.
-                     packets, scan response packets or advertising packet in OTA.
-                     0: Advertising packets, 1: Scan response packets.
-                     2: OTA advertising packets, 4: OTA scan response packets.
-    -> data : Customized advertising data. Must be hexadecimal ASCII. Like “020106”.
+	-> data0 : Customized non-targeted advertising data. Must be hexadecimal ASCII. Like “020106”, Length <=31 characters.
+  -> data1 : Customized scan response data. Must be hexadecimal ASCII. Like “020106”, Length <=31 characters.(Optional)
 ```
 
 If you don't need to customize the parameters, you can use the default parameters.

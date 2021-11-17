@@ -28,7 +28,7 @@ https://github.com/gl-inet/sdk
 ## Download&Compile
 
 ```shell
-$ git clone https://github.com/gl-inet/bletool.git
+$ git clone https://github.com/gl-inet/gl-ble-sdk.git
 ```
 
 Place your package in `openwrt-sdk/<version>/<target>/package/`, then run:
@@ -79,7 +79,11 @@ gl-ble-sdk
 We provide a series of examples(src/example) to help users better understand and use the API. 
 
 ```
-bleScanner   -------------------->  A Ble scanner that can configure scan parameters
+bleScanner   	-------------------->  A Ble scanner that can configure scan parameters
+bleAdvertiser   -------------------->  A Ble advertiser with configurable parameters
+bleService   	-------------------->  A Ble server with configurable parameters
+bleClient   	-------------------->  A Ble client with configurable parameters
+bletool   		-------------------->  A tool that integrates all BLE API functions
 ```
 
 We'll keep updating the example, so let us know if you have any good ideas :D

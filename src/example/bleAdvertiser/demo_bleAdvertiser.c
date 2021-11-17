@@ -52,23 +52,32 @@ int main(int argc, char *argv[])
 	ble_cb.ble_gatt_event = NULL;
 	ble_cb.ble_module_event = ble_module_cb;
 
-	int phys = 1, interval_min = 160, interval_max = 160, discover = 2, adv_conn = 2, flag = 0;
-	char *data = NULL;
+	int phys = 1, interval_min = 160, interval_max = 160, discover = 2, adv_conn = 2;
+	char *data0 = NULL;
+	char *data1 = NULL;
+	// char *data2 = NULL;
+	// char *data3 = NULL;
 	// get scanner param
-	if ((argc != 1) && (argc != 8))
+	if ((argc != 1) && (argc != 6) && (argc != 7) && (argc != 8))
 	{
 		printf("param err!");
 		return GL_ERR_PARAM;
 	}
-	if (argc == 8)
+	if (argc == 6)
 	{
 		phys = atoi(argv[1]);
 		interval_min = atoi(argv[2]);
 		interval_max = atoi(argv[3]);
 		discover = atoi(argv[4]);
 		adv_conn = atoi(argv[5]);
-		flag = atoi(argv[6]);
-		data = argv[7];
+	}
+	if (argc == 7)
+	{
+		data0 = argv[6];
+	}
+	if (argc == 8)
+	{
+		data1 = argv[7];
 	}
 
 	// init ble module
@@ -90,16 +99,26 @@ int main(int argc, char *argv[])
 	// wait for module reset
 	while (!module_work)
 	{
-		usleep(500000);
+		usleep(100000);
 	}
 
 	// set advertising data
-	if (data != NULL)
+	if (data0 != NULL)
 	{
-		ret = gl_ble_adv_data(flag, data);
+		ret = gl_ble_adv_data(0, data0);
 		if (GL_SUCCESS != ret)
 		{
-			printf("gl_ble_adv_data failed: %d\n", ret);
+			printf("gl_ble_adv_data_0 failed: %d\n", ret);
+			exit(-1);
+		}
+	}
+
+	if (data1 != NULL)
+	{
+		ret = gl_ble_adv_data(1, data1);
+		if (GL_SUCCESS != ret)
+		{
+			printf("gl_ble_adv_data_1 failed: %d\n", ret);
 			exit(-1);
 		}
 	}
@@ -144,6 +163,20 @@ static int ble_module_cb(gl_ble_module_event_t event, gl_ble_module_data_t *data
 	case MODULE_BLE_SYSTEM_BOOT_EVT:
 	{
 		module_work = true;
+		json_object *o = NULL;
+		o = json_object_new_object();
+		json_object_object_add(o, "type", json_object_new_string("module_start"));
+		json_object_object_add(o, "major", json_object_new_int(data->system_boot_data.major));
+		json_object_object_add(o, "minor", json_object_new_int(data->system_boot_data.minor));
+		json_object_object_add(o, "patch", json_object_new_int(data->system_boot_data.patch));
+		json_object_object_add(o, "build", json_object_new_int(data->system_boot_data.build));
+		json_object_object_add(o, "bootloader", json_object_new_int(data->system_boot_data.bootloader));
+		json_object_object_add(o, "hw", json_object_new_int(data->system_boot_data.hw));
+		json_object_object_add(o, "ble_hash", json_object_new_string(data->system_boot_data.ble_hash));
+		const char *temp = json_object_to_json_string(o);
+		printf("MODULE_CB_MSG >> %s\n", temp);
+
+		json_object_put(o);
 		break;
 	}
 	default:
