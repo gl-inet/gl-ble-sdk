@@ -335,25 +335,17 @@ void silabs_event_handler(struct gecko_cmd_packet *p)
 
 int wait_rsp_evt(uint32_t evt_id, uint32_t timeout)
 {
-    uint32_t current_time_us = 0, start_time_us = 0;
     uint32_t spend = 0;
 
-	uint32_t timeout_us = timeout * 1000;
-
-    start_time_us = utils_get_timestamp();
-
-    while (timeout_us > spend) {
+    while (timeout > spend) {
 		if (evt_id == BGLIB_MSG_ID(evt->header)) {
 			return 0;
 		}
-		
-        current_time_us = utils_get_timestamp();
-        spend = current_time_us - start_time_us;
+        usleep(1000);
+        spend++;
     }
-
     return -1;
 }
-
 
 
 
