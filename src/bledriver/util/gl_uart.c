@@ -362,7 +362,7 @@ static int32_t uartOpenSerial(int8_t* device, uint32_t bps, uint32_t dataBits, u
   } else {
     /* Block until character is received or timer expires. */
     ttyAttrs.c_cc[VMIN] = 0;
-    ttyAttrs.c_cc[VTIME] = (cc_t)timeout / 100;
+    ttyAttrs.c_cc[VTIME] = (cc_t)(timeout / 100); //Warning: Overflow may result
   }
 
   /* Cause the new options to take effect immediately. */
