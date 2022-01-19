@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
 		printf("param err!");
 		return GL_ERR_PARAM;
 	}
-	if (argc == 6)
+	if (argc >= 6)
 	{
 		phys = atoi(argv[1]);
 		interval_min = atoi(argv[2]);
@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 		discover = atoi(argv[4]);
 		adv_conn = atoi(argv[5]);
 	}
-	if (argc == 7)
+	if (argc >= 7)
 	{
 		data0 = argv[6];
 	}
