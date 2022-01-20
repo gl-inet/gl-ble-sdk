@@ -1135,7 +1135,7 @@ static int match_cmd(int argc, char **argv)
 
 static void interactive_input(char* str)
 {
-	char ptr[128] = {0};
+	char ptr[512+128] = {0};
 	strcpy(ptr,str);
 	char* parameter[20];
 	int num = 0;
@@ -1143,8 +1143,8 @@ static void interactive_input(char* str)
 	token = strtok(ptr," ");
 	while(token)
 	{
-		parameter[num] = (char*)calloc(64,sizeof(char));
-		strncpy(parameter[num++],token,(strlen(token)>64?64:strlen(token)));
+		parameter[num] = (char*)calloc(512,sizeof(char));
+		strncpy(parameter[num++],token,(strlen(token)>512?512:strlen(token)));
 		token = strtok(NULL," ");
 	}
 
