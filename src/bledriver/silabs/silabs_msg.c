@@ -55,6 +55,7 @@ struct gecko_cmd_packet* gecko_wait_message(void); //wait for event from system
 
 void silabs_event_handler(struct gecko_cmd_packet *p);
 static void reverse_rev_payload(struct gecko_cmd_packet* pck);
+void debug_pkg(struct gecko_cmd_packet *pck);
 
 static int evt_msqid;
 
@@ -233,7 +234,20 @@ struct gecko_cmd_packet* gecko_wait_message(void) //wait for event from system
     return retVal;
 }
 
-
+void debug_pkg(struct gecko_cmd_packet *pck)
+{
+    int len = BGLIB_MSG_LEN(pck->header);
+    uint8_t *p = (uint8_t*)&(pck->header);
+    printf("** ");
+    printf("%02x %02x %02x %02x ", *p, *(p+1), *(p+2), *(p+3));
+    int i = 0;
+    while(i < len)
+    {
+        printf("%02x ", pck->data.payload[i]);
+        i++;
+    }
+    printf("**\n");
+}
 
 int rx_peek_timeout(int ms)
 {
@@ -254,6 +268,7 @@ int rx_peek_timeout(int ms)
 void gecko_handle_command(uint32_t hdr, void* data)
 {
 	uint32_t send_msg_length = BGLIB_MSG_HEADER_LEN + BGLIB_MSG_LEN(gecko_cmd_msg->header);
+    // debug_pkg(gecko_cmd_msg);
 	if(ENDIAN) 
 	{
 		reverse_endian((uint8_t*)&gecko_cmd_msg->header,BGLIB_MSG_HEADER_LEN);

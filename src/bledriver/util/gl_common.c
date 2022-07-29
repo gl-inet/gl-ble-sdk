@@ -47,6 +47,7 @@ int str2array(uint8_t* dst, char* src, int len) {
     while (i < len) {
         sscanf(src + i * 2, "%02x", &tmp);
         dst[i] = tmp;
+        // printf("str2array dst[%d] = 0x%02x\n", i, dst[i]);
         i++;
     }
     return 0;
@@ -54,7 +55,7 @@ int str2array(uint8_t* dst, char* src, int len) {
 int hex2str(uint8_t* head, int len, char* value) {
     int i = 0;
 
-    // fix bug(?): (kernel don't mask all uart print) When wifi network up/down, it will recv a big message
+    // FIXME: (Sometime kernel don't mask all uart print) When wifi network up/down, it will recv a big message
     if(len >= 256/2)    
     {    
         strcpy(value,"00");

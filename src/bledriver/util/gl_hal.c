@@ -27,12 +27,15 @@
 #include "gl_hw_cfg.h"
 #include "gl_errno.h"
 
+
+#define MODEL_FILE_PATH		"/proc/gl-hw-info/model"
+
 unsigned char ENDIAN;
 
 char rston[64] = {0};
 char rstoff[64] = {0};
 
-char model[20] = {0};
+char model[48] = {0};
 hw_cfg_t* ble_hw_cfg = NULL;
 
 static int check_endian(void);
@@ -71,12 +74,16 @@ static GL_RET normal_check_rst_io(void)
 
 	char io[32] = {0};
 	sprintf(io, "/sys/class/gpio/gpio%d", ble_hw_cfg->rst_gpio);
+	log_debug("%s\n", io);
 
 	char create_io[64] = {0};   
 	sprintf(create_io, "echo %d > /sys/class/gpio/export", ble_hw_cfg->rst_gpio);
+	log_debug("%s\n", create_io);
 
 	char create_io_direction[80] = {0};   
 	sprintf(create_io_direction, "echo out > /sys/class/gpio/gpio%d/direction", ble_hw_cfg->rst_gpio);
+	log_debug("%s\n", create_io_direction);
+
 
 	// create IO
 	int i = 0;
@@ -162,11 +169,49 @@ static GL_RET get_model_hw_cfg(void)
     if(guci2_get(ctx,"glconfig.general.model",model) < 0)
     {
 		guci2_free(ctx);
-        log_err("serial config missing.\n");
-        return -1;
-    }
 
-	guci2_free(ctx);
+		// sdk4.0 chang model file
+		FILE *model_file = NULL;
+		model_file = fopen(MODEL_FILE_PATH, "r");
+		if(model_file == NULL)
+		{
+			log_info("open MODEL_FILE_PATH error. Maybe it's a official openwrt firmware?\n");
+			ble_hw_cfg = &B2200_BLE_HW_CFG;
+			qsdk_check_ver();
+			normal_check_rst_io();
+			return 1;
+		}
+		size_t model_name_len = 0;
+		// // get model name size
+		// if (fseek(model_file, 0L, SEEK_END)) 
+		// {
+		// 	log_err("fseek MODEL_FILE_PATH error\n");
+		// 	return 1;
+		// }
+		// model_name_len = ftell(model_file);
+		// if (fseek(model_file, 0L, SEEK_SET)) 
+		// {
+		// 	log_err("fseek MODEL_FILE_PATH error\n");
+		// 	return 1;
+		// }
+
+		// if (fread(model, 1, model_name_len, model_file) != model_name_len) 
+		// {
+		// 	printf("File read failure\n");
+		// 	return 1;
+		// }
+		model_name_len = fread(model, 1, 24, model_file);
+		if(model_name_len <= 0)
+		{
+			log_err("File read failure\n");
+			fclose(model_file);
+			return 1;
+		}else{
+			printf("File read[%d]: %s\n", model_name_len, model);
+		}
+    }else{
+		guci2_free(ctx);
+	}
 
 
 	log_debug("Get model: %s\n", model);
@@ -205,6 +250,10 @@ static GL_RET get_model_hw_cfg(void)
 	}else if(0 == strcmp(model, "e750")){
 		ble_hw_cfg = &E750_BLE_HW_CFG;
 
+	}else if(0 == strncmp(model, "s200", strlen("s200"))){
+		ble_hw_cfg = &S200_BLE_HW_CFG;
+		// mark kernel log
+		system("echo 1 4 1 7 > /proc/sys/kernel/printk");
 	}else{
 		log_err("Unknow model!\n");
 		return GL_UNKNOW_ERR;
@@ -222,7 +271,8 @@ int hal_init(void)
 	get_model_hw_cfg();
 
 	// Manual clean uart cache: fix tcflush() not work on some model
-	uartCacheClean();
+	// uartCacheClean();
+	
 
     int serialFd = serial_init();
     if( serialFd < 0 )

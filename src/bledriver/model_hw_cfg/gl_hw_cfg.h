@@ -82,7 +82,7 @@ hw_cfg_t X300B_BLE_HW_CFG = {
     115200,         // baud rate (bits/second)                     
     0,              // true enables RTS/CTS flow control           
     1,              // rst trigger: 1 means high, 0 means low      
-    13,              // RTS IO                                      
+    16,              // RTS IO                                      
 };
 
 hw_cfg_t AP1300_BLE_HW_CFG = {                                                                    
@@ -96,12 +96,20 @@ hw_cfg_t AP1300_BLE_HW_CFG = {
 
 hw_cfg_t B2200_BLE_HW_CFG = {                                                                    
     "b2200",      // model name                                  
-    "/dev/ttyHS0", // serial port name                            
+    "/dev/ttyMSM1", // serial port name                            
     115200,         // baud rate (bits/second)                     
     0,              // true enables RTS/CTS flow control           
     1,              // rst trigger: 1 means high, 0 means low      
-    43,              // RTS IO                                      
+    42,              // RTS IO                                      
 };
 
+hw_cfg_t S200_BLE_HW_CFG = {                                         
+    "s200",         // model name                                     
+    "/dev/ttyS0",   // serial port name                              
+    115200,         // baud rate (bits/second)                     
+    0,              // true enables RTS/CTS flow control           
+    1,              // rst trigger: 1 means high, 0 means low      
+    1,              // RTS IO                                      
+};
 
 #endif

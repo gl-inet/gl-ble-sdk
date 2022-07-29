@@ -113,6 +113,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	// set scan response data
 	if (data1 != NULL)
 	{
 		ret = gl_ble_adv_data(1, data1);

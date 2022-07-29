@@ -25,6 +25,7 @@
 
 #include <unistd.h>
 #include <signal.h>
+#include <string.h>
 
 #include "gl_bleapi.h"
 #include "gl_errno.h"
@@ -34,6 +35,7 @@
 #define PARA_ERROR 		"Parameter error\n"
 
 // static bool module_work = false;
+static bool test_mode = false;
 static void sigal_hander(int sig);
 
 static int ble_module_cb(gl_ble_module_event_t event, gl_ble_module_data_t *data);
@@ -953,10 +955,56 @@ GL_RET cmd_stop_current_discovery(int argc, char **argv)
 	return ret;
 }
 
+static int i = 0;
+static int los_num = 0;
+static int err_num = 0;
 GL_RET cmd_test(int argc, char **argv)
 {
 	printf(" Start test!!!\n");
+	int test_num = 1000;
+	if(argc == 2)
+	{
+		test_num = atoi(argv[1]);
+	}
 
+	BLE_MAC ole_address;
+	BLE_MAC new_address;
+	char str_addr[20] = {0};
+
+	i = 0;
+	los_num = 0;
+	err_num = 0;
+	test_mode = true;
+	while(i < test_num)
+	{
+		printf("TEST NUM: %d/%d  ", i+1, test_num);
+		memset(new_address, 0, DEVICE_MAC_LEN);
+		GL_RET ret = gl_ble_get_mac(new_address);
+		if(ret != GL_SUCCESS)
+		{
+			los_num++;
+			printf("mac lost!\n");
+		}else{
+			addr2str(new_address, str_addr);
+			printf("%s  ", str_addr);
+			if(i == 0)
+			{
+				memcpy(&ole_address, &new_address, DEVICE_MAC_LEN);
+				printf("\n");
+			}else{
+				if(0 != memcmp(&ole_address, &new_address, DEVICE_MAC_LEN))
+				{
+					err_num++;
+					printf("failed!\n");
+				}else{
+					printf("passed!\n");
+				}
+			}
+		}
+		i++;
+	}
+
+	printf("Test end! Test time: %d  Error time: %d  Lost time: %d\n", i, err_num, los_num);
 	return GL_SUCCESS;
 }
 
@@ -991,7 +1039,7 @@ command_t command_list[] = {
 	{"set_notify", cmd_set_notify, "Enable or disable the notifications and indications"},
 	{"read_value", cmd_read_value, "Read specified characteristic value"},
 	{"write_value", cmd_write_value, "Write characteristic value"},
-	{"test", cmd_test, "test"},
+	{"uart_test", cmd_test, "Test the stability of serial communication"},
 	/* Hidden method */
 	{"q", cmd_stop_current_discovery, ""},
 	{NULL, NULL, 0}
@@ -1160,6 +1208,10 @@ static void interactive_input(char* str)
 
 static void sigal_hander(int sig)
 {
+	if(test_mode)
+	{
+		printf("Test end! Test time: %d  Error time: %d  Lost time: %d\n", i, err_num, los_num);
+	}
 	gl_ble_unsubscribe();
 	gl_ble_destroy();
 
