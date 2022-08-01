@@ -25,7 +25,7 @@ extern char rston[];
 extern char rstoff[];
 
 typedef struct {
-    char model[20];
+    char model[32];
     char port[32];
     uint32_t baudRate;
     uint32_t flowcontrol;

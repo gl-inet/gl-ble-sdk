@@ -28,14 +28,11 @@
 #include "gl_errno.h"
 
 
-#define MODEL_FILE_PATH		"/proc/gl-hw-info/model"
-
 unsigned char ENDIAN;
 
 char rston[64] = {0};
 char rstoff[64] = {0};
 
-char model[48] = {0};
 hw_cfg_t* ble_hw_cfg = NULL;
 
 static int check_endian(void);
@@ -110,8 +107,8 @@ static GL_RET normal_check_rst_io(void)
 	return GL_SUCCESS;
 }
 
-/* Check special openwrt version
-	QSDK in open source openwrt will have a special io base num.
+/* Check openwrt version
+	QSDK in official openwrt will have a special io base num.
 	If "/sys/class/gpio/gpiochip412" exist, all io shoule add 412.
 */
 #define SPECIAL_CHIP_IO 		"/sys/class/gpio/gpiochip412"
@@ -157,8 +154,27 @@ static int serial_init(void)
     return uartOpen((int8_t*)ble_hw_cfg->port, ble_hw_cfg->baudRate, ble_hw_cfg->flowcontrol, 100);
 }
 
+static GL_RET find_model_hw(char *model_name)
+{
+
+	int support_model_nums = sizeof(GL_BLE_HW_LIST)/sizeof(GL_BLE_HW_LIST[0]);
+	
+	for(int i = 0; i < support_model_nums; i++)
+	{
+		if(0 == strcmp(model_name, GL_BLE_HW_LIST[i].model))
+		{
+			ble_hw_cfg = &GL_BLE_HW_LIST[i];
+			qsdk_check_ver();
+			return GL_SUCCESS;
+		}
+	}
+
+	return GL_ERR_UNSUPPORT_MODEL;
+}
+
 static GL_RET get_model_hw_cfg(void)
 {
+	char model[48] = {0};
     struct uci_context* ctx = guci2_init();
 	if(!ctx)
 	{
@@ -166,97 +182,19 @@ static GL_RET get_model_hw_cfg(void)
 		return GL_UNKNOW_ERR;
 	}
 
-    if(guci2_get(ctx,"glconfig.general.model",model) < 0)
+    if(guci2_get(ctx,"gl_ble_hw.model",model) < 0)
     {
-		guci2_free(ctx);
-
-		// sdk4.0 chang model file
-		FILE *model_file = NULL;
-		model_file = fopen(MODEL_FILE_PATH, "r");
-		if(model_file == NULL)
-		{
-			log_info("open MODEL_FILE_PATH error. Maybe it's a official openwrt firmware?\n");
-			ble_hw_cfg = &B2200_BLE_HW_CFG;
-			qsdk_check_ver();
-			normal_check_rst_io();
-			return 1;
-		}
-		size_t model_name_len = 0;
-		// // get model name size
-		// if (fseek(model_file, 0L, SEEK_END)) 
-		// {
-		// 	log_err("fseek MODEL_FILE_PATH error\n");
-		// 	return 1;
-		// }
-		// model_name_len = ftell(model_file);
-		// if (fseek(model_file, 0L, SEEK_SET)) 
-		// {
-		// 	log_err("fseek MODEL_FILE_PATH error\n");
-		// 	return 1;
-		// }
-
-		// if (fread(model, 1, model_name_len, model_file) != model_name_len) 
-		// {
-		// 	printf("File read failure\n");
-		// 	return 1;
-		// }
-		model_name_len = fread(model, 1, 24, model_file);
-		if(model_name_len <= 0)
-		{
-			log_err("File read failure\n");
-			fclose(model_file);
-			return 1;
-		}else{
-			printf("File read[%d]: %s\n", model_name_len, model);
-		}
-    }else{
-		guci2_free(ctx);
+		log_err("Get hw model uci config error!\n");
+		return GL_UNKNOW_ERR;
+	}else{
+		log_debug("Get model: %s\n", model);
 	}
 
+	guci2_free(ctx);
 
-	log_debug("Get model: %s\n", model);
-
-	if(0 == strcmp(model, "s1300"))
+	if(GL_SUCCESS != find_model_hw(model))
 	{
-		ble_hw_cfg = &S1300_BLE_HW_CFG;
-		qsdk_check_ver();
-
-	}else if(0 == strcmp(model, "x750")){
-		ble_hw_cfg = &X750_BLE_HW_CFG;
-		// mark kernel log
-		system("echo 1 4 1 7 > /proc/sys/kernel/printk");
-
-	}else if(0 == strcmp(model, "xe300")){
-		ble_hw_cfg = &XE300_BLE_HW_CFG;
-		// mark kernel log
-		system("echo 1 4 1 7 > /proc/sys/kernel/printk");
-
-	}else if(0 == strcmp(model, "mt300n-v2")){
-		ble_hw_cfg = &MT300N_V2_BLE_HW_CFG; 
-
-	}else if(0 == strcmp(model, "x300b")){
-		ble_hw_cfg = &X300B_BLE_HW_CFG;
-		// mark kernel log
-		system("echo 1 4 1 7 > /proc/sys/kernel/printk");
-
-	}else if(0 == strcmp(model, "ap1300")){
-		ble_hw_cfg = &AP1300_BLE_HW_CFG;
-		qsdk_check_ver();
-
-	}else if(0 == strcmp(model, "b2200")){
-		ble_hw_cfg = &B2200_BLE_HW_CFG;
-		qsdk_check_ver();
-
-	}else if(0 == strcmp(model, "e750")){
-		ble_hw_cfg = &E750_BLE_HW_CFG;
-
-	}else if(0 == strncmp(model, "s200", strlen("s200"))){
-		ble_hw_cfg = &S200_BLE_HW_CFG;
-		// mark kernel log
-		system("echo 1 4 1 7 > /proc/sys/kernel/printk");
-	}else{
-		log_err("Unknow model!\n");
-		return GL_UNKNOW_ERR;
+		return GL_ERR_UNSUPPORT_MODEL;
 	}
 
 	normal_check_rst_io();

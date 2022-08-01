@@ -16,7 +16,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gl-ble-sdk
-PKG_VERSION:=1.1.0
+PKG_VERSION:=1.2.0
 
 
 include $(INCLUDE_DIR)/package.mk
@@ -82,6 +82,8 @@ define Package/libglble/install
 	$(INSTALL_DIR) $(1)/usr/lib/gl
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/* $(1)/usr/lib/gl
 	$(LN) /usr/lib/gl/libglbleapi.so $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) files/etc/uci-defaults/30-ble-model-config $(1)/etc/uci-defaults/30-ble-model-config
 endef
 
 define Package/gl-bleScanner/install

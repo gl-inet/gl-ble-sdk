@@ -91,6 +91,10 @@ typedef enum gl_error {
  */	
 	GL_ERR_INVOKE					= GL_ERR_BASE + 7, 
 
+/**
+ * @brief Unsupprot hardware model.
+ */	
+	GL_ERR_UNSUPPORT_MODEL			= GL_ERR_BASE + 8, 
 }errcode_t;
 
 #endif

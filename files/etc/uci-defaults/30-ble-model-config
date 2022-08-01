@@ -1,0 +1,58 @@
+#!/bin/sh /etc/rc.common
+
+. /lib/functions.sh
+
+if [ ! -f "/etc/config/gl_ble_hw" ]; then
+    touch "/etc/config/gl_ble_hw"
+fi
+
+board=$(board_name)
+boardname="${board#*-}"
+[ -n "$boardname" ] || {
+        loger "Unsupported model (model not in support-list)"
+        echo ""
+        return
+}
+
+case "$boardname" in
+        ar300m-nor|\
+        ar300m-nand)
+                model=ar300m
+                ;;
+        ar750s-nor|\
+        ar750s-nor-nand)
+                model=ar750s
+                ;;
+        e750-nor|\
+        e750-nor-nand)
+                model=e750
+                ;;
+        x750-nor|\
+        x750-nor-nand)
+                model=x750
+                ;;
+        x300b-nor|\
+        x300b-nor-nand)
+                model=x300b
+                ;;
+        xe300-iot|\
+        xe300-nor|\
+        xe300-nor-nand)
+                model=xe300
+                ;;
+        x1200-nor|\
+        x1200-nor-nand)
+                model=x1200
+                ;;
+        s200-nor|\
+        s200-nor-nand)
+                model=s200
+                ;;
+        *)
+                model=$boardname
+                ;;
+esac
+echo $model
+
+uci set gl_ble_hw.model=$model
+uci commit gl_ble_hw
