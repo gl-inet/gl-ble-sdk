@@ -16,7 +16,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gl-ble-sdk
-PKG_VERSION:=1.2.0
+PKG_VERSION:=1.2.1
 
 
 include $(INCLUDE_DIR)/package.mk

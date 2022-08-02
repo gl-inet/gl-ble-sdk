@@ -110,6 +110,14 @@ GL_RET gl_ble_destroy(void)
 	free(_driver_param);
 	_driver_param = NULL;
 
+	// close event thread
+	HAL_ThreadDelete(ble_watcher_thread_ctx);
+	ble_watcher_thread_ctx = NULL;
+
+	// free watcher_param
+	free(_watcher_param);
+	_watcher_param = NULL;
+
 	// close hal fd
 	hal_destroy();
 
