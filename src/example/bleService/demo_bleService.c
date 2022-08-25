@@ -33,6 +33,7 @@
 static void sigal_hander(int sig);
 static int ble_module_cb(gl_ble_module_event_t event, gl_ble_module_data_t *data);
 static int addr2str(BLE_MAC adr, char *str);
+static int hex2str(uint8_t* head, int len, char* value);
 static int gl_tools_hexStr2bytes(const char *hexstr, int strlen, unsigned char *bytes);
 
 #define MAC2STR(a) (a)[5], (a)[4], (a)[3], (a)[2], (a)[1], (a)[0]
@@ -43,11 +44,13 @@ static bool module_work = false;
 static int ble_gap_cb(gl_ble_gap_event_t event, gl_ble_gap_data_t *data)
 {
 	char address[BLE_MAC_LEN] = {0};
+	char ble_adv[MAX_ADV_DATA_LEN] = {0};
 	switch (event)
 	{
 	case GAP_BLE_SCAN_RESULT_EVT:
 	{
 		addr2str(data->scan_rst.address, address);
+		hex2str(data->scan_rst.ble_adv, data->scan_rst.ble_adv_len, ble_adv);
 
 		// json format
 		json_object *o = NULL;
@@ -58,7 +61,7 @@ static int ble_gap_cb(gl_ble_gap_event_t event, gl_ble_gap_data_t *data)
 		json_object_object_add(o, "rssi", json_object_new_int(data->scan_rst.rssi));
 		json_object_object_add(o, "packet_type", json_object_new_int(data->scan_rst.packet_type));
 		json_object_object_add(o, "bonding", json_object_new_int(data->scan_rst.bonding));
-		json_object_object_add(o, "data", json_object_new_string(data->scan_rst.ble_adv));
+		json_object_object_add(o, "data", json_object_new_string(ble_adv));
 		const char *temp = json_object_to_json_string(o);
 		printf("GAP_CB_MSG >> %s\n", temp);
 
@@ -322,6 +325,25 @@ static void sigal_hander(int sig)
 	gl_ble_destroy();
 
 	exit(0);
+}
+
+static int hex2str(uint8_t* head, int len, char* value)
+{
+    int i = 0;
+
+    // FIXME: (Sometime kernel don't mask all uart print) When wifi network up/down, it will recv a big message
+    if(len >= 256/2)    
+    {    
+        strcpy(value,"00");
+        // printf("recv a err msg! err len = %d\n",len);
+        return -1;
+    }
+    
+    while (i < len) {
+        sprintf(value + i * 2, "%02x", head[i]);
+        i++;
+    }
+    return 0;
 }
 
 static int gl_tools_hexStr2bytes(const char *hexstr, int strlen, unsigned char *bytes)

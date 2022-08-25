@@ -126,7 +126,8 @@ typedef union {
         gl_ble_addr_type_t ble_addr_type; 
         int32_t packet_type;  
         int32_t rssi;  
-        char ble_adv[MAX_ADV_DATA_LEN];
+        uint8_t ble_adv_len;
+        uint8_t ble_adv[MAX_ADV_DATA_LEN];
         int32_t bonding;
     } scan_rst;
 

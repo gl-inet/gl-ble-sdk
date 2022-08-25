@@ -219,7 +219,7 @@ GL_RET gl_ble_adv_data(int flag, char *data)
 
 GL_RET gl_ble_adv(int phys, int interval_min, int interval_max, int discover, int adv_conn)
 {
-	return ble_adv(phys, interval_min, interval_max, discover, adv_conn);
+	return ble_start_adv(phys, interval_min, interval_max, discover, adv_conn);
 }
 
 GL_RET gl_ble_stop_adv(void)

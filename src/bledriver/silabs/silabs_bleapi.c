@@ -139,7 +139,7 @@ GL_RET silabs_ble_discovery(int phys, int interval, int window, int type, int mo
     }
     if (set_tim_rsp->result)
     {
-        // printf("gecko_cmd_le_gap_set_discovery_timing: %d\n", set_tim_rsp->result);
+        printf("gecko_cmd_le_gap_set_discovery_timing: %d\n", set_tim_rsp->result);
         return (set_tim_rsp->result + MANUFACTURER_ERR_BASE);
     }
 
@@ -150,7 +150,7 @@ GL_RET silabs_ble_discovery(int phys, int interval, int window, int type, int mo
     }
     if (set_type_rsp->result)
     {
-        // printf("gecko_cmd_le_gap_set_discovery_type: %d\n", set_type_rsp->result);
+        printf("gecko_cmd_le_gap_set_discovery_type: %d\n", set_type_rsp->result);
         return (set_type_rsp->result + MANUFACTURER_ERR_BASE);
     }
 
@@ -161,7 +161,7 @@ GL_RET silabs_ble_discovery(int phys, int interval, int window, int type, int mo
     }
     if (start_rsp->result)
     {
-        // printf("gecko_cmd_le_gap_start_discovery: %d\n", start_rsp->result);
+        printf("gecko_cmd_le_gap_start_discovery: %d\n", start_rsp->result);
         return (start_rsp->result + MANUFACTURER_ERR_BASE);
     }
 

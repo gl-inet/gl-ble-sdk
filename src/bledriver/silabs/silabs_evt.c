@@ -179,9 +179,10 @@ void* silabs_watcher(void* arg)
                 data.scan_rst.bonding = p->data.evt_le_gap_scan_response.bonding;
                 data.scan_rst.packet_type = p->data.evt_le_gap_scan_response.packet_type;
                 data.scan_rst.ble_addr_type = p->data.evt_le_gap_scan_response.address_type;
-                hex2str(p->data.evt_le_gap_scan_response.data.data, p->data.evt_le_gap_scan_response.data.len,data.scan_rst.ble_adv);
+                data.scan_rst.ble_adv_len = p->data.evt_le_gap_scan_response.data.len;
+                memset(data.scan_rst.ble_adv, 0, MAX_ADV_DATA_LEN);
+                memcpy(data.scan_rst.ble_adv, p->data.evt_le_gap_scan_response.data.data, data.scan_rst.ble_adv_len);
                 memcpy(data.scan_rst.address, p->data.evt_le_gap_scan_response.address.addr, 6);
-
                 if(ble_msg_cb->ble_gap_event)
                 {
                     ble_msg_cb->ble_gap_event(GAP_BLE_SCAN_RESULT_EVT, &data);

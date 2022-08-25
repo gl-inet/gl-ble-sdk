@@ -35,7 +35,7 @@
 #define ble_set_power                   silabs_ble_set_power
 #define ble_discovery                   silabs_ble_discovery
 #define ble_stop_discovery              silabs_ble_stop_discovery
-#define ble_adv                         silabs_ble_adv
+#define ble_start_adv                   silabs_ble_adv
 #define ble_adv_data                    silabs_ble_adv_data
 #define ble_stop_adv                    silabs_ble_stop_adv
 #define ble_send_notify                 silabs_ble_send_notify
