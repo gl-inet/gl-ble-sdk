@@ -122,7 +122,7 @@ typedef enum {
 
 typedef union {
     struct ble_scan_result_evt_data {
-        BLE_MAC address; 
+        BLE_MAC address;
         gl_ble_addr_type_t ble_addr_type; 
         int32_t packet_type;  
         int32_t rssi;  

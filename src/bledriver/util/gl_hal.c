@@ -196,7 +196,7 @@ static GL_RET get_model_hw_cfg(void)
 	{
 		return GL_ERR_UNSUPPORT_MODEL;
 	}
-
+	
 	normal_check_rst_io();
 
 	return GL_SUCCESS;

@@ -176,6 +176,7 @@ static int ble_gatt_cb(gl_ble_gatt_event_t event, gl_ble_gatt_data_t *data)
 		json_object_put(o);
 
 		uint8_t bytes[128] = {0};
+
 		gl_tools_hexStr2bytes(data->local_gatt_attribute.value, strlen(data->local_gatt_attribute.value), bytes);
 		printf("Data from the client : %.*s\n", strlen(bytes), bytes);
 

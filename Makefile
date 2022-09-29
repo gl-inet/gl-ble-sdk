@@ -16,7 +16,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gl-ble-sdk
-PKG_VERSION:=1.3.0
+PKG_VERSION:=1.4.0
 
 
 include $(INCLUDE_DIR)/package.mk
@@ -62,6 +62,13 @@ define Package/gl-bletool
 	CATEGORY:=gl-inet-ble
 	TITLE:=GL inet BLE Debug Cmdline Tool
 	DEPENDS:= +libjson-c +libreadline +libncurses +libglble
+endef
+
+define Package/gl-bleIbeacon
+	SECTION:=base
+	CATEGORY:=gl-inet-ble
+	TITLE:=GL inet BLE Ibeacon
+	DEPENDS:= +libjson-c +libglble +libubox +libubus +libblobmsg-json 
 endef
 
 define Build/Prepare
@@ -111,9 +118,16 @@ define Package/gl-bletool/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/bletool $(1)/usr/sbin/
 endef
 
+define Package/gl-bleIbeacon/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/bleIbeacon $(1)/usr/sbin/
+endef
+
+
 $(eval $(call BuildPackage,libglble))
 $(eval $(call BuildPackage,gl-bleScanner))
 $(eval $(call BuildPackage,gl-bleAdvertiser))
 $(eval $(call BuildPackage,gl-bleClient))
 $(eval $(call BuildPackage,gl-bleService))
 $(eval $(call BuildPackage,gl-bletool))
+$(eval $(call BuildPackage,gl-bleIbeacon))

@@ -16,6 +16,7 @@
 #ifndef _GL_ERRNO_H_
 #define _GL_ERRNO_H_
 
+#include <stdint.h>
 /**
  * @defgroup RETURN_CODE RETURN_CODE
  * The return value definition of the API
