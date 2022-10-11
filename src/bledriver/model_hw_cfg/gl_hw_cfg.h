@@ -32,8 +32,7 @@ hw_cfg_t GL_BLE_HW_LIST[] =
 
     {                                        
         "s1300",      // model name                                    
-        // "/dev/ttyMSM1", // serial port name    
-        "/dev/ttyUSB0", // serial port name                        
+        "/dev/ttyMSM1", // serial port name                         
         115200,         // baud rate (bits/second)                     
         0,              // true enables RTS/CTS flow control           
         1,              // rst trigger: 1 means high, 0 means low      
@@ -47,24 +46,6 @@ hw_cfg_t GL_BLE_HW_LIST[] =
         0,              // true enables RTS/CTS flow control           
         1,              // rst trigger: 1 means high, 0 means low      
         14,              // RTS IO                                      
-    },
-
-    {                                                                    
-        "mt300n-v2",      // model name                                  
-        "/dev/ttyS1", // serial port name                            
-        115200,         // baud rate (bits/second)                     
-        0,              // true enables RTS/CTS flow control           
-        1,              // rst trigger: 1 means high, 0 means low      
-        5,              // RTS IO                                      
-    },
-
-    {                                        
-        "e750",      // model name                                    
-        "/dev/ttyUSB0", // serial port name                           
-        115200,         // baud rate (bits/second)                    
-        0,              // true enables RTS/CTS flow control          
-        1,              // rst trigger: 1 means high, 0 means low     
-        17,              // RTS IO                                    
     },
 
     {                                                                    

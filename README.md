@@ -98,3 +98,17 @@ We will continue to update the online version of the API documentation.
 
 Users can also use doxygen to generate documents locally.
 
+
+
+## Supported devices
+
+| device name | Details                                                      |
+| ----------- | ------------------------------------------------------------ |
+| GL-X750     | [GL-X750 / Spitz - GL.iNet (gl-inet.com)](https://www.gl-inet.com/products/gl-x750/) |
+| GL-S1300    | [GL-S1300 / Convexa-S - GL.iNet (gl-inet.com)](https://www.gl-inet.com/products/gl-s1300/) |
+| GL-XE300    | [GL-XE300 / Puli - GL.iNet (gl-inet.com)](https://www.gl-inet.com/products/gl-xe300/) |
+| GL-X300B    | [GL-X300B / Collie - GL.iNet (gl-inet.com)](https://www.gl-inet.com/products/gl-x300b/) |
+| GL-AP1300   | [GL-AP1300 / Cirrus - GL.iNet (gl-inet.com)](https://www.gl-inet.com/products/gl-ap1300/) |
+| GL-B2200    | [GL-B2200 / Velica - GL.iNet (gl-inet.com)](https://www.gl-inet.com/products/gl-b2200/) |
+| GL-S200     | [GL-S200 - GL.iNet (gl-inet.com)](https://www.gl-inet.com/products/gl-s200/) |
+
