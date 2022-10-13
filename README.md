@@ -101,6 +101,7 @@ Users can also use doxygen to generate documents locally.
 
 
 ## Supported devices
+BLE may not be available in all standard versions.So please confirm if it comes with BLE first. 
 
 | device name | Details                                                      |
 | ----------- | ------------------------------------------------------------ |
