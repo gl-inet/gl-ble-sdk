@@ -1,5 +1,5 @@
  ###################################################################
- # Copyright 2020 GL-iNet. https://www.gl-inet.com/
+ # Copyright 2022 GL-iNet. https://www.gl-inet.com/
  # 
  # Licensed under the Apache License, Version 2.0 (the "License");
  # you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gl-ble-sdk
-PKG_VERSION:=1.4.0
+PKG_VERSION:=2.0.0
+
+TARGET_CFLAGS += -ggdb3
 
 
 include $(INCLUDE_DIR)/package.mk
@@ -26,7 +28,7 @@ define Package/libglble
 	SECTION:=base
 	CATEGORY:=gl-inet-ble
 	TITLE:=GL inet BLE driver library
-	DEPENDS:= +libuci +libpthread
+	DEPENDS:= +libuci +libpthread +gl-sdk4-uci 
 endef
 
 define Package/gl-bleScanner
@@ -36,10 +38,31 @@ define Package/gl-bleScanner
 	DEPENDS:= +libjson-c +libglble
 endef
 
-define Package/gl-bleAdvertiser
+define Package/gl-bleSynchronize
 	SECTION:=base
 	CATEGORY:=gl-inet-ble
-	TITLE:=GL inet BLE Advertising
+	TITLE:=GL inet BLE Synchronize
+	DEPENDS:= +libjson-c +libglble
+endef
+
+define Package/gl-bleAdvLegacy
+	SECTION:=base
+	CATEGORY:=gl-inet-ble
+	TITLE:=GL inet BLE Legacy Advertising
+	DEPENDS:= +libjson-c +libglble
+endef
+
+define Package/gl-bleAdvExtended
+	SECTION:=base
+	CATEGORY:=gl-inet-ble
+	TITLE:=GL inet BLE Extended Advertising
+	DEPENDS:= +libjson-c +libglble
+endef
+
+define Package/gl-bleAdvPeriodic
+	SECTION:=base
+	CATEGORY:=gl-inet-ble
+	TITLE:=GL inet BLE Periodic Advertising
 	DEPENDS:= +libjson-c +libglble
 endef
 
@@ -91,6 +114,8 @@ define Package/libglble/install
 	$(LN) /usr/lib/gl/libglbleapi.so $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) files/etc/uci-defaults/30-ble-model-config $(1)/etc/uci-defaults/30-ble-model-config
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_BIN) files/etc/config/gl_gattdb_cfg $(1)/etc/config/gl_gattdb_cfg
 endef
 
 define Package/gl-bleScanner/install
@@ -98,9 +123,24 @@ define Package/gl-bleScanner/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/bleScanner $(1)/usr/sbin/
 endef
 
-define Package/gl-bleAdvertiser/install
+define Package/gl-bleSynchronize/install
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/bleAdvertiser $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/bleSynchronize $(1)/usr/sbin/
+endef
+
+define Package/gl-bleAdvLegacy/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/bleAdvLegacy $(1)/usr/sbin/
+endef
+
+define Package/gl-bleAdvExtended/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/bleAdvExtended $(1)/usr/sbin/
+endef
+
+define Package/gl-bleAdvPeriodic/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/bleAdvPeriodic $(1)/usr/sbin/
 endef
 
 define Package/gl-bleClient/install
@@ -126,7 +166,10 @@ endef
 
 $(eval $(call BuildPackage,libglble))
 $(eval $(call BuildPackage,gl-bleScanner))
-$(eval $(call BuildPackage,gl-bleAdvertiser))
+$(eval $(call BuildPackage,gl-bleSynchronize))
+$(eval $(call BuildPackage,gl-bleAdvLegacy))
+$(eval $(call BuildPackage,gl-bleAdvExtended))
+$(eval $(call BuildPackage,gl-bleAdvPeriodic))
 $(eval $(call BuildPackage,gl-bleClient))
 $(eval $(call BuildPackage,gl-bleService))
 $(eval $(call BuildPackage,gl-bletool))

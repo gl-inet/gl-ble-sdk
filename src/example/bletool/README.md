@@ -13,7 +13,7 @@ Make sure you have the compile option enabled before compiling the project.
 ```
 make menuconfig
 -> gl-inet-ble
-		-> {M} libglble...................................... GL inet BLE driver library
+		-> <M> libglble...................................... GL inet BLE driver library
 		-> <M> gl-bletool................................ GL inet BLE Debug Cmdline Tool
 ```
 
@@ -32,8 +32,8 @@ You can use SCP or other means to upload example ipk to the device.
 ### install
 
 ```shell
-opkg install libglble_1.0.0_mipsel_24kc.ipk
-opkg install gl-bletool_1.0.0_mipsel_24kc.ipk
+opkg install libglble_2.0.0_mipsel_24kc.ipk
+opkg install gl-bletool_2.0.0_mipsel_24kc.ipk
 ```
 
 ### Using
@@ -41,20 +41,30 @@ opkg install gl-bletool_1.0.0_mipsel_24kc.ipk
 You can use the help command to quickly view the currently supported commands. 
 
 ```shell
-root@GL-MT300N-V2:~# bletool 
-MODULE_CB_MSG >> { "type": "module_start", "major": 2, "minor": 13, "patch": 10, "build": 423, "bootloader": 17367041, "hw": 1, "ble_hash": "61965a4d" }
-bletool >> help
+root@OpenWrt:~# bletool 
+bletool >> MODULE_CB_MSG >> { "type": "module_start", "major": 4, "minor": 2, "patch": 0, "build": 321, "bootloader": 0, "hw": 257, "ble_hash": "1b0e33cd" }
+bletool >> help 
 quit                           Quit bletool
 help                           Help
 enable                         Enable or disable the module
 set_power                      Set the tx power level
 local_address                  Get local Bluetooth module public address
-adv_data                       Set adv data
-adv                            Set and Start advertising
+show_adv_handle_list           Show adv handle list
+create_adv_handle              Create adv handle
+delete_adv_handle              Delete adv handle
+set_legacy_adv_data            Set legacy adv data
+set_extended_adv_data          Set extended adv data
+set_periodic_adv_data          Set periodic adv data
+start_legacy_adv               Set and Start legacy advertising
+start_extended_adv             Set and Start extended advertising
+start_periodic_adv             Set and Start periodic advertising
 adv_stop                       Stop advertising
 send_notify                    Send notification to remote device
+set_gattdb                     Set local gatt database
 discovery                      Start discovery
 stop_discovery                 End current GAP procedure
+synchronize                    synchronize to periodic advertising
+stop_synchronize               stop synchronize to periodic advertising
 connect                        Open connection
 disconnect                     Close connection
 get_rssi                       Get rssi of an established connection
@@ -63,8 +73,6 @@ get_char                       Get supported characteristics in specified servic
 set_notify                     Enable or disable the notifications and indications
 read_value                     Read specified characteristic value
 write_value                    Write characteristic value
-test                           test
-bletool >>
 ```
 
 You can also use the TAB completion command and the up and down key to view the history commands.
@@ -84,20 +92,9 @@ bletool >> enable
 
 **Parameters**：
 
-| Type    | Name   | Default Value* | Description                                                  |
-| ------- | ------ | -------------- | ------------------------------------------------------------ |
-| int32_t | enable | 1              | 0 means disable the BLE hardware; None-zero means enable the BLE hardware. |
-
-
-
-#### local_address
-
-```shell
-bletool >> local_address 
-{ "code": 0, "mac": "80:4b:50:50:e7:72" }
-```
-
-**Description**：Get the Local Bluetooth MAC address.
+| Type    | Name   | Default Value | Description                                                  |
+| ------- | ------ | ------------- | ------------------------------------------------------------ |
+| int32_t | enable | 1             | 0 means disable the BLE hardware; None-zero means enable the BLE hardware. |
 
 
 
@@ -120,37 +117,161 @@ bletool >> set_power 80
 
 
 
-#### adv_data
+#### local_address
 
 ```shell
-bletool >> adv_data 0 020106050974657374
+bletool >> local_address 
+{ "code": 0, "mac": "94:de:b8:f1:35:1a" }
+```
+
+**Description**：Get the Local Bluetooth MAC address.
+
+
+
+#### <span id="create_adv_handle">create_adv_handle</span>
+
+```shell
+bletool >> create_adv_handle 
+{ "code": 0, "new_adv_handle": 0, "adv_handle_list": [ 0 ] }
+```
+
+**Description**：Create advertising set handle. It be used to operation of advertising.
+
+
+
+#### delete_adv_handle
+
+```shell
+bletool >> delete_adv_handle 0
+{ "code": 0, "adv_handle_list": [ ] }
+```
+
+**Description**：Delete advertising set handle.
+
+**Parameters**：
+
+| Type    | Name       | Default Value | Description                                                  |
+| ------- | ---------- | ------------- | ------------------------------------------------------------ |
+| int32_t | adv_handle | -             | The Advertising set handle which you want to delete.<br/>You can view the currently created adv_handle by [show_adv_handle_list](#show_adv_handle_list). |
+
+**Note**: If the Advertising set handle that it is broadcasting, and then call this function to delete it, the broadcast is stopped.
+
+
+
+#### <span id="show_adv_handle_list">show_adv_handle_list</span>
+
+```shell
+bletool >> show_adv_handle_list 
+{ "adv_handle_list": [ 0, 2, 3 ] }
+```
+
+**Description**：Show the list of advertising set handle that is created.
+
+
+
+#### set_legacy_adv_data
+
+```shell
+bletool >> set_legacy_adv_data ./legacy_adv.json 
 { "code": 0 }
 ```
 
-**Description**：Act as BLE slave, set customized advertising data
+**Description**：Act as BLE slave, set customized legacy advertising  data
 
 **Parameters**:
 
-| Type    | Name | Default Value | Description                       |
-| ------- | ---- | ------------- | --------------------------------- |
-| int32_t | flag | -             | Adv data flag.                    |
-| string  | data | -             | Customized advertising data(hex). |
+| Type   | Name           | Default Value | Description                                    |
+| ------ | -------------- | ------------- | ---------------------------------------------- |
+| string | json_file_path | -             | The path of configuration parameter json file. |
 
-**flag**: 
+**json file parameter**
 
-- 0: Advertising packets
-
-- 1: Scan response packets
-- 2: OTA advertising packets
-- 4: OTA scan response packets
-
-
-
-#### adv
+| Key             | Value_type | Descriptiion                                                 |
+| --------------- | ---------- | ------------------------------------------------------------ |
+| adv_handle      | int32_t    | Advertising set handle. It be created by [create_adv_handle](#create_adv_handle). |
+| flag            | int32_t    | Adv data flag. <br/>0: Legacy advertising packets, the maximum size is 31 bytes  <br/>1: Scan response packets, the maximum size is 31 bytes |
+| legacy_adv_data | string     | Customized legacy advertising data(hex). Like “020106”.      |
 
 ```shell
-bletool >> adv
+# The template of json file
+{
+        "adv_handle": 0,
+        "flag": 0,
+        "legacy_adv_data": "0201060709474c5f424c45"
+}
+```
+
+
+
+#### set_extended_adv_data
+
+```shell
+bletool >> set_extended_adv_data ./extended_adv.json 
 { "code": 0 }
+```
+
+**Description**：Act as BLE slave, set customized extended advertising  data
+
+**Parameters**:
+
+| Type   | Name           | Default Value | Description                                    |
+| ------ | -------------- | ------------- | ---------------------------------------------- |
+| string | json_file_path | -             | The path of configuration parameter json file. |
+
+**json file parameter**
+
+| Key               | Value_type | Descriptiion                                                 |
+| ----------------- | ---------- | ------------------------------------------------------------ |
+| adv_handle        | int32_t    | Advertising set handle. It be created by [create_adv_handle](#create_adv_handle). |
+| extended_adv_data | string     | Customized extended advertising data(hex).<br/>Maximum 1024 bytes of data can be set for unconnectable extended advertising.<br/>Maximum 191 bytes of data can be set for connectable extended advertising. |
+
+```shell
+# The template of json file
+{
+        "adv_handle": 0,
+        "extended_adv_data": "020106111111111122222222223333333333444444444455555555556666666666777777777788888888889999999999000000000011111111112222222222333333333344444444445555555555666666666677777777778888888888999999999900000000001111111111222222222233333333334444444444555555555566666666667777777777888888888899999999990000000000111111111122222222223333333333444444444455555555556666666666777777777788888888889999999999000000000011111111112222222222333333333344"
+}
+```
+
+
+
+#### set_periodic_adv_data
+
+```shell
+bletool >> set_periodic_adv_data ./periodic_adv.json 
+{ "code": 0 }
+```
+
+**Description**：Act as BLE slave, set customized periodic advertising  data
+
+**Parameters**:
+
+| Type   | Name           | Default Value | Description                                    |
+| ------ | -------------- | ------------- | ---------------------------------------------- |
+| string | json_file_path | -             | The path of configuration parameter json file. |
+
+**json file parameter**
+
+| Key               | Value_type | Descriptiion                                                 |
+| ----------------- | ---------- | ------------------------------------------------------------ |
+| adv_handle        | int32_t    | Advertising set handle. It be created by [create_adv_handle](#create_adv_handle). |
+| periodic_adv_data | string     | Customized periodic advertising data(hex).<br/>Maximum 1024 bytes of data can be set for periodic advertising. |
+
+```shell
+# The template of json file
+{
+        "adv_handle": 0,
+        "periodic_adv_data": "020106111111111122222222223333333333444444444455555555556666666666777777777788888888889999999999000000000011111111112222222222333333333344444444445555555555666666666677777777778888888888999999999900000000001111111111222222222233333333334444444444555555555566666666667777777777888888888899999999990000000000111111111122222222223333333333444444444455555555556666666666777777777788888888889999999999000000000011111111112222222222333333333344"
+}  
+```
+
+
+
+#### start_legacy_adv
+
+```shell
+bletool >> start_legacy_adv 0
+{ "code": 0, "adv_handle": 0 }
 ```
 
 **Description**：Set the advertising parameters and start advertising act as BLE slave.
@@ -159,52 +280,96 @@ bletool >> adv
 
 | Type    | Name         | Default Value | Description                                                  |
 | ------- | ------------ | ------------- | ------------------------------------------------------------ |
-| int32_t | phys         | 1             | The PHY on which the advertising packets are transmitted on. |
-| int32_t | interval_min | 160 (100ms)   | Minimum advertising interval.                                |
-| int32_t | interval_max | 160 (100ms)   | Maximum advertising interval.                                |
-| int32_t | discover     | 2             | Discoverable mode.                                           |
-| int32_t | connect      | 2             | Connectable mode.                                            |
+| uint8_t | adv_handle   | -             | Advertising set handle. It be created by [create_adv_handle](#create_adv_handle). |
+| int32_t | interval_min | 160 (100ms)   | Minimum advertising interval. Value in units of 0.625 ms. <br/>Range: 0x20 to 0xFFFFFF, Time range: 20 ms to 10485.759375 s. |
+| int32_t | interval_max | 160 (100ms)   | Maximum advertising interval. Value in units of 0.625 ms.<br/>Range: 0x20 to 0xFFFFFF, Time range: 20 ms to 10485.759375 s. |
+| uint8_t | discover     | 2             | Discoverable mode.<br/>0: Not discoverable<br/>1: Discoverable by both limited and general discovery procedures<br/>2: Discoverable by the general discovery procedure <br/>3: Send legacy advertising and/or scan response data defined by the user.<br/>    The limited/general discoverable flags are defined by the user. |
+| uint8_t | connect      | 2             | Connectable mode.<br/>0: Undirected non-connectable and non-scannable legacy advertising<br/>2: Undirected connectable and scannable legacy advertising<br/>3: Undirected scannable and non-connectable legacy advertising |
 
-**phys**:
+**Note:**
 
-- 1: LE 1M PHY
+Interval_max should be bigger than interval_min.
 
-- *4:(not support now) LE Coded PHY*
+Legacy Avertising is transmitted on LE 1M PHY by default.
 
-**discover**: 
-
-- 0: Not discoverable 
-
-- 1: Discoverable using both limited and general discovery procedures
-
-- 2: Discoverable using general discovery procedure
-
-- 3: Device is not discoverable in either limited or generic discovery procedure, but may be discovered by using the Observation procedure
-
-- 4: Send advertising and/or scan response data defined by the user. The limited/general discoverable flags are defined by the user.
-
-**connect**:
-
-- 0: Non-connectable non-scannable
-
-- 1: Directed connectable (RESERVED, DO NOT USE)
-
-- 2: Undirected connectable scannable (This mode can only be used in legacy advertising PDUs)
-
-- 3: Undirected scannable (Non-connectable but responds to scan requests)
-
-- 4: Undirected connectable non-scannable. This mode can only be used in extended advertising PDUs
+If you want multiple Avertising to run at the same time, make sure their advertising interval are different.
 
 
 
-#### adv_stop
+#### start_extended_adv
 
 ```shell
-bletool >> adv_stop 
+bletool >> start_extended_adv 0
+{ "code": 0, "adv_handle": 0 }
+```
+
+**Description**：Set the advertising parameters and start advertising act as BLE slave.
+
+**Parameters**:
+
+| Type    | Name          | Default Value | Description                                                  |
+| ------- | ------------- | ------------- | ------------------------------------------------------------ |
+| uint8_t | adv_handle    | -             | Advertising set handle. It be created by [create_adv_handle](#create_adv_handle). |
+| uint8_t | primary_phy   | 1             | The PHY on which the advertising packets are transmitted on the primary advertising channel.<br/>1: LE 1M PHY, 4: LE Coded PHY(125k, S=8) |
+| uint8_t | secondary_phy | 1             | The PHY on which the advertising packets are transmitted on the secondary advertising channel.            1: LE 1M PHY, 2: LE 2M PHY, 4: LE Coded PHY(125k, S=8) |
+| int32_t | interval_min  | 320(200ms)    | Minimum advertising interval. Value in units of 0.625 ms. <br/>Range: 0x20 to 0xFFFFFF, Time range: 20 ms to 10485.759375 s. |
+| int32_t | interval_max  | 320(200ms)    | Maximum advertising interval. Value in units of 0.625 ms.<br/>Range: 0x20 to 0xFFFFFF, Time range: 20 ms to 10485.759375 s. |
+| uint8_t | discover      | 2             | Discoverable mode.<br/>0: Not discoverable<br/>1: Discoverable by both limited and general discovery procedures<br/>2: Discoverable by the general discovery procedure <br/>3: Send extended advertising data defined by the user.<br/>    The limited/general discoverable flags are defined by the user. |
+| uint8_t | connect       | 4             | Connectable mode.<br/>0: Non-connectable and non-scannable extended advertising<br/>3: Scannable extended advertising<br/>4: Connectable extended advertising |
+
+**Note:**
+
+Interval_max should be bigger than interval_min.
+
+Maximum 191 bytes of data can be set for connectable extended advertising.
+
+Maximum 1024 bytes of data can be set for unconnectable extended advertising.
+
+When Extended advertising packet is more than 254 bytes and short advertising interval you set, it will cause lose packet problem. Here's recommend advertising interval of no less than 200ms.
+
+
+
+#### start_periodic_adv
+
+```shell
+bletool >> start_periodic_adv 0
+{ "code": 0, "adv_handle": 0 }
+```
+
+**Description**：Set the advertising parameters and start advertising act as BLE slave.
+
+**Parameters**:
+
+| Type    | Name          | Default Value | Description                                                  |
+| ------- | ------------- | ------------- | ------------------------------------------------------------ |
+| uint8_t | adv_handle    | -             | Advertising set handle. It be created by [create_adv_handle](#create_adv_handle). |
+| uint8_t | primary_phy   | 1             | The PHY on which the advertising packets are transmitted on the primary advertising channel.<br/>1: LE 1M PHY, 4: LE Coded PHY(125k, S=8) |
+| uint8_t | secondary_phy | 1             | The PHY on which the advertising packets are transmitted on the secondary advertising channel.            1: LE 1M PHY, 2: LE 2M PHY, 4: LE Coded PHY(125k, S=8) |
+| int32_t | interval_min  | 80(100ms)     | Minimum periodic advertising interval. Value in units of 1.25 ms <br/>Range: 0x06 to 0xFFFF, Time range: 7.5 ms to 81.92 s |
+| int32_t | interval_max  | 160(200ms)    | Maximum periodic advertising interval. Value in units of 1.25 ms<br/>Range: 0x06 to 0xFFFF, Time range: 7.5 ms to 81.92 s |
+
+**Note:**
+
+Interval_max should be bigger than interval_min.
+
+The Periodic advertising interval you set should be smaller than synchronize timeout. If not, it will breaks the established synchronization.
+
+
+
+#### stop_adv
+
+```shell
+bletool >> stop_adv 0
 { "code": 0 }
 ```
 
 **Description**：Stop advertising.
+
+**Parameters**:
+
+| Type    | Name       | Default Value | Description                                                  |
+| ------- | ---------- | ------------- | ------------------------------------------------------------ |
+| uint8_t | adv_handle | -             | Advertising set handle. It be created by [create_adv_handle](#create_adv_handle).<br/>You can view the currently created adv_handle by [show_adv_handle_list](#show_adv_handle_list). |
 
 
 
@@ -229,10 +394,183 @@ bletool >> send_notify 56:38:ac:a7:5f:96 16 010203
 
 
 
+#### set_gattdb
+
+```shell
+bletool >> set_gattdb gl_gattdb_cfg
+It will take a while, please waiting...
+{ "code": 0 }
+```
+
+**Description**：Set the local Gatt database dynamically. 
+
+**Parameters**:
+
+| Type   | Name          | Default Value | Description        |
+| ------ | ------------- | ------------- | ------------------ |
+| string | uci_file_name | _             | The uci file name. |
+
+**uci file parameter**
+
+```
+This file is a configuration file for the local GATT database, here will describes the structure of this UCI file.
+
+Firstly, there will be a section called 'gattdb'. This section has an option item which key is service_num to identify how many services need to config. At the same time, determine how many list items which key is service for this section based on the service_num. Each list item identifies a service.
+	-> option service_num: identifies how many services this local GATT database contains
+	-> list service: service name(The service name in the list item can not be same)
+	-> list service: service name(The service name in the list item can not be same)
+	
+Secondly, config a section named by list service item name in section called 'gattdb'. If there are more than one, config more than one. This section have four options, three of these are parameters that set the service, and the remaining one identifies how many characteristics the service contains. At the same time, determine how many list items which key is characteristic for this section based on the characteristic_num. Each list item identifies a characteristic.
+	-> option property: 
+						0: The service should not be advertised
+						1: The service should be advertised
+	-> option uuid_len:
+						2:  16 bits uuid by SIG
+						4:  32 bits uuid by SIG
+						16: 128 bits uuid by custom generate
+	-> option uuid: service uuid
+	-> option characteristic_num: identifies how many characteristics this service contains
+	-> list characteristic: characteristic name(The characteristic name in the list item can not be same) 
+	-> list characteristic: characteristic name(The characteristic name in the list item can not be same) 
+
+Thirdly, config a section named by the list characteristic item name in section which config in second step. If there are more than one, config more than one. This section have nine options, eight of these are parameters that set the characteristic, and the remaining one identifies how many descriptor the characteristic contains. At the same time, determine how many list items which key is descriptor for this section based on the descriptor_num. Each list item identifies a descriptor.
+	-> option property: A Characteristic Extended Properties descriptor is automatically added if the reliable write property is set.
+						2:  GATTDB_CHARACTERISTIC_READ
+						4:  GATTDB_CHARACTERISTIC_WRITE_NO_RESPONSE
+						8:  GATTDB_CHARACTERISTIC_WRITE
+						16: GATTDB_CHARACTERISTIC_NOTIFY
+						32: GATTDB_CHARACTERISTIC_INDICATE
+						128:GATTDB_CHARACTERISTIC_EXTENDED_PROPS
+						257:GATTDB_CHARACTERISTIC_RELIABLE_WRITE
+	-> option flag:
+					0: Automatically create a Client Characteristic Configuration descriptor
+   		  		       when adding a characteristic that has the notify or indicate property.
+					1: Do not automatically create a Client Characteristic Configuration descriptor 
+  					   when adding a characteristic that has the notify or indicate property.
+	-> option uuid_len:
+						2:  16 bits uuid by SIG
+						16: 128 bits uuid by custom generate
+	-> option uuid: Characteristic uuid
+	-> option value_type:
+						  1: fixed_length_value
+						  2: variable_length_value
+						  3: user_managed_value
+	-> option maxlen: The maximum length of the characteristic value. Ignored if value_type is user_managed_value.
+	-> option value_len: At most 240 bytes when uuid_len is 2 bytes, At most 226 bytes when uuid_len is 16 bytes				
+	-> option value: it should be hex format
+	-> option descriptor_num: identifies how many descriptor this characteristics contains
+	-> list descriptor: descriptor name(The descriptor name in the list item can not be same) 
+
+	-> list descriptor: descriptor name(The descriptor name in the list item can not be same)
+
+Finally, config a section named by the list descriptor item name in section which config in third step. If there are more than one, config more than one. This section have seven options, these are parameters that set the descriptor.
+	-> option property: 
+						1:   GATTDB_DESCRIPTOR_READ
+						2:   GATTDB_DESCRIPTOR_WRITE
+						512: GATTDB_DESCRIPTOR_LOCAL_ONLY
+	-> option uuid_len:
+						2:  16 bits uuid by SIG
+						16: 128 bits uuid by custom generate
+	-> option uuid: descriptor uuid
+	-> option value_type:
+						  1: fixed_length_value
+						  2: variable_length_value
+						  3: user_managed_value
+	-> option maxlen: The maximum length of the descriptor value. Ignored if value_type is user_managed_value, or if this is a Client Characteristic Configuration descriptor.
+	-> option value_len: At most 241 bytes when uuid_len is 2 bytes, At most 227 bytes when uuid_len is 16 bytes
+	-> option value: it should be hex format
+
+```
+
+```shell
+# The template of uci file
+config gatt_database 'gattdb'
+	option    service_num               2
+	list      service                   'service1'
+	list      service                   'service2'
+
+#----------------------------------------------------------------------------------------------------------------
+config service 'service1'
+	option    property			     0    
+	option    uuid_len				 2
+	option    uuid					 '180a'			          
+	option    characteristic_num     1
+	list      characteristic         'service1_char1'
+
+config characteristic 'service1_char1'
+	option	  property				 34
+	option	  flag					 0
+	option	  uuid_len				 16
+	option    uuid					 '0D77CC114AC149F2BFA9CD96AC7A92F8'	
+	option 	  value_type			 1 
+	option    maxlen				 5
+	option    value_len				 5
+	option    value 				 '342E322E30'  #"4.2.0"
+	option    descriptor_num     	 0
+
+#----------------------------------------------------------------------------------------------------------------
+config service 'service2'
+	option    property			     1    
+	option    uuid_len				 2
+	option    uuid					 '1800'	
+	option    characteristic_num     2
+	list      characteristic         'service2_char1'
+	list      characteristic         'service2_char2'
+
+config characteristic 'service2_char1'
+	option	  property				 2
+	option	  flag					 1
+	option	  uuid_len				 2
+	option    uuid					 '2A00'	
+	option 	  value_type			 1 
+	option    maxlen				 6
+	option    value_len				 6
+	option    value 				 '474C5F424C45' #"GL_BLE"
+	option    descriptor_num     	 1
+	list      descriptor   		 'service2_char1_descriptor1'
+
+config descriptor 'service2_char1_descriptor1'
+	option    property               1
+	option	  uuid_len				 2
+	option    uuid					 '2902'	
+	option 	  value_type		     1
+	option    maxlen				 2
+	option    value_len				 2
+	option    value 				 '3030'
+
+config characteristic 'service2_char2'
+	option	  property				 10
+	option	  flag					 1
+	option	  uuid_len				 2
+	option    uuid					 '2A80'	
+	option 	  value_type			 1 
+	option    maxlen				 2
+	option    value_len				 2
+	option    value 				 '3132' #"12"
+	option    descriptor_num     	 0
+```
+
+**Note:** Please config UCI file(like /etc/config/gl_gattdb_cfg) before execute this command. It will remove default static gatt database first before set new gatt database. **When you exit bletool, it will recovery to the default static gatt database.**
+
+
+
 #### discovery
 
 ```shell
-bletool >> discovery 
+# Default parameters, not specify MAC address
+bletool >> discovery
+{ "code": 0 }
+
+# Default parameters, specify MAC address
+bletool >> discovery 72:64:21:10:00:ba
+{ "code": 0 }
+
+# Customize parameters, not specify MAC address
+bletool >> discovery 1 16 16 0 2
+{ "code": 0 }
+
+# Customize parameters, specify MAC address
+bletool >> discovery 1 160 160 0 2 72:64:21:10:00:ba
 { "code": 0 }
 ```
 
@@ -240,30 +578,14 @@ bletool >> discovery
 
 **Parameters**:
 
-| Type    | Name     | Default Value | Description               |
-| ------- | -------- | ------------- | ------------------------- |
-| int32_t | phys     | 1             | The scanning PHY.         |
-| int32_t | interval | 16 (10ms)     | Scan interval.            |
-| int32_t | window   | 16 (10ms)     | Scan window.              |
-| int32_t | type     | 0             | Scan type.                |
-| int32_t | mode     | 1             | Bluetooth discovery Mode. |
-
-**phys**:
-
-- 1: LE 1M PHY
-
-- 4:(not support now) LE Coded PHY
-
-**type**:
-
-- 0: Passive scanning
-- 1: Active scanning
-
-**mode**:
-
-- 0: Discover only limited discoverable devices
-- 1: Discover limited and generic discoverable devices
-- 2: Discover all devices
+| Type    | Name     | Default Value | Description                                                  |
+| ------- | -------- | ------------- | ------------------------------------------------------------ |
+| int32_t | phys     | 1             | The scanning PHY.<br/>1: LE 1M PHY<br/>4: LE Coded PHY<br/>5: Simultaneous LE 1M and Coded PHY alternatively |
+| int32_t | interval | 16 (10ms)     | Scan interval. Time = Value x 0.625 ms<br/>Range: 0x0004 to 0xFFFF, Time Range: 2.5 ms to 40.96 s |
+| int32_t | window   | 16 (10ms)     | Scan window. Time = Value x 0.625 ms<br/>Range: 0x0004 to 0xFFFF, Time Range: 2.5 ms to 40.96 s. |
+| int32_t | type     | 0             | Scan type. <br/>0: Passive scanning<br/>1: Active scanning   |
+| int32_t | mode     | 2             | Bluetooth discovery Mode.<br/>0: Discover only limited discoverable devices<br/>1: Discover limited and generic discoverable devices<br/>2: Discover all devices |
+| string  | address: |               | (**optional**)Scans the broadcast packet for the specified MAC address. Like “11:22:33:44:55:66”(**low case**). |
 
 **Note**: You can stop the current Ble scan by typing **q+Enter**.
 
@@ -273,9 +595,49 @@ bletool >> discovery
 
 ```shell
 bletool >> stop_discovery
+{ "code": 0 }
 ```
 
 **Description**：Stop discovery procedure. 
+
+
+
+#### synchronize
+
+```shell
+# Default parameters
+bletool >> synchronize
+{ "code": 0 }
+
+# Customize parameters 
+bletool >> synchronize 0 100 94:de:b8:f1:23:f4 0 0
+{ "code": 0 }
+```
+
+**Description**：Set and start the BLE synchronize.
+
+**Parameters**:
+
+| Type    | Name         | Default Value | Description                                                  |
+| ------- | ------------ | ------------- | ------------------------------------------------------------ |
+| int32_t | skip         | 0             | The maximum number of periodic advertising packets that can be skipped after a successful receive. Range: 0x0000 to 0x01F3. |
+| int32_t | timeout      | 100(1000ms)   | The maximum permitted time between successful receives. If this time is exceeded, synchronization is lost. Unit: 10 ms.<br/>Range: 0x0A to 0x4000, Time Range: 100 ms to 163.84 s. |
+| string  | address      | NULL          | Address of the device to synchronize to. Like “11:22:33:44:55:66”(**low case**). |
+| int32_t | address_type | NULL          | Address type of the device to connect to.<br/>0: public address<br/>1: random address |
+| int32_t | adv_sid      | NULL          | Advertising set identifiers. You can get adv_sid in GAP_CB_MSG, check more in CB_MSG->GAP_CB_MSG->[scan_result](#scan_result). |
+
+**Note:**  **It will automationaly start ble scan on the simultaneous LE 1M and Coded PHY alternatively.** And stop ble scan when established synchronization. If you don't need to customize the parameters, you can use the default parameters. It automatically synchronizes the first periodic broadcast package scanned into the environment.
+
+
+
+#### stop_synchronize
+
+```shell
+bletool >> stop_synchronize 
+{ "code": 0 }
+```
+
+**Description**：Stop synchronizeprocedure. 
 
 
 
@@ -290,26 +652,13 @@ bletool >> connect 1 1 73:8c:01:1d:3f:b0
 
 **Parameters:**
 
-| Type    | Name         | Default Value | Description                |
-| ------- | ------------ | ------------- | -------------------------- |
-| int32_t | phy          | _             | The initiating PHY.        |
-| int32_t | address_type | -             | Advertiser address type.   |
-| string  | address      | -             | Remote BLE device address. |
+| Type    | Name         | Default Value | Description                                                  |
+| ------- | ------------ | ------------- | ------------------------------------------------------------ |
+| int32_t | phy          | _             | The initiating PHY.<br/>1: LE 1M PHY<br/>4: LE Coded PHY     |
+| int32_t | address_type | -             | Advertiser address type.<br/>0: Public device address<br/>1: Static device address <br/>2: Resolvable private random address <br/>3: Non-resolvable private random address |
+| string  | address      | -             | Remote BLE device address.(**low case**)                     |
 
-**phys**:
-
-- 1: LE 1M PHY
-
-- 4:(not support now) LE Coded PHY
-
-**address_type**:
-
-- 0: Public address
-- 1: Random address
-- 2: Public identity address resolved by stack
-- 3: Random identity address resolved by stack
-
-**Note**: If connect success, it will report a **connect_open** message, check more in CB_MSG->GAP_CB_MSG->connect_open.
+**Note**: If connect success, it will report a **connect_open** message, check more in CB_MSG->GAP_CB_MSG->[connect_open](#connect_open).
 
 
 
@@ -324,11 +673,11 @@ bletool >> disconnect 73:8c:01:1d:3f:b0
 
 **Parameters**:
 
-| Type   | Name    | Default Value | Description                          |
-| ------ | ------- | ------------- | ------------------------------------ |
-| string | address | -             | The MAC address of the remote device |
+| Type   | Name    | Default Value | Description                                        |
+| ------ | ------- | ------------- | -------------------------------------------------- |
+| string | address | -             | The MAC address of the remote device(**low case**) |
 
-**Note**: If success, it will report a **connect_close** message, check more in CB_MSG->GAP_CB_MSG->connect_close.
+**Note**: If success, it will report a **connect_close** message, check more in CB_MSG->GAP_CB_MSG->[connect_close](#connect_close).
 
 
 
@@ -360,9 +709,9 @@ bletool >> get_service 73:8c:01:1d:3f:b0
 
 **Parameters**:
 
-| Type   | Name    | Default Value | Description                          |
-| ------ | ------- | ------------- | ------------------------------------ |
-| string | address | -             | The MAC address of the remote device |
+| Type   | Name    | Default Value | Description                                        |
+| ------ | ------- | ------------- | -------------------------------------------------- |
+| string | address | -             | The MAC address of the remote device(**low case**) |
 
 
 
@@ -377,10 +726,10 @@ bletool >> get_char 73:8c:01:1d:3f:b0 65539
 
 **Parameters**:
 
-| Type    | Name           | Default Value | Description                          |
-| ------- | -------------- | ------------- | ------------------------------------ |
-| string  | address        | -             | The MAC address of the remote device |
-| int32_t | service_handle | -             | Service handle                       |
+| Type    | Name           | Default Value | Description                                        |
+| ------- | -------------- | ------------- | -------------------------------------------------- |
+| string  | address        | -             | The MAC address of the remote device(**low case**) |
+| int32_t | service_handle | -             | Service handle                                     |
 
 
 
@@ -395,17 +744,11 @@ bletool >> set_notify 73:8c:01:1d:3f:b0 61 1
 
 **Parameters**:
 
-| Type    | Name        | Default Value | Description                          |
-| ------- | ----------- | ------------- | ------------------------------------ |
-| string  | address     | -             | The MAC address of the remote device |
-| int32_t | char_handle | -             | Characteristic handle                |
-| int32_t | flag        | -             | Notification flag.                   |
-
-**flag**:
-
-- 0: disable
-- 1: notification
-- 2: indication
+| Type    | Name        | Default Value | Description                                                  |
+| ------- | ----------- | ------------- | ------------------------------------------------------------ |
+| string  | address     | -             | The MAC address of the remote device(**low case**)           |
+| int32_t | char_handle | -             | Characteristic handle                                        |
+| int32_t | flag        | -             | Notification flag.<br/>0: disable<br/>1: notification<br/>2: indication |
 
 
 
@@ -420,12 +763,12 @@ bletool >> read_value 73:8c:01:1d:3f:b0 61
 
 **Parameters**:
 
-| Type    | Name        | Default Value | Description                          |
-| ------- | ----------- | ------------- | ------------------------------------ |
-| string  | address     | -             | The MAC address of the remote device |
-| int32_t | char_handle | -             | Characteristic handle                |
+| Type    | Name        | Default Value | Description                                        |
+| ------- | ----------- | ------------- | -------------------------------------------------- |
+| string  | address     | -             | The MAC address of the remote device(**low case**) |
+| int32_t | char_handle | -             | Characteristic handle                              |
 
-**Note**: If success, it will report a **remote_characteristic_value** message, check more in CB_MSG->GATT_CB_MSG->remote_characteristic_value.
+**Note**: If success, it will report a **remote_characteristic_value** message, check more in CB_MSG->GATT_CB_MSG->[remote_characteristic_value](#remote_characteristic_value).
 
 
 
@@ -440,18 +783,18 @@ bletool >> write_value 73:8c:01:1d:3f:b0 67 0 0102
 
 **Parameters**:
 
-| Type    | Name        | Default Value | Description                          |
-| ------- | ----------- | ------------- | ------------------------------------ |
-| string  | address     | _             | The MAC address of the remote device |
-| int32_t | char_handle | _             | Characteristic handle                |
-| int32_t | res         | _             | Response flag                        |
-| string  | value       | _             | Value to be written                  |
+| Type    | Name        | Default Value | Description                                                 |
+| ------- | ----------- | ------------- | ----------------------------------------------------------- |
+| string  | address     | _             | The MAC address of the remote device(**low case**)          |
+| int32_t | char_handle | _             | Characteristic handle                                       |
+| int32_t | res         | _             | Response flag<br/>0: without response <br/>1: with response |
+| string  | value       | _             | Value to be written(hex)                                    |
 
 
 
-#### test
+#### uart_test
 
-**Description**：Empty function, users can add their own code in this source code to do the test.
+**Description**：Test the stability of serial communication.
 
 
 
@@ -466,17 +809,29 @@ Bletool displays any data that is actively reported by ble module.
 This data is reported every time the Ble module is started.
 
 ```shell
-MODULE_CB_MSG >> { "type": "module_start", "major": 2, "minor": 13, "patch": 10, "build": 423, "bootloader": 17367041, "hw": 1, "ble_hash": "61965a4d" }
+MODULE_CB_MSG >> { "type": "module_start", "major": 4, "minor": 2, "patch": 0, "build": 321, "bootloader": 0, "hw": 257, "ble_hash": "1b0e33cd" }
 ```
 
 #### GAP_CB_MSG
 
-##### scan_result
+##### <span id="scan_result">scan_result</span>
 
-This data is reported when scanning ble broadcast.
+This data is reported when scanning ble Legacy broadcast.
 
 ```shell
 GAP_CB_MSG >> { "type": "scan_result", "mac": "6c:56:69:93:db:3c", "address_type": 1, "rssi": -54, "packet_type": 0, "bonding": 255, "data": "02011a020a070bff4c0010060d1abc419e9c" }
+```
+
+This data is reported when scanning ble Extended broadcast.
+
+```shell
+GAP_CB_MSG >> { "type": "extended_adv_result", "mac": "94:de:b8:f1:23:f4", "address_type": 0, "rssi": -25, "event_flags": 0, "bonding": 255, "data": "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890" }
+```
+
+This data is reported when scanning ble Periodic broadcast.
+
+```shell
+GAP_CB_MSG >> { "type": "periodic_adv_result", "mac": "94:de:b8:f1:23:f4", "address_type": 0, "rssi": -22, "adv_sid": 0, "periodic_interval": 120 }
 ```
 
 ##### connect_update
@@ -487,7 +842,7 @@ This data is reported when connection parameters update.
 GAP_CB_MSG >> { "type": "connect_update", "mac": "56:38:ac:a7:5f:96", "interval": 40, "latency": 0, "timeout": 500, "security_mode": 0, "txsize": 27 }
 ```
 
-##### connect_open
+##### <span id="connect_open">connect_open</span>
 
 This data is reported when connection open.
 
@@ -495,7 +850,7 @@ This data is reported when connection open.
 bletool >> GAP_CB_MSG >> { "type": "connect_open", "mac": "56:38:ac:a7:5f:96", "address_type": 1, "connect_role": 0, "bonding": 255, "advertiser": 0 }
 ```
 
-##### connect_close
+##### <span id="connect_close">connect_close</span>
 
 This data is reported when connection close.
 
@@ -505,7 +860,7 @@ bletool >> GAP_CB_MSG >> { "type": "connect_close", "mac": "56:38:ac:a7:5f:96", 
 
 #### GATT_CB_MSG
 
-##### remote_characteristic_value
+##### <span id="remote_characteristic_value">remote_characteristic_value</span>
 
 This data is reported when get remote device characteristic value.
 
@@ -528,4 +883,3 @@ This data is reported when master setting characteristic flag, such as setting c
 ```shell
 GATT_CB_MSG >> { "type": "remote_set", "mac": "56:38:ac:a7:5f:96", "characteristic": 16, "status_flags": 1, "client_config_flags": 1 }
 ```
-

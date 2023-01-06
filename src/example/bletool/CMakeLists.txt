@@ -5,6 +5,7 @@ aux_source_directory(./ SOURCES)
 
 include_directories(./ )
 include_directories( ${PROJECT_SOURCE_DIR}/lib/include )
+include_directories( ${PROJECT_SOURCE_DIR}/bledriver/silabs )
 
 
 add_executable( ${EXEC_NAME} ${SOURCES} )

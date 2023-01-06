@@ -1,8 +1,8 @@
-/*****************************************************************************
+/*******************************************************************************
  * @file  demo_bletool.c
  * @brief CLI interface of BLE functions
  *******************************************************************************
- Copyright 2020 GL-iNet. https://www.gl-inet.com/
+ Copyright 2022 GL-iNet. https://www.gl-inet.com/
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@
 #include <signal.h>
 #include <string.h>
 
+#include "sl_bt_api.h"
+
 #include "gl_bleapi.h"
 #include "gl_errno.h"
 #include "gl_type.h"
@@ -50,7 +52,11 @@ int readLineInit(void);
 
 static bool hold_loop = true;
 static bool start_discovery = false;
+static uint8_t adv_handle[16] = {0};
+static uint8_t adv_handle_p = 0;
 
+static BLE_MAC mac_filter = {0};
+static bool mac_filter_flag = false;
 
 /* System functions */
 GL_RET cmd_enable(int argc, char **argv)
@@ -155,65 +161,170 @@ GL_RET cmd_set_power(int argc, char **argv)
 	return GL_SUCCESS;
 }
 
-/*BLE slave functions */
-GL_RET cmd_adv(int argc, char **argv)
+GL_RET cmd_adv_handle_show(int argc, char **argv)
 {
-	int phys = 1, interval_min = 160, interval_max = 160, discover = 2, adv_conn = 2;
-
-	if((argc != 1) && (argc != 6))
+	if (argc != 1)
 	{
 		printf(PARA_MISSING);
 		return GL_ERR_PARAM;
 	}
 
-	if(argc == 6)
+	json_object* o = json_object_new_object();
+	json_object* handle_list = json_object_new_array(); 
+	for(uint8_t i=0; i < adv_handle_p; ++i)
 	{
-		phys = atoi(argv[1]);
-		interval_min = atoi(argv[2]);
-		interval_max = atoi(argv[3]);
-		discover = atoi(argv[4]);
-		adv_conn = atoi(argv[5]);
+		json_object_array_add(handle_list, json_object_new_int(adv_handle[i]));
 	}
-
-	if (interval_max < interval_min)
-	{
-		interval_max = interval_min;
-	}
-
-	GL_RET ret = gl_ble_adv(phys, interval_min, interval_max, discover, adv_conn);
-
-	// json format	
-	json_object* o = NULL;
-	o = json_object_new_object();
-	json_object_object_add(o, "code", json_object_new_int(ret));
+	json_object_object_add(o, "adv_handle_list", handle_list);
 	const char *temp = json_object_to_json_string(o);
 	printf("%s\n",temp);
-
-	
 	json_object_put(o);
 
 	return GL_SUCCESS;
 }
 
-GL_RET cmd_adv_data(int argc, char **argv)
+GL_RET cmd_adv_handle_create(int argc, char **argv)
 {
-	int flag = -1;
-	char *value = NULL;
-
-	if(argc != 3)
+	if (argc != 1)
 	{
 		printf(PARA_MISSING);
 		return GL_ERR_PARAM;
 	}
-	flag = atoi(argv[1]);
-	value = argv[2];
+	// json format	
+	json_object* o = json_object_new_object();
+	json_object* handle_list = json_object_new_array(); 
+	
+	const char *temp;
 
-	if (flag < 0 || !value) {
+	GL_RET ret = gl_ble_create_adv_handle(&adv_handle[adv_handle_p]);
+	json_object_object_add(o, "code", json_object_new_int(ret));
+	if (GL_SUCCESS != ret)
+	{
+		json_object_object_add(o, "reason", json_object_new_string("create adv handle failed"));
+	}
+	else
+	{
+		json_object_object_add(o, "new_adv_handle", json_object_new_int(adv_handle[adv_handle_p++]));
+
+		for(uint8_t i=0; i < adv_handle_p; ++i)
+		{
+			json_object_array_add(handle_list, json_object_new_int(adv_handle[i]));
+		}
+
+		json_object_object_add(o, "adv_handle_list", handle_list);
+	}
+	temp = json_object_to_json_string(o);
+	printf("%s\n",temp);
+	json_object_put(o);
+
+	return GL_SUCCESS;
+}
+
+GL_RET cmd_adv_handle_delete(int argc, char **argv)
+{
+	bool handle_exist = false;
+	uint8_t handle = 0xff;
+	uint8_t i = 0;
+	if (argc != 2)
+	{
 		printf(PARA_MISSING);
-		return GL_ERR_PARAM_MISSING;
+		return GL_ERR_PARAM;
+	}
+	handle = atoi(argv[1]);
+	for (; i < adv_handle_p; ++i)
+	{
+		if(handle == adv_handle[i])
+		{
+			handle_exist = true;
+			break;
+		}
 	}
 
-	GL_RET ret = gl_ble_adv_data(flag, value);
+	// json format	
+	json_object* o = json_object_new_object();
+	json_object* handle_list = json_object_new_array();
+
+	const char *temp;
+	GL_RET ret = GL_UNKNOW_ERR;
+
+	if(handle_exist)
+	{
+		ret = gl_ble_delete_adv_handle(handle);
+		json_object_object_add(o, "code", json_object_new_int(ret));
+		if (GL_SUCCESS != ret)
+		{
+			json_object_object_add(o, "reason", json_object_new_string("delete adv handle failed"));
+		}
+		else
+		{
+			--adv_handle_p;
+			for (; i < adv_handle_p; ++i)
+			{
+				adv_handle[i] = adv_handle[i + 1];
+			}
+		}
+		
+	}
+	else
+	{
+		json_object_object_add(o, "code", json_object_new_int(ret));
+		json_object_object_add(o, "reason", json_object_new_string("adv handle is not exist"));
+	}
+
+	for(i = 0; i < adv_handle_p; ++i)
+	{
+		json_object_array_add(handle_list, json_object_new_int(adv_handle[i]));
+	}
+	json_object_object_add(o, "adv_handle_list", handle_list);
+
+	temp = json_object_to_json_string(o);
+	printf("%s\n",temp);
+	json_object_put(o);
+	return GL_SUCCESS;
+}
+
+GL_RET cmd_set_legacy_adv_data(int argc, char **argv)
+{
+	// init adv data param
+	uint8_t legacy_adv_handle;
+	uint8_t flag;
+	char *adv_data = NULL;
+	json_object *file_o = NULL;
+
+	if (argc != 2)
+	{
+		goto exit;
+	}
+
+	file_o = json_object_from_file(argv[1]);
+	if(file_o == NULL)
+	{
+		goto exit;
+	}
+
+	json_object *legacy_adv_handle_o = json_object_object_get(file_o, "adv_handle");
+	if(legacy_adv_handle_o == NULL)
+	{
+		goto exit;
+	}
+	legacy_adv_handle = json_object_get_int(legacy_adv_handle_o);
+
+	json_object *flag_o = json_object_object_get(file_o, "flag");
+	if(flag_o == NULL)
+	{
+		goto exit;
+	}
+	flag = json_object_get_int(flag_o);
+
+	json_object *legacy_adv_data_o = json_object_object_get(file_o, "legacy_adv_data");
+	if(legacy_adv_data_o == NULL)
+	{
+		goto exit;
+	}
+	adv_data = json_object_get_string(legacy_adv_data_o);
+	json_object_put(file_o);
+
+	GL_RET ret = gl_ble_set_legacy_adv_data(legacy_adv_handle, flag, adv_data);
 
 	// json format
 	json_object* o = NULL;
@@ -222,14 +333,289 @@ GL_RET cmd_adv_data(int argc, char **argv)
 	const char *temp = json_object_to_json_string(o);
 	printf("%s\n",temp);	
 	
+	json_object_put(o);
+	return GL_SUCCESS;
+
+exit:
+	if(file_o != NULL)
+	{
+		json_object_put(file_o);
+	}
+	printf(PARA_ERROR);
+	return GL_ERR_PARAM;
+}
+
+GL_RET cmd_set_extended_adv_data(int argc, char **argv)
+{
+	uint8_t extended_adv_handle;
+	char *adv_data = NULL;
+	json_object *file_o = NULL;
+
+	if (argc != 2)
+	{
+		goto exit;
+	}
+
+	file_o = json_object_from_file(argv[1]);
+	if(file_o == NULL)
+	{
+		goto exit;
+	}
+
+	json_object *extended_adv_handle_o = json_object_object_get(file_o, "adv_handle");
+	if(extended_adv_handle_o == NULL)
+	{
+		goto exit;
+	}
+	extended_adv_handle = json_object_get_int(extended_adv_handle_o);
+
+	json_object *extended_adv_data_o = json_object_object_get(file_o, "extended_adv_data");
+	if(extended_adv_data_o == NULL)
+	{
+		goto exit;
+	}
+	adv_data = json_object_get_string(extended_adv_data_o);
+	json_object_put(file_o);
+
+	GL_RET ret = gl_ble_set_extended_adv_data(extended_adv_handle, adv_data);
+
+	// json format
+	json_object* o = NULL;
+	o = json_object_new_object();
+	json_object_object_add(o, "code", json_object_new_int(ret));
+	const char *temp = json_object_to_json_string(o);
+	printf("%s\n",temp);	
 	
 	json_object_put(o);
 	return GL_SUCCESS;
+
+exit:
+	if(file_o != NULL)
+	{
+		json_object_put(file_o);
+	}
+	printf(PARA_ERROR);
+	return GL_ERR_PARAM;
 }
+
+GL_RET cmd_set_periodic_adv_data(int argc, char **argv)
+{
+	uint8_t periodic_adv_handle;
+	char *adv_data = NULL;
+	json_object *file_o = NULL;
+
+	if (argc != 2)
+	{
+		goto exit;
+	}
+
+	file_o = json_object_from_file(argv[1]);
+	if(file_o == NULL)
+	{
+		goto exit;
+	}
+
+	json_object *periodic_adv_handle_o = json_object_object_get(file_o, "adv_handle");
+	if(periodic_adv_handle_o == NULL)
+	{
+		goto exit;
+	}
+	periodic_adv_handle = json_object_get_int(periodic_adv_handle_o);
+
+	json_object *periodic_adv_data_o = json_object_object_get(file_o, "periodic_adv_data");
+	if(periodic_adv_data_o == NULL)
+	{
+		goto exit;
+	}
+	adv_data = json_object_get_string(periodic_adv_data_o);
+	json_object_put(file_o);
+
+	GL_RET ret = gl_ble_set_periodic_adv_data(periodic_adv_handle, adv_data);
+
+	// json format
+	json_object* o = NULL;
+	o = json_object_new_object();
+	json_object_object_add(o, "code", json_object_new_int(ret));
+	const char *temp = json_object_to_json_string(o);
+	printf("%s\n",temp);	
+	
+	json_object_put(o);
+	return GL_SUCCESS;
+
+exit:
+	if(file_o != NULL)
+	{
+		json_object_put(file_o);
+	}
+	printf(PARA_ERROR);
+	return GL_ERR_PARAM;
+}
+
+GL_RET cmd_legacy_adv_start(int argc, char **argv)
+{
+	// init adv param
+	uint8_t legacy_adv_handle;
+    uint32_t interval_min = 160;
+    uint32_t interval_max = 160;
+    uint8_t discover = 2;
+    uint8_t connect = 2;
+
+	if((argc != 2) && (argc != 6))
+	{
+		printf(PARA_MISSING);
+		return GL_ERR_PARAM;
+	}
+
+	if(argc >= 2)
+	{
+		legacy_adv_handle = atoi(argv[1]);
+	}
+
+	if(argc == 6)
+	{
+		interval_min = atoi(argv[2]);
+		interval_max = atoi(argv[3]);
+		discover = atoi(argv[4]);
+		connect = atoi(argv[5]);
+	}
+
+	if (interval_max < interval_min)
+	{
+		interval_max = interval_min;
+	}
+
+	// json format	
+	json_object* o = NULL;
+	o = json_object_new_object();
+	const char *temp;
+	
+	GL_RET ret = gl_ble_start_legacy_adv(legacy_adv_handle, interval_min, interval_max, discover, connect);
+	json_object_object_add(o, "code", json_object_new_int(ret));
+	if (GL_SUCCESS == ret)
+	{
+		json_object_object_add(o, "adv_handle", json_object_new_int(legacy_adv_handle));
+	}
+	temp = json_object_to_json_string(o);
+	printf("%s\n",temp);
+	json_object_put(o);
+	
+	return GL_SUCCESS;
+}
+
+GL_RET cmd_extended_adv_start(int argc, char **argv)
+{
+	// init adv param
+	uint8_t extended_adv_handle;
+    uint8_t primary_phy = 1;
+    uint8_t secondary_phy = 1;
+    uint32_t interval_min = 320;
+    uint32_t interval_max = 320;
+    uint8_t discover = 2;
+    uint8_t connect = 4;
+
+	if((argc != 2) && (argc != 8))
+	{
+		printf(PARA_MISSING);
+		return GL_ERR_PARAM;
+	}
+
+	if(argc >= 2)
+	{
+		extended_adv_handle= atoi(argv[1]);
+	}
+	if(argc == 8)
+	{
+		primary_phy = atoi(argv[2]);
+		secondary_phy = atoi(argv[3]);
+		interval_min = atoi(argv[4]);
+		interval_max = atoi(argv[5]);
+		discover = atoi(argv[6]);
+		connect = atoi(argv[7]);
+	}
+
+	if (interval_max < interval_min)
+	{
+		interval_max = interval_min;
+	}
+
+	// json format	
+	json_object* o = NULL;
+	o = json_object_new_object();
+	const char *temp;
+	
+	GL_RET ret = gl_ble_start_extended_adv(extended_adv_handle, primary_phy, secondary_phy, interval_min, interval_max, discover, connect);
+	json_object_object_add(o, "code", json_object_new_int(ret));
+	if (GL_SUCCESS == ret)
+	{
+		json_object_object_add(o, "adv_handle", json_object_new_int(extended_adv_handle));
+	}
+	temp = json_object_to_json_string(o);
+	printf("%s\n",temp);
+	json_object_put(o);
+	
+	return GL_SUCCESS;
+}
+
+GL_RET cmd_periodic_adv_start(int argc, char **argv)
+{	
+	// init adv param
+	uint8_t periodic_adv_handle;
+    uint8_t primary_phy = 1;
+    uint8_t secondary_phy = 1;
+    uint16_t interval_min = 80;
+    uint16_t interval_max = 160;
+
+	if((argc != 2) && (argc != 6))
+	{
+		printf(PARA_MISSING);
+		return GL_ERR_PARAM;
+	}
+
+	if(argc >= 2)
+	{
+		periodic_adv_handle = atoi(argv[1]);
+	}
+	if(argc == 6)
+	{
+		primary_phy = atoi(argv[2]);
+		secondary_phy = atoi(argv[3]);
+		interval_min = atoi(argv[4]);
+		interval_max = atoi(argv[5]);
+	}
+
+	if (interval_max < interval_min)
+	{
+		interval_max = interval_min;
+	}
+
+	// json format	
+	json_object* o = NULL;
+	o = json_object_new_object();
+	const char *temp;
+	
+	GL_RET ret = gl_ble_start_periodic_adv(periodic_adv_handle, primary_phy, secondary_phy, interval_min, interval_max);
+	json_object_object_add(o, "code", json_object_new_int(ret));
+	if (GL_SUCCESS == ret)
+	{
+		json_object_object_add(o, "adv_handle", json_object_new_int(periodic_adv_handle));
+	}
+	temp = json_object_to_json_string(o);
+	printf("%s\n",temp);
+	json_object_put(o);
+	
+	return GL_SUCCESS;
+}
+
 
 GL_RET cmd_adv_stop(int argc, char **argv)
 {
-	GL_RET ret = gl_ble_stop_adv();
+	if (argc != 2)
+	{
+		printf(PARA_MISSING);
+		return GL_ERR_PARAM;
+	}
+
+	GL_RET ret = gl_ble_stop_adv(atoi(argv[1]));
 
 	json_object* o = NULL;
 	o = json_object_new_object();
@@ -265,7 +651,7 @@ GL_RET cmd_send_notify(int argc, char **argv)
 	}
 
 	uint8_t addr_len = strlen(address);
-	if (addr_len < BLE_MAC_LEN - 1 || char_handle < 0 || !value)
+	if (addr_len != (BLE_MAC_LEN - 1) || char_handle < 0 || !value)
 	{
 		printf(PARA_ERROR);
 		return GL_ERR_PARAM;
@@ -289,16 +675,55 @@ GL_RET cmd_send_notify(int argc, char **argv)
 	return GL_SUCCESS;
 }
 
-GL_RET cmd_discovery(int argc, char **argv)
+GL_RET cmd_set_gattdb(int argc, char **argv)
 {
-	int phys = 1, interval = 16, window = 16, type = 0, mode = 1;
-
-	if((argc != 1) && (argc != 6))
+	if(argc != 2)
 	{
 		printf(PARA_MISSING);
 		return GL_ERR_PARAM;
 	}
-	if(argc == 6)
+
+	printf("It will take a while, please waiting...\n");
+
+	GL_RET ret = gl_ble_set_gattdb(argv[1]);
+	// json format
+	json_object* o = NULL;
+	o = json_object_new_object();
+	json_object_object_add(o, "code", json_object_new_int(ret));
+	const char *temp=json_object_to_json_string(o);
+	printf("%s\n",temp);	
+
+	
+	json_object_put(o);
+
+	return GL_SUCCESS;
+}
+
+GL_RET cmd_discovery(int argc, char **argv)
+{
+	uint8_t phys = 1;
+	uint16_t interval = 16, window = 16;
+	uint8_t type = 0, mode = 2;
+	char *address = NULL;
+
+	if ((argc != 1) && (argc != 2) && (argc != 6) && (argc != 7))
+	{
+		printf(PARA_MISSING);
+		return GL_ERR_PARAM;
+	}
+	if (argc == 2)
+	{
+		address = argv[1];
+		if (strlen(address) != (BLE_MAC_LEN - 1))
+		{
+			printf("param err!");
+			return GL_ERR_PARAM;
+		}
+
+		str2addr(address, mac_filter);
+		mac_filter_flag = true;
+	}
+	if(argc >= 6)
 	{
 		phys = atoi(argv[1]);
 		interval = atoi(argv[2]);
@@ -306,8 +731,20 @@ GL_RET cmd_discovery(int argc, char **argv)
 		type = atoi(argv[4]);
 		mode = atoi(argv[5]);
 	}
+	if (argc == 7)
+	{
+		address = argv[6];
+		if (strlen(address) != (BLE_MAC_LEN - 1))
+		{
+			printf("param err!");
+			return GL_ERR_PARAM;
+		}
 
-	GL_RET ret = gl_ble_discovery(phys, interval, window, type, mode);
+		str2addr(address, mac_filter);
+		mac_filter_flag = true;
+	}
+
+	GL_RET ret = gl_ble_start_discovery(phys, interval, window, type, mode);
 
 	// json format
 	json_object* o = NULL;
@@ -324,9 +761,13 @@ GL_RET cmd_discovery(int argc, char **argv)
 	return GL_SUCCESS;
 }
 
-GL_RET cmd_stop(int argc, char **argv)
+GL_RET cmd_stop_discovery(int argc, char **argv)
 {
 	GL_RET ret = gl_ble_stop_discovery();
+	if(ret == GL_SUCCESS)
+	{
+		mac_filter_flag = false;
+	}
 
 	// json format
 	json_object* o = NULL;
@@ -336,6 +777,93 @@ GL_RET cmd_stop(int argc, char **argv)
 	printf("%s\n",temp);
 
 	
+	json_object_put(o);
+
+	return GL_SUCCESS;
+}
+
+static bool start_sync = false;
+static bool is_specified = false;
+static uint16_t skip = 0;
+static uint16_t timeout = 100;
+static BLE_MAC address_u8;
+static uint8_t address_type;
+static uint8_t adv_sid;
+static uint16_t sync_handle = 0xffff;
+GL_RET cmd_synchronize(int argc, char **argv)
+{
+	if((argc != 1) && (argc != 6))
+	{
+		printf(PARA_MISSING);
+		return GL_ERR_PARAM;
+	}
+	
+	if(argc == 6)
+	{
+		is_specified = true;
+		char *addr = NULL;
+		skip = atoi(argv[1]);
+		timeout = atoi(argv[2]);
+		addr = argv[3];
+		str2addr(addr, address_u8);
+		address_type = atoi(argv[4]);
+		adv_sid = atoi(argv[5]);
+	}
+
+	start_sync = true;
+
+	// start scan before sync
+	GL_RET ret = gl_ble_start_discovery(5, 16, 16, 0, 2);
+	if (ret != GL_SUCCESS)
+	{
+		start_sync = false;
+		printf("Start ble scanner error!! Err code: %d\n", ret);
+		exit(-1);
+	}
+
+	// Start synchronizing the specified address
+	if(argc == 6)
+	{
+		ret = gl_ble_start_synchronize(skip, timeout, address_u8, address_type, adv_sid, &sync_handle);
+		if (ret != GL_SUCCESS)
+		{
+			start_sync = false;
+			printf("Start ble synchronize error!! Err code: %d\n", ret);
+			exit(-1);
+		}
+		gl_ble_stop_discovery();
+	}
+	
+
+	// json format
+	json_object* o = NULL;
+	o = json_object_new_object();
+	json_object_object_add(o,"code",json_object_new_int(ret));
+	const char *temp=json_object_to_json_string(o);
+	printf("%s\n",temp);
+	
+	json_object_put(o);
+
+	return GL_SUCCESS;
+}
+
+GL_RET cmd_stop_synchronize(int argc, char **argv)
+{
+	// when not established synchronization, the ble scan still working
+	gl_ble_stop_discovery();
+
+	GL_RET ret = gl_ble_stop_synchronize(sync_handle);
+
+	start_sync = false;
+	is_specified = false;
+
+	// json format
+	json_object* o = NULL;
+	o = json_object_new_object();
+	json_object_object_add(o, "code", json_object_new_int(ret));
+	const char *temp = json_object_to_json_string(o);
+	printf("%s\n",temp);
+
 	json_object_put(o);
 
 	return GL_SUCCESS;
@@ -402,7 +930,7 @@ GL_RET cmd_disconnect(int argc, char **argv)
 	}
 
 	uint8_t addr_len = strlen(address);
-	if (addr_len < BLE_MAC_LEN - 1)
+	if (addr_len != (BLE_MAC_LEN - 1))
 	{
 		printf(PARA_ERROR);
 		return GL_ERR_PARAM;
@@ -444,7 +972,7 @@ GL_RET cmd_get_rssi(int argc, char **argv)
 	}
 
 	uint8_t addr_len = strlen(address);
-	if (addr_len != BLE_MAC_LEN - 1)
+	if (addr_len != (BLE_MAC_LEN - 1))
 	{
 		printf(PARA_ERROR);
 		return GL_ERR_PARAM;
@@ -492,7 +1020,7 @@ GL_RET cmd_get_service(int argc, char **argv)
 	}
 
 	uint8_t addr_len = strlen(address);
-	if (addr_len < BLE_MAC_LEN - 1)
+	if (addr_len != (BLE_MAC_LEN - 1))
 	{
 		printf(PARA_ERROR);
 		return GL_ERR_PARAM;
@@ -830,6 +1358,13 @@ static int ble_module_cb(gl_ble_module_event_t event, gl_ble_module_data_t *data
 			printf("MODULE_CB_MSG >> %s\n",temp);
 			
 			json_object_put(o);
+
+			if ((data->system_boot_data.major != 4) || (data->system_boot_data.minor != 2) || (data->system_boot_data.patch != 0))
+			{
+				printf("The ble module firmware version is not 4_2_0, please switch it.\n");
+				hold_loop = false;
+			}
+
 			break;
 		}
 		default:
@@ -842,23 +1377,36 @@ static int ble_module_cb(gl_ble_module_event_t event, gl_ble_module_data_t *data
 static int ble_gap_cb(gl_ble_gap_event_t event, gl_ble_gap_data_t *data)
 {
 	char address[BLE_MAC_LEN] = {0};
-	char ble_adv[MAX_ADV_DATA_LEN] = {0};
+	char ble_adv[MAX_ADV_DATA_LEN * 2 + 1] = {0};	
+
 	switch (event)
 	{
-		case GAP_BLE_SCAN_RESULT_EVT:
+		case GAP_BLE_LEGACY_SCAN_RESULT_EVT:
 		{
-			addr2str(data->scan_rst.address, address);
-			hex2str(data->scan_rst.ble_adv, data->scan_rst.ble_adv_len, ble_adv);
+			if(start_sync)
+			{
+				break;
+			}
+			if(mac_filter_flag)
+			{
+				if(0 != memcmp(data->legacy_scan_rst.address, mac_filter, 6))
+				{
+					break;
+				}
+			}
+			addr2str(data->legacy_scan_rst.address, address);
+			hex2str(data->legacy_scan_rst.ble_adv, data->legacy_scan_rst.ble_adv_len, ble_adv);
 
 			// json format
 			json_object* o = NULL;
 			o = json_object_new_object();
-			json_object_object_add(o, "type", json_object_new_string("scan_result"));
+
+			json_object_object_add(o, "type", json_object_new_string("legacy_adv_result"));
 			json_object_object_add(o, "mac", json_object_new_string(address));
-			json_object_object_add(o, "address_type", json_object_new_int(data->scan_rst.ble_addr_type));
-			json_object_object_add(o, "rssi", json_object_new_int(data->scan_rst.rssi));
-			json_object_object_add(o, "packet_type", json_object_new_int(data->scan_rst.packet_type));
-			json_object_object_add(o, "bonding", json_object_new_int(data->scan_rst.bonding));
+			json_object_object_add(o, "address_type", json_object_new_int(data->legacy_scan_rst.ble_addr_type));
+			json_object_object_add(o, "rssi", json_object_new_int(data->legacy_scan_rst.rssi));
+			json_object_object_add(o, "event_flags", json_object_new_int(data->legacy_scan_rst.event_flags));
+			json_object_object_add(o, "bonding", json_object_new_int(data->legacy_scan_rst.bonding));
 			json_object_object_add(o, "data", json_object_new_string(ble_adv));
 			const char *temp = json_object_to_json_string(o);
 			printf("GAP_CB_MSG >> %s\n",temp);
@@ -866,6 +1414,107 @@ static int ble_gap_cb(gl_ble_gap_event_t event, gl_ble_gap_data_t *data)
 			json_object_put(o);
 			break;
 		}
+
+		case GAP_BLE_EXTENDED_SCAN_RESULT_EVT:
+		{	
+			if(mac_filter_flag)
+			{
+				if(0 != memcmp(data->legacy_scan_rst.address, mac_filter, 6))
+				{
+					break;
+				}
+			}
+			addr2str(data->extended_scan_rst.address, address);
+
+			// json format
+			json_object* o = NULL;
+			o = json_object_new_object();
+
+			//periodic adv exist
+			if (data->extended_scan_rst.periodic_interval)
+			{
+				json_object_object_add(o, "type", json_object_new_string("periodic_adv_result"));
+				json_object_object_add(o, "mac", json_object_new_string(address));
+				json_object_object_add(o, "address_type", json_object_new_int(data->extended_scan_rst.ble_addr_type));
+				json_object_object_add(o, "rssi", json_object_new_int(data->extended_scan_rst.rssi));
+				json_object_object_add(o, "adv_sid", json_object_new_int(data->extended_scan_rst.adv_sid));
+				json_object_object_add(o, "periodic_interval", json_object_new_int(data->extended_scan_rst.periodic_interval));
+				const char *temp = json_object_to_json_string(o);
+				printf("GAP_CB_MSG >> %s\n",temp);
+
+				json_object_put(o);
+
+				// if no synchronization address is specified, the first periodic broadcast packet scanned synchronously
+				if(!is_specified && start_sync)
+				{
+					is_specified = true;
+					memcpy(address_u8, data->extended_scan_rst.address, DEVICE_MAC_LEN);
+					address_type = data->extended_scan_rst.ble_addr_type;
+					adv_sid = data->extended_scan_rst.adv_sid;
+					
+					GL_RET ret = gl_ble_start_synchronize(skip, timeout, address_u8, address_type, adv_sid, &sync_handle);
+					if (ret != GL_SUCCESS)
+					{
+						printf("Start ble synchronize error!! Err code: %d\n", ret);
+						exit(-1);
+					}
+
+					gl_ble_stop_discovery();
+				}
+				break;
+			}
+
+			if(start_sync)
+			{
+				break;
+			}
+
+			hex2str(data->extended_scan_rst.ble_adv, data->extended_scan_rst.ble_adv_len, ble_adv);
+
+			json_object_object_add(o, "type", json_object_new_string("extended_adv_result"));
+			json_object_object_add(o, "mac", json_object_new_string(address));
+			json_object_object_add(o, "address_type", json_object_new_int(data->extended_scan_rst.ble_addr_type));
+			json_object_object_add(o, "rssi", json_object_new_int(data->extended_scan_rst.rssi));
+			json_object_object_add(o, "event_flags", json_object_new_int(data->extended_scan_rst.event_flags));
+			json_object_object_add(o, "bonding", json_object_new_int(data->extended_scan_rst.bonding));
+			json_object_object_add(o, "data", json_object_new_string(ble_adv));
+			const char *temp = json_object_to_json_string(o);
+			printf("GAP_CB_MSG >> %s\n",temp);
+
+			json_object_put(o);
+			break;
+		}
+
+		case  GAP_BLE_SYNC_SCAN_RESULT_EVT:
+		{
+			hex2str(data->sync_scan_rst.ble_adv, data->sync_scan_rst.ble_adv_len, ble_adv);
+
+			// json format
+			json_object* o = NULL;
+			o = json_object_new_object();
+			json_object_object_add(o, "type", json_object_new_string("sync_result"));
+			json_object_object_add(o, "rssi", json_object_new_int(data->sync_scan_rst.rssi));
+			json_object_object_add(o, "data", json_object_new_string(ble_adv));
+			const char *temp = json_object_to_json_string(o);
+			printf("GAP_CB_MSG >> %s\n",temp);
+
+			json_object_put(o);
+			break;
+		}
+
+		// case GAP_BLE_SYNC_CLOSED_EVT:
+		// {
+		// 	printf("sync closed\n");
+		// 	// If the synchronous closed is not ordered, it will to restart synchronize
+		// 	int status = -1;
+		// 	if (!start_sync)
+		// 	{
+		// 		status = gl_ble_start_synchronize(skip, timeout, address_u8, address_type, adv_sid, &sync_handle);
+		// 		printf("restart sync status: %d\n", status);
+		// 	}
+				
+		// 	break;
+		// }
 
 		case GAP_BLE_UPDATE_CONN_EVT:
 		{
@@ -946,11 +1595,11 @@ GL_RET cmd_stop_current_discovery(int argc, char **argv)
 		return GL_SUCCESS;
 	}
 
-
 	GL_RET ret = gl_ble_stop_discovery();
 	if(ret == GL_SUCCESS)
 	{
 		start_discovery = false;
+		mac_filter_flag = false;
 	}else{
 		printf("gl_ble_stop_discovery error return %d\n", ret);
 		exit(0);
@@ -1028,13 +1677,23 @@ command_t command_list[] = {
 	{"set_power", cmd_set_power, "Set the tx power level"},
 	{"local_address", cmd_local_address, "Get local Bluetooth module public address"},
 	/*BLE slave functions */
-	{"adv_data", cmd_adv_data, "Set adv data"},
-	{"adv", cmd_adv, "Set and Start advertising"},
-	{"adv_stop", cmd_adv_stop, "Stop advertising"},
+	{"show_adv_handle_list", cmd_adv_handle_show, "Show adv handle list"},
+	{"create_adv_handle", cmd_adv_handle_create, "Create adv handle"},
+	{"delete_adv_handle", cmd_adv_handle_delete, "Delete adv handle"},
+	{"set_legacy_adv_data", cmd_set_legacy_adv_data, "Set legacy adv data"},
+	{"set_extended_adv_data", cmd_set_extended_adv_data, "Set extended adv data"},
+	{"set_periodic_adv_data", cmd_set_periodic_adv_data, "Set periodic adv data"},
+	{"start_legacy_adv", cmd_legacy_adv_start, "Set and Start legacy advertising"},
+	{"start_extended_adv", cmd_extended_adv_start, "Set and Start extended advertising"},
+	{"start_periodic_adv", cmd_periodic_adv_start, "Set and Start periodic advertising"},
+	{"stop_adv", cmd_adv_stop, "Stop advertising"},
 	{"send_notify", cmd_send_notify, "Send notification to remote device"},
+	{"set_gattdb", cmd_set_gattdb, "Set local gatt database"},
 	/*BLE master functions */
 	{"discovery", cmd_discovery, "Start discovery"},
-	{"stop_discovery", cmd_stop, "End current GAP procedure"},
+	{"stop_discovery", cmd_stop_discovery, "End current GAP procedure"},
+	{"synchronize", cmd_synchronize, "synchronize to periodic advertising"},
+	{"stop_synchronize", cmd_stop_synchronize, "stop synchronize to periodic advertising"},
 	{"connect", cmd_connect, "Open connection"},
 	{"disconnect", cmd_disconnect, "Close connection"},
 	{"get_rssi", cmd_get_rssi, "Get rssi of an established connection"},
@@ -1248,12 +1907,12 @@ static int hex2str(uint8_t* head, int len, char* value)
     int i = 0;
 
     // FIXME: (Sometime kernel don't mask all uart print) When wifi network up/down, it will recv a big message
-    if(len >= 256/2)    
-    {    
-        strcpy(value,"00");
-        // printf("recv a err msg! err len = %d\n",len);
-        return -1;
-    }
+    // if(len >= /*256/2*/1024)    
+    // {    
+    //     strcpy(value,"00");
+    //     // printf("recv a err msg! err len = %d\n",len);
+    //     return -1;
+    // }
     
     while (i < len) {
         sprintf(value + i * 2, "%02x", head[i]);

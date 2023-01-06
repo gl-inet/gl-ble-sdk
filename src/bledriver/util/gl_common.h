@@ -2,7 +2,7 @@
  * @file 
  * @brief 
  *******************************************************************************
- Copyright 2020 GL-iNet. https://www.gl-inet.com/
+ Copyright 2022 GL-iNet. https://www.gl-inet.com/
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #define GL_COMMON_H
 #include <stdint.h>
 #include "gl_type.h"
+#include "sl_status.h"
 
 /***********************************************************************************************//**
  *  \brief  The MAC address of uint8_t type convets to string.
@@ -60,5 +61,7 @@ int hex2str(uint8_t* head, int len, char* value);
  *  \param[in]   length  The length of the value.
  **************************************************************************************************/
 void reverse_endian(uint8_t* header, uint8_t length);
+
+sl_status_t ble_write_long_data(uint16_t len, uint8_t *adv_data);
 
 #endif

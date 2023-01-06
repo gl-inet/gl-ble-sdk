@@ -1,3 +1,18 @@
+/*****************************************************************************
+ Copyright 2022 GL-iNet. https://www.gl-inet.com/
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+ 
+ http://www.apache.org/licenses/LICENSE-2.0
+ 
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ ******************************************************************************/
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -41,7 +56,7 @@ bool is_ibeacon_packet(uint8_t *adv_data, uint8_t adv_data_len)
 
 void ibeacon_data_collect(gl_ble_gap_data_t *data)
 {
-	if(!is_ibeacon_packet(data->scan_rst.ble_adv, data->scan_rst.ble_adv_len))
+	if(!is_ibeacon_packet(data->legacy_scan_rst.ble_adv, data->legacy_scan_rst.ble_adv_len))
 	{
 		return;
 	}
@@ -85,7 +100,7 @@ char *get_ibeacon_vendor_field(char *data, uint8_t field, char *buf)
 json_object *get_ibeacon_vendor(void)
 {
 	char address[BLE_MAC_LEN] = {0};
-	char ble_adv[MAX_ADV_DATA_LEN] = {0};
+	char ble_adv[MAX_LEGACY_ADV_DATA_LEN * 2 + 1] = {0};
 	char proximity_uuid[PROXIMITY_UUID_SIZE*2 + 1] = {0};
 	char major[MAJOR_SIZE*2 + 1] = {0};
 	char minor[MINOR_SIZE*2 + 1] = {0};
@@ -94,12 +109,12 @@ json_object *get_ibeacon_vendor(void)
 
 	if(ibeacon_array->r_count != ibeacon_array->w_count)
 	{
-		addr2str(ibeacon_array->data[ibeacon_array->r_count].scan_rst.address, address);
-		hex2str(ibeacon_array->data[ibeacon_array->r_count].scan_rst.ble_adv, ibeacon_array->data[ibeacon_array->r_count].scan_rst.ble_adv_len, ble_adv);
+		addr2str(ibeacon_array->data[ibeacon_array->r_count].legacy_scan_rst.address, address);
+		hex2str(ibeacon_array->data[ibeacon_array->r_count].legacy_scan_rst.ble_adv, ibeacon_array->data[ibeacon_array->r_count].legacy_scan_rst.ble_adv_len, ble_adv);
 
 		get_ibeacon_vendor_field(ble_adv, PROXIMITY_UUID, proximity_uuid);
 		get_ibeacon_vendor_field(ble_adv, MAJOR, major);
-		get_ibeacon_vendor_field(ble_adv, MAJOR, minor);
+		get_ibeacon_vendor_field(ble_adv, MINOR, minor);
 	    get_ibeacon_vendor_field(ble_adv, MEASURED_POWER, measured_power);
 
 		str2array(&power, measured_power, strlen(measured_power) / 2);
@@ -109,10 +124,10 @@ json_object *get_ibeacon_vendor(void)
 		o = json_object_new_object();
 		json_object_object_add(o, "type", json_object_new_string("Beacon"));
 		json_object_object_add(o, "mac", json_object_new_string(address));
-		json_object_object_add(o, "address_type", json_object_new_int(ibeacon_array->data[ibeacon_array->r_count].scan_rst.ble_addr_type));
-		json_object_object_add(o, "rssi", json_object_new_int(ibeacon_array->data[ibeacon_array->r_count].scan_rst.rssi));
-		json_object_object_add(o, "packet_type", json_object_new_int(ibeacon_array->data[ibeacon_array->r_count].scan_rst.packet_type));
-		json_object_object_add(o, "bonding", json_object_new_int(ibeacon_array->data[ibeacon_array->r_count].scan_rst.bonding));
+		json_object_object_add(o, "address_type", json_object_new_int(ibeacon_array->data[ibeacon_array->r_count].legacy_scan_rst.ble_addr_type));
+		json_object_object_add(o, "rssi", json_object_new_int(ibeacon_array->data[ibeacon_array->r_count].legacy_scan_rst.rssi));
+		json_object_object_add(o, "event_flags", json_object_new_int(ibeacon_array->data[ibeacon_array->r_count].legacy_scan_rst.event_flags));
+		json_object_object_add(o, "bonding", json_object_new_int(ibeacon_array->data[ibeacon_array->r_count].legacy_scan_rst.bonding));
 
 		json_object_object_add(o, "proximity_uuid", json_object_new_string(proximity_uuid));
 		json_object_object_add(o, "major", json_object_new_string(major));

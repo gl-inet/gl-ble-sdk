@@ -2,7 +2,7 @@
  * @file  demo_bleScanner.c
  * @brief Start the BLE discovery and subscribe the BLE event
  *******************************************************************************
- Copyright 2020 GL-iNet. https://www.gl-inet.com/
+ Copyright 2022 GL-iNet. https://www.gl-inet.com/
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -33,9 +33,12 @@ static void sigal_hander(int sig);
 static int ble_gap_cb(gl_ble_gap_event_t event, gl_ble_gap_data_t *data);
 static int ble_module_cb(gl_ble_module_event_t event, gl_ble_module_data_t *data);
 static int addr2str(BLE_MAC adr, char *str);
+static int str2addr(char* str, BLE_MAC address); 
 static int hex2str(uint8_t* head, int len, char* value);
 
 static bool module_work = false;
+static BLE_MAC mac_filter = {0};
+static bool mac_filter_flag = false;
 
 int main(int argc, char *argv[])
 {
@@ -51,20 +54,50 @@ int main(int argc, char *argv[])
 	ble_cb.ble_gatt_event = NULL;
 	ble_cb.ble_module_event = ble_module_cb;
 
-	int phys = 1, interval = 16, window = 16, type = 0, mode = 1;
+	uint8_t phys = 1;
+	uint16_t interval = 16, window = 16;
+	uint8_t type = 0, mode = 2;
+	char *address = NULL;
 	// get scanner param
-	if ((argc != 1) && (argc != 6))
+	if ((argc != 1) && (argc != 2) && (argc != 6) && (argc != 7))
 	{
 		printf("param err!");
 		return GL_ERR_PARAM;
 	}
-	if (argc == 6)
+
+	if (argc == 2)
+	{
+		address = argv[1];
+		if (strlen(address) != (BLE_MAC_LEN - 1))
+		{
+			printf("param err!");
+			return GL_ERR_PARAM;
+		}
+
+		str2addr(address, mac_filter);
+		mac_filter_flag = true;
+	}
+
+	if (argc >= 6)
 	{
 		phys = atoi(argv[1]);
 		interval = atoi(argv[2]);
 		window = atoi(argv[3]);
 		type = atoi(argv[4]);
 		mode = atoi(argv[5]);
+	}
+	
+	if (argc == 7)
+	{
+		address = argv[6];
+		if (strlen(address) != (BLE_MAC_LEN - 1))
+		{
+			printf("param err!");
+			return GL_ERR_PARAM;
+		}
+
+		str2addr(address, mac_filter);
+		mac_filter_flag = true;
 	}
 
 	// init ble module
@@ -90,7 +123,7 @@ int main(int argc, char *argv[])
 	}
 
 	// start scan
-	ret = gl_ble_discovery(phys, interval, window, type, mode);
+	ret = gl_ble_start_discovery(phys, interval, window, type, mode);
 	if (ret != GL_SUCCESS)
 	{
 		printf("Start ble discovery error!! Err code: %d\n", ret);
@@ -112,17 +145,31 @@ static int addr2str(BLE_MAC adr, char *str)
 	return 0;
 }
 
+static int str2addr(char* str, BLE_MAC address) 
+{
+	int mac[6] = {0};
+    sscanf(str, "%02x:%02x:%02x:%02x:%02x:%02x", &mac[5], &mac[4], &mac[3],
+           &mac[2], &mac[1], &mac[0]);
+
+	uint8_t i = 0;
+	for(;i < 6; i++)
+	{
+		address[i] = mac[i];
+	}
+    return 0;
+}
+
 static int hex2str(uint8_t* head, int len, char* value)
 {
     int i = 0;
 
     // FIXME: (Sometime kernel don't mask all uart print) When wifi network up/down, it will recv a big message
-    if(len >= 256/2)    
-    {    
-        strcpy(value,"00");
-        // printf("recv a err msg! err len = %d\n",len);
-        return -1;
-    }
+    // if(len >= 256/2)    
+    // {    
+    //     strcpy(value,"00");
+    //     // printf("recv a err msg! err len = %d\n",len);
+    //     return -1;
+    // }
     
     while (i < len) {
         sprintf(value + i * 2, "%02x", head[i]);
@@ -134,32 +181,120 @@ static int hex2str(uint8_t* head, int len, char* value)
 static int ble_gap_cb(gl_ble_gap_event_t event, gl_ble_gap_data_t *data)
 {
 	char address[BLE_MAC_LEN] = {0};
-	char ble_adv[MAX_ADV_DATA_LEN] = {0};
+	char ble_adv[MAX_ADV_DATA_LEN * 2 + 1] = {0};
 	switch (event)
 	{
-	case GAP_BLE_SCAN_RESULT_EVT:
-	{
-		addr2str(data->scan_rst.address, address);
-		hex2str(data->scan_rst.ble_adv, data->scan_rst.ble_adv_len, ble_adv);
+		case GAP_BLE_LEGACY_SCAN_RESULT_EVT:
+		{
+			if(mac_filter_flag)
+			{
+				if(0 != memcmp(data->legacy_scan_rst.address, mac_filter, 6))
+				{
+					break;
+				}
+			}
+			addr2str(data->legacy_scan_rst.address, address);
+			hex2str(data->legacy_scan_rst.ble_adv, data->legacy_scan_rst.ble_adv_len, ble_adv);
 
-		// json format
-		json_object *o = NULL;
-		o = json_object_new_object();
-		json_object_object_add(o, "type", json_object_new_string("scan_result"));
-		json_object_object_add(o, "mac", json_object_new_string(address));
-		json_object_object_add(o, "address_type", json_object_new_int(data->scan_rst.ble_addr_type));
-		json_object_object_add(o, "rssi", json_object_new_int(data->scan_rst.rssi));
-		json_object_object_add(o, "packet_type", json_object_new_int(data->scan_rst.packet_type));
-		json_object_object_add(o, "bonding", json_object_new_int(data->scan_rst.bonding));
-		json_object_object_add(o, "data", json_object_new_string(ble_adv));
-		const char *temp = json_object_to_json_string(o);
-		printf("%s\n", temp);
+			// json format
+			json_object* o = NULL;
+			o = json_object_new_object();
 
-		json_object_put(o);
-		break;
-	}
-	default:
-		break;
+			json_object_object_add(o, "type", json_object_new_string("legacy_adv_result"));
+			json_object_object_add(o, "mac", json_object_new_string(address));
+			json_object_object_add(o, "address_type", json_object_new_int(data->legacy_scan_rst.ble_addr_type));
+			json_object_object_add(o, "rssi", json_object_new_int(data->legacy_scan_rst.rssi));
+			json_object_object_add(o, "event_flags", json_object_new_int(data->legacy_scan_rst.event_flags));
+			json_object_object_add(o, "bonding", json_object_new_int(data->legacy_scan_rst.bonding));
+			json_object_object_add(o, "data", json_object_new_string(ble_adv));
+			const char *temp = json_object_to_json_string(o);
+			printf("GAP_CB_MSG >> %s\n",temp);
+
+			json_object_put(o);
+			break;
+		}
+
+		case GAP_BLE_EXTENDED_SCAN_RESULT_EVT:
+		{	
+			if(mac_filter_flag)
+			{
+				if(0 != memcmp(data->legacy_scan_rst.address, mac_filter, 6))
+				{
+					break;
+				}
+			}
+			addr2str(data->extended_scan_rst.address, address);
+
+			// json format
+			json_object* o = NULL;
+			o = json_object_new_object();
+
+			//periodic adv exist
+			if (data->extended_scan_rst.periodic_interval)
+			{
+				json_object_object_add(o, "type", json_object_new_string("periodic_adv_result"));
+				json_object_object_add(o, "mac", json_object_new_string(address));
+				json_object_object_add(o, "address_type", json_object_new_int(data->extended_scan_rst.ble_addr_type));
+				json_object_object_add(o, "rssi", json_object_new_int(data->extended_scan_rst.rssi));
+				json_object_object_add(o, "adv_sid", json_object_new_int(data->extended_scan_rst.adv_sid));
+				json_object_object_add(o, "periodic_interval", json_object_new_int(data->extended_scan_rst.periodic_interval));
+				const char *temp = json_object_to_json_string(o);
+				printf("GAP_CB_MSG >> %s\n",temp);
+
+				json_object_put(o);
+				break;
+			}
+
+			hex2str(data->extended_scan_rst.ble_adv, data->extended_scan_rst.ble_adv_len, ble_adv);
+
+			json_object_object_add(o, "type", json_object_new_string("extended_adv_result"));
+			json_object_object_add(o, "mac", json_object_new_string(address));
+			json_object_object_add(o, "address_type", json_object_new_int(data->extended_scan_rst.ble_addr_type));
+			json_object_object_add(o, "rssi", json_object_new_int(data->extended_scan_rst.rssi));
+			json_object_object_add(o, "event_flags", json_object_new_int(data->extended_scan_rst.event_flags));
+			json_object_object_add(o, "bonding", json_object_new_int(data->extended_scan_rst.bonding));
+			json_object_object_add(o, "data", json_object_new_string(ble_adv));
+			const char *temp = json_object_to_json_string(o);
+			printf("GAP_CB_MSG >> %s\n",temp);
+
+			json_object_put(o);
+			break;
+		}
+
+		// case  GAP_BLE_SYNC_SCAN_RESULT_EVT:
+		// {
+		// 	char ble_adv[data->sync_scan_rst.ble_adv_len * 2];
+		// 	memset(ble_adv, 0, data->sync_scan_rst.ble_adv_len * 2);
+		// 	hex2str(data->sync_scan_rst.ble_adv, data->sync_scan_rst.ble_adv_len, ble_adv);
+
+		// 	// json format
+		// 	json_object* o = NULL;
+		// 	o = json_object_new_object();
+		// 	json_object_object_add(o, "type", json_object_new_string("sync_result"));
+		// 	json_object_object_add(o, "rssi", json_object_new_int(data->sync_scan_rst.rssi));
+		// 	json_object_object_add(o, "data", json_object_new_string(sync_data));
+		// 	const char *temp = json_object_to_json_string(o);
+		// 	printf("GAP_CB_MSG >> %s\n",temp);
+
+		// 	json_object_put(o);
+		// 	break;
+		// }
+
+		// case GAP_BLE_SYNC_CLOSED_EVT:
+		// {
+		// 	printf("sync closed\n");
+		// 	// If the synchronous closed is not ordered, it will to restart synchronize
+		// 	int status = -1;
+		// 	if (!is_stop_sync)
+		// 	{
+		// 		status = gl_ble_start_synchronize(&synchronize_param);
+		// 		printf("restart sync status: %d\n", status);
+		// 	}
+				
+		// 	break;
+		// }
+		default:
+			break;
 	}
 
 	return 0;
@@ -171,7 +306,7 @@ static int ble_module_cb(gl_ble_module_event_t event, gl_ble_module_data_t *data
 	{
 	case MODULE_BLE_SYSTEM_BOOT_EVT:
 	{
-		module_work = true;
+
 		json_object *o = NULL;
 		o = json_object_new_object();
 		json_object_object_add(o, "type", json_object_new_string("module_start"));
@@ -186,6 +321,16 @@ static int ble_module_cb(gl_ble_module_event_t event, gl_ble_module_data_t *data
 		printf("MODULE_CB_MSG >> %s\n", temp);
 
 		json_object_put(o);
+
+		if ((data->system_boot_data.major != 4) || (data->system_boot_data.minor != 2) || (data->system_boot_data.patch != 0))
+		{
+			printf("The ble module firmware version is not 4_2_0, please switch it.\n");
+			gl_ble_unsubscribe();
+			gl_ble_destroy();	
+			exit(0);
+		}
+		module_work = true;
+
 		break;
 	}
 	default:

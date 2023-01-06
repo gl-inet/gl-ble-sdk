@@ -1,5 +1,5 @@
 /*****************************************************************************
- Copyright 2020 GL-iNet. https://www.gl-inet.com/
+ Copyright 2022 GL-iNet. https://www.gl-inet.com/
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -18,7 +18,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+#include "sl_bt_api.h"
 #include "gl_common.h"
+#include "gl_errno.h"
 
 
 
@@ -56,12 +59,12 @@ int hex2str(uint8_t* head, int len, char* value) {
     int i = 0;
 
     // FIXME: (Sometime kernel don't mask all uart print) When wifi network up/down, it will recv a big message
-    if(len >= 256/2)    
-    {    
-        strcpy(value,"00");
-        // printf("recv a err msg! err len = %d\n",len);
-        return -1;
-    }
+    // if(len >= 256/2)    
+    // {    
+    //     strcpy(value,"00");
+    //     // printf("recv a err msg! err len = %d\n",len);
+    //     return -1;
+    // }
     
     while (i < len) {
         sprintf(value + i * 2, "%02x", head[i]);
@@ -80,4 +83,33 @@ void reverse_endian(uint8_t* header, uint8_t length) {
     }
     free(tmp);
     return;
+}
+
+sl_status_t ble_write_long_data(uint16_t len, uint8_t *adv_data)
+{
+    sl_status_t status = SL_STATUS_FAIL;
+    status = sl_bt_system_data_buffer_clear();
+    if (status != SL_STATUS_OK)
+    {
+        return GL_UNKNOW_ERR;
+    }
+
+    uint8_t i = 0;
+    uint8_t remain = len % (SL_BGAPI_MAX_PAYLOAD_SIZE - 1);
+    uint8_t write_count = len / (SL_BGAPI_MAX_PAYLOAD_SIZE - 1);
+    for (; i < write_count; ++i)
+    {
+        status = sl_bt_system_data_buffer_write(SL_BGAPI_MAX_PAYLOAD_SIZE - 1, &adv_data[i * (SL_BGAPI_MAX_PAYLOAD_SIZE - 1)]);
+        if (status != SL_STATUS_OK)
+        {
+            return GL_UNKNOW_ERR;
+        }
+    }
+    status = sl_bt_system_data_buffer_write(remain, &adv_data[write_count * (SL_BGAPI_MAX_PAYLOAD_SIZE - 1)]);
+    if (status != SL_STATUS_OK)
+    {
+        return GL_UNKNOW_ERR;
+    }
+
+    return GL_SUCCESS;
 }

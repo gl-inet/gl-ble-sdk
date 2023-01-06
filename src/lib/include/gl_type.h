@@ -1,5 +1,5 @@
 /*****************************************************************************
- Copyright 2020 GL-iNet. https://www.gl-inet.com/
+ Copyright 2022 GL-iNet. https://www.gl-inet.com/
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -32,8 +32,66 @@
 #define DEVICE_MAC_LEN              6
 #define BLE_MAC_LEN                 18
 #define MAX_VALUE_DATA_LEN          255
-#define MAX_ADV_DATA_LEN            255
+#define MAX_LEGACY_ADV_DATA_LEN     31
+#define MAX_ADV_DATA_LEN            1024
 #define MAX_HASH_DATA_LEN           255
+
+/**
+ * @brief BLE 48-bit MAC.
+ */
+typedef uint8_t BLE_MAC[DEVICE_MAC_LEN];
+
+/**
+ * @brief BLE Mac type. 
+ */
+typedef enum {
+  PUBLIC_ADDRESS = 0,
+  RANDOM_ADDRESS,
+} gl_ble_ble_mac_type_e;
+
+/**
+ * @brief gatt database service param
+ * 
+ */
+typedef struct {
+    uint8_t property;
+    size_t uuid_len;
+    uint8_t *uuid;
+    char service_name[64];
+} gl_ble_gattdb_service_param_t;
+
+/**
+ * @brief gatt database characteristic param
+ * 
+ */
+typedef struct {
+    uint16_t property;
+    uint8_t flag;
+    uint8_t uuid_len;
+    uint8_t uuid_16[2];
+    uint8_t uuid_128[16];
+    uint8_t value_type;
+    uint16_t maxlen;
+    size_t value_len;
+    uint8_t *value;
+    char char_name[64];
+} gl_ble_gattdb_char_param_t;
+
+/**
+ * @brief gatt database descriptor param
+ * 
+ */
+typedef struct {
+    uint16_t property;
+    uint8_t uuid_len;
+    uint8_t uuid_16[2];
+    uint8_t uuid_128[16];
+    uint8_t value_type;
+    uint16_t maxlen;
+    size_t value_len;
+    uint8_t *value;
+    char descriptor_name[64];
+} gl_ble_gattdb_descriptor_param_t;
 
 /**
  * @brief service node.
@@ -51,11 +109,6 @@ typedef struct {
     char uuid[UUID_MAX];
     uint8_t properties;
 } ble_characteristic_node_t;
-
-/**
- * @brief BLE 48-bit MAC.
- */
-typedef uint8_t BLE_MAC[DEVICE_MAC_LEN];
 
 /**
  * @brief service list.
@@ -102,7 +155,10 @@ typedef union {
  * @brief GAP BLE callback event type.
  */
 typedef enum {
-    GAP_BLE_SCAN_RESULT_EVT = 0,
+    GAP_BLE_LEGACY_SCAN_RESULT_EVT = 0,
+    GAP_BLE_EXTENDED_SCAN_RESULT_EVT,
+    GAP_BLE_SYNC_SCAN_RESULT_EVT,
+    GAP_BLE_SYNC_CLOSED_EVT,
     GAP_BLE_UPDATE_CONN_EVT,
     GAP_BLE_CONNECT_EVT,
     GAP_BLE_DISCONNECT_EVT,
@@ -122,14 +178,32 @@ typedef enum {
 
 typedef union {
     struct ble_scan_result_evt_data {
-        BLE_MAC address;
+        BLE_MAC  address;
         gl_ble_addr_type_t ble_addr_type; 
-        int32_t packet_type;  
-        int32_t rssi;  
-        uint8_t ble_adv_len;
-        uint8_t ble_adv[MAX_ADV_DATA_LEN];
-        int32_t bonding;
-    } scan_rst;
+        uint8_t  event_flags;
+        int8_t   rssi;  
+        uint16_t ble_adv_len;
+        uint8_t  ble_adv[MAX_LEGACY_ADV_DATA_LEN];
+        int32_t  bonding;
+    } legacy_scan_rst;
+
+    struct ble_extended_result_evt_data {
+        BLE_MAC  address;
+        gl_ble_addr_type_t ble_addr_type; 
+        uint8_t  event_flags;  
+        int8_t   rssi;  
+        uint16_t ble_adv_len;
+        uint8_t  ble_adv[MAX_ADV_DATA_LEN];
+        int32_t  bonding;
+        uint8_t  adv_sid;
+        uint16_t periodic_interval;
+    } extended_scan_rst;
+
+    struct ble_sync_result_evt_data {
+        int8_t   rssi;  
+        uint16_t ble_adv_len;
+        uint8_t  ble_adv[MAX_ADV_DATA_LEN];
+    } sync_scan_rst;
 
     struct ble_update_conn_evt_data {
         BLE_MAC address;
@@ -189,7 +263,7 @@ typedef enum {
 typedef enum {
     GATT_SERVER_CLIENT_CONFIG                                    = 0x1,
     GATT_SERVER_CONFIRMATION                                     = 0x2,
-} gl_ble_local_characteristic_status_flags_t;
+} gl_ble_local_characteristic_status_flag_t;
 
 typedef enum {
     GATT_DISABLE                                                 = 0x0,
@@ -217,7 +291,7 @@ typedef union {
     struct ble_local_characteristic_status_evt_data {
         BLE_MAC address;
         int32_t characteristic;
-        gl_ble_local_characteristic_status_flags_t status_flags;
+        gl_ble_local_characteristic_status_flag_t status_flags;
         gl_ble_gatt_client_config_flag_t client_config_flags;
     } local_characteristic_status;
 

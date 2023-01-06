@@ -34,7 +34,7 @@ add_library( ${LIB_NAME} SHARED ${SOURCES} )
 add_library( lib_static STATIC ${SOURCES} )
 SET_TARGET_PROPERTIES(lib_static PROPERTIES OUTPUT_NAME "glbleapi")
 
-target_link_libraries( ${LIB_NAME} PRIVATE pthread uci )
+target_link_libraries( ${LIB_NAME} PRIVATE pthread uci guci)
 
 install(
 	TARGETS ${LIB_NAME}

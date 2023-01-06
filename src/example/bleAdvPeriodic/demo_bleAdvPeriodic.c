@@ -1,8 +1,8 @@
 /*****************************************************************************
- * @file  bleAdvertiser.c
- * @brief Enable BLE broadcast sending function
+ * @file  demo_bleAdvPeriodic.c
+ * @brief Enable BLE Periodic broadcast sending function
  *******************************************************************************
- Copyright 2020 GL-iNet. https://www.gl-inet.com/
+ Copyright 2022 GL-iNet. https://www.gl-inet.com/
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -31,12 +31,12 @@
 
 static void sigal_hander(int sig);
 static int ble_module_cb(gl_ble_module_event_t event, gl_ble_module_data_t *data);
-static int addr2str(BLE_MAC adr, char *str);
 
 #define MAC2STR(a) (a)[5], (a)[4], (a)[3], (a)[2], (a)[1], (a)[0]
-#define MACSTR "%02X:%02X:%02X:%02X:%02X:%02X"
+#define MACSTR "%02x:%02x:%02x:%02x:%02x:%02x"
 
 static bool module_work = false;
+static uint8_t handle = 0xff;
 
 int main(int argc, char *argv[])
 {
@@ -52,33 +52,68 @@ int main(int argc, char *argv[])
 	ble_cb.ble_gatt_event = NULL;
 	ble_cb.ble_module_event = ble_module_cb;
 
-	int phys = 1, interval_min = 160, interval_max = 160, discover = 2, adv_conn = 2;
-	char *data0 = NULL;
-	char *data1 = NULL;
-	// char *data2 = NULL;
-	// char *data3 = NULL;
-	// get scanner param
-	if ((argc != 1) && (argc != 6) && (argc != 7) && (argc != 8))
+	// init adv param
+    uint8_t primary_phy = 1;
+    uint8_t secondary_phy = 1;
+    uint16_t interval_min = 80;
+    uint16_t interval_max = 160;
+	//init adv data param
+	char *data = NULL;
+
+	json_object *file_o = NULL;
+
+	if ((argc != 1)  && (argc != 2))
 	{
-		printf("param err!");
-		return GL_ERR_PARAM;
+		goto exit;
 	}
-	if (argc >= 6)
+
+	if (argc == 2)
 	{
-		phys = atoi(argv[1]);
-		interval_min = atoi(argv[2]);
-		interval_max = atoi(argv[3]);
-		discover = atoi(argv[4]);
-		adv_conn = atoi(argv[5]);
+		file_o = json_object_from_file(argv[1]);
+		if(file_o == NULL)
+		{
+			goto exit;
+		}
+
+		json_object *primary_phy_o = json_object_object_get(file_o, "primary_phy");
+		if(primary_phy_o == NULL)
+		{
+			goto exit;
+		}
+		primary_phy = json_object_get_int(primary_phy_o);
+
+		json_object *secondary_phy_o = json_object_object_get(file_o, "secondary_phy");
+		if(secondary_phy_o == NULL)
+		{
+			goto exit;
+		}
+		secondary_phy = json_object_get_int(secondary_phy_o);
+
+		json_object *interval_min_o = json_object_object_get(file_o, "interval_min");
+		if(interval_min_o == NULL)
+		{
+			goto exit;
+		}
+		interval_min = json_object_get_int(interval_min_o);
+
+		json_object *interval_max_o = json_object_object_get(file_o, "interval_max");
+		if(interval_max_o == NULL)
+		{
+			goto exit;
+		}
+		interval_max = json_object_get_int(interval_max_o);
+
+		json_object *periodic_adv_data_o = json_object_object_get(file_o, "periodic_adv_data");
+		if(periodic_adv_data_o != NULL)
+		{
+			data = json_object_get_string(periodic_adv_data_o);
+		}
+		
+		json_object_put(file_o);
 	}
-	if (argc >= 7)
-	{
-		data0 = argv[6];
-	}
-	if (argc == 8)
-	{
-		data1 = argv[7];
-	}
+	
+	
+
 
 	// init ble module
 	GL_RET ret;
@@ -102,33 +137,30 @@ int main(int argc, char *argv[])
 		usleep(100000);
 	}
 
-	// set advertising data
-	if (data0 != NULL)
+	// create adv handle
+	ret = gl_ble_create_adv_handle(&handle);
+	if (GL_SUCCESS != ret)
 	{
-		ret = gl_ble_adv_data(0, data0);
-		if (GL_SUCCESS != ret)
-		{
-			printf("gl_ble_adv_data_0 failed: %d\n", ret);
-			exit(-1);
-		}
+		printf("gl_ble_create_adv_handle failed: %d\n", ret);
+		exit(-1);
 	}
 
-	// set scan response data
-	if (data1 != NULL)
+	// set advertising data
+	if (data)
 	{
-		ret = gl_ble_adv_data(1, data1);
+		ret = gl_ble_set_periodic_adv_data(handle, data);
 		if (GL_SUCCESS != ret)
 		{
-			printf("gl_ble_adv_data_1 failed: %d\n", ret);
+			printf("gl_ble_set_periodic_adv_data failed: %d\n", ret);
 			exit(-1);
 		}
 	}
 
 	// start advertising
-	ret = gl_ble_adv(phys, interval_min, interval_max, discover, adv_conn);
+	ret = gl_ble_start_periodic_adv(handle, primary_phy, secondary_phy, interval_min, interval_max);
 	if (GL_SUCCESS != ret)
 	{
-		printf("gl_ble_adv failed: %d\n", ret);
+		printf("gl_ble_start_periodic_adv failed: %d\n", ret);
 		exit(-1);
 	}
 
@@ -148,13 +180,14 @@ int main(int argc, char *argv[])
 	}
 
 	return 0;
-}
 
-static int addr2str(BLE_MAC adr, char *str)
-{
-	sprintf(str, "%02x:%02x:%02x:%02x:%02x:%02x", adr[5], adr[4],
-			adr[3], adr[2], adr[1], adr[0]);
-	return 0;
+exit:
+	if(file_o != NULL)
+	{
+		json_object_put(file_o);
+	}
+	printf("param err!");
+	return GL_ERR_PARAM;
 }
 
 static int ble_module_cb(gl_ble_module_event_t event, gl_ble_module_data_t *data)
@@ -163,7 +196,7 @@ static int ble_module_cb(gl_ble_module_event_t event, gl_ble_module_data_t *data
 	{
 	case MODULE_BLE_SYSTEM_BOOT_EVT:
 	{
-		module_work = true;
+
 		json_object *o = NULL;
 		o = json_object_new_object();
 		json_object_object_add(o, "type", json_object_new_string("module_start"));
@@ -178,6 +211,16 @@ static int ble_module_cb(gl_ble_module_event_t event, gl_ble_module_data_t *data
 		printf("MODULE_CB_MSG >> %s\n", temp);
 
 		json_object_put(o);
+
+		if ((data->system_boot_data.major != 4) || (data->system_boot_data.minor != 2) || (data->system_boot_data.patch != 0))
+		{
+			printf("The ble module firmware version is not 4_2_0, please switch it.\n");
+			gl_ble_unsubscribe();
+			gl_ble_destroy();	
+			exit(0);
+		}
+		module_work = true;
+
 		break;
 	}
 	default:
@@ -189,9 +232,10 @@ static int ble_module_cb(gl_ble_module_event_t event, gl_ble_module_data_t *data
 
 static void sigal_hander(int sig)
 {
-	printf("\nbleAdvertising exit!\n");
+	printf("\bleAdvertiserPeriodic exit!\n");
 
-	gl_ble_stop_adv();
+	gl_ble_stop_adv(handle);
+	gl_ble_delete_adv_handle(handle);
 	gl_ble_unsubscribe();
 	gl_ble_destroy();
 

@@ -2,7 +2,7 @@
  * @file  libglbleapi.c
  * @brief Shared library for API interface
  *******************************************************************************
- Copyright 2020 GL-iNet. https://www.gl-inet.com/
+ Copyright 2022 GL-iNet. https://www.gl-inet.com/
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -41,7 +41,8 @@ gl_ble_cbs ble_msg_cb;
 void *ble_driver_thread_ctx = NULL;
 void *ble_watcher_thread_ctx = NULL;
 
-static int* msqid = NULL;
+// static int* msqid = NULL;
+static int msqid = -1;
 static driver_param_t* _driver_param = NULL;
 static watcher_param_t* _watcher_param = NULL;
 
@@ -58,17 +59,17 @@ GL_RET gl_ble_init(void)
 	_driver_param = (driver_param_t*)malloc(sizeof(driver_param_t));
 	
 	// create an event message queue if it not exist
-	if(NULL == msqid)
+	if(-1 == msqid)
 	{
-		msqid = (int*)malloc(sizeof(int));
-		*msqid = msgget(IPC_PRIVATE, 0666 | IPC_CREAT);
-		if(*msqid == -1)
+		// msqid = (int*)malloc(sizeof(int));
+		msqid = msgget(IPC_PRIVATE, 0666 | IPC_CREAT);
+		if(msqid == -1)
 		{
 			log_err("create msg queue error!!!\n");
 			return GL_UNKNOW_ERR;
 		}
 	}
-	_driver_param->evt_msgid = *msqid;
+	_driver_param->evt_msgid = msqid;
 
 	/* Init device manage */
 	ble_dev_mgr_init();
@@ -125,13 +126,13 @@ GL_RET gl_ble_destroy(void)
 	ble_dev_mgr_destroy();
 
 	// destroy evt msg queue
-	if(-1 == msgctl(*msqid, IPC_RMID, NULL))
+	if(-1 == msgctl(msqid, IPC_RMID, NULL))
 	{
 		log_err("msgctl error");
 		return GL_UNKNOW_ERR;
 	}
-	free(msqid);
-	msqid = NULL;
+	// free(msqid);
+	// msqid = NULL;
 
 	return GL_SUCCESS;
 }
@@ -152,17 +153,17 @@ GL_RET gl_ble_subscribe(gl_ble_cbs *callback)
 	_watcher_param = (watcher_param_t*)malloc(sizeof(watcher_param_t));
 
 	// create an event message queue if it not exist
-	if(NULL == msqid)
+	if(-1 == msqid)
 	{
-		msqid = (int*)malloc(sizeof(int));
-		*msqid = msgget(IPC_PRIVATE, 0666 | IPC_CREAT);
-		if(*msqid == -1)
+		// msqid = (int*)malloc(sizeof(int));
+		msqid = msgget(IPC_PRIVATE, 0666 | IPC_CREAT);
+		if(msqid == -1)
 		{
 			log_err("create msg queue error!!!\n");
 			return GL_UNKNOW_ERR;
 		}
 	}
-	_watcher_param->evt_msgid = *msqid;
+	_watcher_param->evt_msgid = msqid;
 	_watcher_param->cbs = callback;
 
     int ret;
@@ -196,7 +197,6 @@ GL_RET gl_ble_enable(int32_t enable)
 	return ble_enable(enable);
 }
 
-
 GL_RET gl_ble_hard_reset(void)
 {
 	return ble_hard_reset();
@@ -212,19 +212,51 @@ GL_RET gl_ble_set_power(int power, int *current_power)
 	return ble_set_power(power, current_power);
 }
 
-GL_RET gl_ble_adv_data(int flag, char *data)
+GL_RET gl_ble_create_adv_handle(uint8_t *handle)
 {
-	return ble_adv_data(flag, data);
+	return ble_create_adv_handle(handle);
 }
 
-GL_RET gl_ble_adv(int phys, int interval_min, int interval_max, int discover, int adv_conn)
+GL_RET gl_ble_delete_adv_handle(uint8_t handle)
 {
-	return ble_start_adv(phys, interval_min, interval_max, discover, adv_conn);
+	return ble_delete_adv_handle(handle);
 }
 
-GL_RET gl_ble_stop_adv(void)
+GL_RET gl_ble_start_legacy_adv(uint8_t handle, uint32_t interval_min, uint32_t interval_max, uint8_t discover, uint8_t connect)
 {
-	return ble_stop_adv();
+	return ble_start_legacy_adv(handle, interval_min, interval_max, discover, connect);
+}
+
+GL_RET gl_ble_start_extended_adv(uint8_t handle, uint8_t primary_phy, uint8_t secondary_phy, 
+                        uint32_t interval_min, uint32_t interval_max, uint8_t discover, uint8_t connect)
+{
+	return ble_start_extended_adv(handle, primary_phy, secondary_phy, interval_min, interval_max,
+							 discover, connect);
+}
+
+GL_RET gl_ble_start_periodic_adv(uint8_t handle, uint8_t primary_phy, uint8_t secondary_phy, uint16_t interval_min, uint16_t interval_max)
+{
+	return ble_start_periodic_adv(handle, primary_phy, secondary_phy, interval_min, interval_max);
+}
+
+GL_RET gl_ble_stop_adv(uint8_t handle)
+{
+	return ble_stop_adv(handle);
+}
+
+GL_RET gl_ble_set_legacy_adv_data(uint8_t handle, uint8_t flag, char *data)
+{
+	return ble_set_legacy_adv_data(handle, flag, data);
+}
+
+GL_RET gl_ble_set_extended_adv_data(uint8_t handle, char *data)
+{
+	return ble_set_extended_adv_data(handle, data);
+}
+
+GL_RET gl_ble_set_periodic_adv_data(uint8_t handle, char *data)
+{
+	return ble_set_periodic_adv_data(handle, data);
 }
 
 GL_RET gl_ble_send_notify(BLE_MAC address, int char_handle, char *value)
@@ -232,14 +264,24 @@ GL_RET gl_ble_send_notify(BLE_MAC address, int char_handle, char *value)
 	return ble_send_notify(address, char_handle, value);
 }
 
-GL_RET gl_ble_discovery(int phys, int interval, int window, int type, int mode)
+GL_RET gl_ble_start_discovery(uint8_t phys, uint16_t interval, uint16_t window, uint8_t type, uint8_t mode)
 {
-	return ble_discovery(phys, interval, window, type, mode);
+	return ble_start_discovery(phys, interval, window, type, mode);
 }
 
 GL_RET gl_ble_stop_discovery(void)
 {
 	return ble_stop_discovery();
+}
+
+GL_RET gl_ble_start_synchronize(uint16_t skip, uint16_t timeout, BLE_MAC address, uint8_t address_type, uint8_t adv_sid, uint16_t *handle)
+{
+	return ble_start_synchronize(skip, timeout, address, address_type, adv_sid, handle);
+}
+
+GL_RET gl_ble_stop_synchronize(uint16_t handle)
+{
+	return ble_stop_synchronize(handle);
 }
 
 GL_RET gl_ble_connect(BLE_MAC address, int address_type, int phy)
@@ -282,3 +324,12 @@ GL_RET gl_ble_set_notify(BLE_MAC address, int char_handle, int flag)
 	return ble_set_notify(address, char_handle, flag);
 }
 
+GL_RET gl_ble_set_gattdb(char *uci_cfg_name)
+{
+	return ble_set_gattdb(uci_cfg_name);
+}
+
+// GL_RET gl_ble_del_gattdb(void)
+// {
+// 	return ble_del_gattdb();
+// }
