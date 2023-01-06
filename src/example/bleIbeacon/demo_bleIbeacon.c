@@ -1,8 +1,8 @@
 /*****************************************************************************
- * @file  bleIbeacon.c
+ * @file  demo_bleIbeacon.c
  * @brief Enable BLE broadcast or discovery ibeacon packet
  *******************************************************************************
- Copyright 2020 GL-iNet. https://www.gl-inet.com/
+ Copyright 2022 GL-iNet. https://www.gl-inet.com/
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@
 bool ibeacon_module_work = false;
 
 ibeacon_ringArray_t *ibeacon_array;
+uint8_t adv_handle = 0xff;
 
 static pthread_t tid_ble;
 static void *ble_start(void *arg);
@@ -131,7 +132,7 @@ static int ble_gap_cb(gl_ble_gap_event_t event, gl_ble_gap_data_t *data)
 	
 	switch (event)
 	{
-	case GAP_BLE_SCAN_RESULT_EVT:
+	case GAP_BLE_LEGACY_SCAN_RESULT_EVT:
 	{
 		ibeacon_data_collect(data);
 		break;
@@ -149,7 +150,7 @@ static int ble_module_cb(gl_ble_module_event_t event, gl_ble_module_data_t *data
 	{
 	case MODULE_BLE_SYSTEM_BOOT_EVT:
 	{
-		ibeacon_module_work = true;
+		
 		json_object *o = NULL;
 		o = json_object_new_object();
 		json_object_object_add(o, "type", json_object_new_string("module_start"));
@@ -164,6 +165,16 @@ static int ble_module_cb(gl_ble_module_event_t event, gl_ble_module_data_t *data
 		printf("MODULE_CB_MSG >> %s\n", temp);
 
 		json_object_put(o);
+
+		if ((data->system_boot_data.major != 4) || (data->system_boot_data.minor != 2) || (data->system_boot_data.patch != 0))
+		{
+			printf("The ble module firmware version is not 4_2_0, please switch it.\n");
+			gl_ble_unsubscribe();
+			gl_ble_destroy();	
+			exit(0);
+		}
+		ibeacon_module_work = true;
+
 		break;
 	}
 	default:
@@ -191,12 +202,19 @@ static void sigal_ibeacon_hander(int sig)
 
 exit_background:
 
-	ubus_free(ctx);
+	pthread_cancel(ubus_tid);
+	pthread_join(ubus_tid, NULL);
+	if (_ctx_event)
+		ubus_free(_ctx_event);
+
+	if (_ctx_invoke)
+		ubus_free(_ctx_invoke);
+		
 	uloop_done();
 
 exit_foreground:	
 
-	gl_ble_stop_adv();
+	gl_ble_stop_adv(adv_handle);
 	gl_ble_stop_discovery();
 	gl_ble_destroy();
 	pthread_cancel(tid_ble);

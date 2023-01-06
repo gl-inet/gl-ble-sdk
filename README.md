@@ -1,6 +1,8 @@
 # GL-Ble-SDK User Guide
 
 
+
+
 ## What’s GL-Ble-SDK
 
 GL-Ble-SDK is developed and provided by GL-iNet Technology as a part of the iot solution. SDK encapsulates the operation interface of bluetooth modules from different manufacturers and provides users with bluetooth operation functions after abstraction. Users don't need to care what Bluetooth module they are using, just call the **gl-ble-api** in their application to control Bluetooth.
@@ -79,14 +81,20 @@ gl-ble-sdk
 We provide a series of examples(src/example) to help users better understand and use the API. 
 
 ```
-bleScanner   	-------------------->  A Ble scanner that can configure scan parameters
-bleAdvertiser   -------------------->  A Ble advertiser with configurable parameters
-bleService   	-------------------->  A Ble server with configurable parameters
-bleClient   	-------------------->  A Ble client with configurable parameters
-bletool   		-------------------->  A tool that integrates all BLE API functions
+bleAdvertiserLegacy    -------------------->  A Ble Legacy advertiser with configurable parameters
+bleAdvertiserExtended  -------------------->  A Ble Extended advertiser with configurable parameters 
+bleAdvertiserPeriodic  -------------------->  A Ble Periodic advertiser with configurable parameters 
+bleScanner   	       -------------------->  A Ble scanner that can configure scan parameters
+bleSynchronize		   -------------------->  A Ble Synchronize that can configure scan parameters
+bleIbeacon			   -------------------->  A Ble Ibeacon that can configure send or receive.
+bleService   		   -------------------->  A Ble server wait for connected
+bleClient   		   -------------------->  A Ble client with configurable parameters
+bletool   			   -------------------->  A tool that integrates all BLE API functions
 ```
 
 We'll keep updating the example, so let us know if you have any good ideas :D
+
+**Note: The above example will check the BLE module firmware version, if the version of BLE module firmware is not v4.2.0, it will exit. Please see [DFU DOCS](./dfu).**
 
 
 
@@ -101,15 +109,10 @@ Users can also use doxygen to generate documents locally.
 
 
 ## Supported devices
-BLE may not be available in all standard versions.So please confirm if it comes with BLE first. 
 
 | device name | Details                                                      |
 | ----------- | ------------------------------------------------------------ |
-| GL-X750     | [GL-X750 / Spitz - GL.iNet (gl-inet.com)](https://www.gl-inet.com/products/gl-x750/) |
-| GL-S1300    | [GL-S1300 / Convexa-S - GL.iNet (gl-inet.com)](https://www.gl-inet.com/products/gl-s1300/) |
-| GL-XE300    | [GL-XE300 / Puli - GL.iNet (gl-inet.com)](https://www.gl-inet.com/products/gl-xe300/) |
-| GL-X300B    | [GL-X300B / Collie - GL.iNet (gl-inet.com)](https://www.gl-inet.com/products/gl-x300b/) |
-| GL-AP1300   | [GL-AP1300 / Cirrus - GL.iNet (gl-inet.com)](https://www.gl-inet.com/products/gl-ap1300/) |
 | GL-B2200    | [GL-B2200 / Velica - GL.iNet (gl-inet.com)](https://www.gl-inet.com/products/gl-b2200/) |
 | GL-S200     | [GL-S200 - GL.iNet (gl-inet.com)](https://www.gl-inet.com/products/gl-s200/) |
 
+We'll updating the Supported devices.

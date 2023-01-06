@@ -1,5 +1,5 @@
 
-set( EXEC_NAME "bleAdvertiser" )
+set( EXEC_NAME "bleAdvExtended" )
 
 aux_source_directory(./ SOURCES)
 

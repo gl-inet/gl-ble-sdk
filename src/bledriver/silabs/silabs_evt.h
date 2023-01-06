@@ -1,5 +1,5 @@
 /*****************************************************************************
- Copyright 2020 GL-iNet. https://www.gl-inet.com/
+ Copyright 2022 GL-iNet. https://www.gl-inet.com/
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@
 #ifndef _SILABS_EVT_H_
 #define _SILABS_EVT_H_
 
-
+#include "sli_bt_api.h"
 
 typedef struct{
     long msgtype;   
-    struct gecko_cmd_packet evt;
+    struct sl_bt_packet evt;
 }silabs_msg_queue_t;
 
 typedef struct{

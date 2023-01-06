@@ -2,7 +2,7 @@
  * @file  demo_bleService.c
  * @brief Start the BLE discovery and subscribe the BLE event
  *******************************************************************************
- Copyright 2020 GL-iNet. https://www.gl-inet.com/
+ Copyright 2022 GL-iNet. https://www.gl-inet.com/
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -37,33 +37,35 @@ static int hex2str(uint8_t* head, int len, char* value);
 static int gl_tools_hexStr2bytes(const char *hexstr, int strlen, unsigned char *bytes);
 
 #define MAC2STR(a) (a)[5], (a)[4], (a)[3], (a)[2], (a)[1], (a)[0]
-#define MACSTR "%02X:%02X:%02X:%02X:%02X:%02X"
+#define MACSTR "%02x:%02x:%02x:%02x:%02x:%02x"
 
 static bool module_work = false;
+static uint8_t adv_handle = 0xff;
 
 static int ble_gap_cb(gl_ble_gap_event_t event, gl_ble_gap_data_t *data)
 {
 	char address[BLE_MAC_LEN] = {0};
-	char ble_adv[MAX_ADV_DATA_LEN] = {0};
+	char ble_adv[MAX_LEGACY_ADV_DATA_LEN * 2] = {0};
 	switch (event)
 	{
-	case GAP_BLE_SCAN_RESULT_EVT:
+	case GAP_BLE_LEGACY_SCAN_RESULT_EVT:
 	{
-		addr2str(data->scan_rst.address, address);
-		hex2str(data->scan_rst.ble_adv, data->scan_rst.ble_adv_len, ble_adv);
+		addr2str(data->legacy_scan_rst.address, address);
+		hex2str(data->legacy_scan_rst.ble_adv, data->legacy_scan_rst.ble_adv_len, ble_adv);
 
 		// json format
-		json_object *o = NULL;
+		json_object* o = NULL;
 		o = json_object_new_object();
-		json_object_object_add(o, "type", json_object_new_string("scan_result"));
+
+		json_object_object_add(o, "type", json_object_new_string("legacy_adv_result"));
 		json_object_object_add(o, "mac", json_object_new_string(address));
-		json_object_object_add(o, "address_type", json_object_new_int(data->scan_rst.ble_addr_type));
-		json_object_object_add(o, "rssi", json_object_new_int(data->scan_rst.rssi));
-		json_object_object_add(o, "packet_type", json_object_new_int(data->scan_rst.packet_type));
-		json_object_object_add(o, "bonding", json_object_new_int(data->scan_rst.bonding));
+		json_object_object_add(o, "address_type", json_object_new_int(data->legacy_scan_rst.ble_addr_type));
+		json_object_object_add(o, "rssi", json_object_new_int(data->legacy_scan_rst.rssi));
+		json_object_object_add(o, "event_flags", json_object_new_int(data->legacy_scan_rst.event_flags));
+		json_object_object_add(o, "bonding", json_object_new_int(data->legacy_scan_rst.bonding));
 		json_object_object_add(o, "data", json_object_new_string(ble_adv));
 		const char *temp = json_object_to_json_string(o);
-		printf("GAP_CB_MSG >> %s\n", temp);
+		printf("GAP_CB_MSG >> %s\n",temp);
 
 		json_object_put(o);
 		break;
@@ -180,7 +182,7 @@ static int ble_gatt_cb(gl_ble_gatt_event_t event, gl_ble_gatt_data_t *data)
 		gl_tools_hexStr2bytes(data->local_gatt_attribute.value, strlen(data->local_gatt_attribute.value), bytes);
 		printf("Data from the client : %.*s\n", strlen(bytes), bytes);
 
-		GL_RET ret = gl_ble_write_char(data->local_gatt_attribute.address, data->local_gatt_attribute.attribute, "48656C6C6F20436C69656E74202E", 0);
+		GL_RET ret = gl_ble_write_char(data->local_gatt_attribute.address, data->local_gatt_attribute.attribute, "48656C6C6F20436C69656E74202E", 1);
 		if (GL_SUCCESS != ret)
 		{
 			printf("gl_ble_write_char_%d failed: %d\n", data->local_gatt_attribute.attribute, ret);
@@ -219,7 +221,7 @@ static int ble_module_cb(gl_ble_module_event_t event, gl_ble_module_data_t *data
 	{
 	case MODULE_BLE_SYSTEM_BOOT_EVT:
 	{
-		module_work = true;
+
 		json_object *o = NULL;
 		o = json_object_new_object();
 		json_object_object_add(o, "type", json_object_new_string("module_start"));
@@ -234,11 +236,16 @@ static int ble_module_cb(gl_ble_module_event_t event, gl_ble_module_data_t *data
 		printf("MODULE_CB_MSG >> %s\n", temp);
 
 		json_object_put(o);
-		if (data->system_boot_data.build != 151)
+		
+		if ((data->system_boot_data.major != 4) || (data->system_boot_data.minor != 2) || (data->system_boot_data.patch != 0))
 		{
-			printf("The device does not support the use of this example, so stay tuned\n");
-			exit(-1);
+			printf("The ble module firmware version is not 4_2_0, please switch it.\n");
+			gl_ble_unsubscribe();
+			gl_ble_destroy();	
+			exit(0);
 		}
+		module_work = true;
+
 		break;
 	}
 	default:
@@ -262,8 +269,6 @@ int main(int argc, char *argv[])
 	ble_cb.ble_gatt_event = ble_gatt_cb;
 	ble_cb.ble_module_event = ble_module_cb;
 
-	int phys = 1, interval_min = 160, interval_max = 160, discover = 2, adv_conn = 2;
-
 	// init ble module
 	GL_RET ret;
 	ret = gl_ble_init();
@@ -286,12 +291,26 @@ int main(int argc, char *argv[])
 		usleep(100000);
 	}
 
-	ret = gl_ble_adv(phys, interval_min, interval_max, discover, adv_conn);
+	// create adv handle
+	ret = gl_ble_create_adv_handle(&adv_handle);
 	if (GL_SUCCESS != ret)
 	{
-		printf("gl_ble_adv failed: %d\n", ret);
+		printf("gl_ble_create_adv_handle failed: %d\n", ret);
 		exit(-1);
 	}
+	// init adv param
+    uint32_t interval_min = 160;
+    uint32_t interval_max = 160;
+    uint8_t discover = 2;
+    uint8_t connect = 2;
+
+	ret = gl_ble_start_legacy_adv(adv_handle, interval_min, interval_max, discover, connect);
+	if (GL_SUCCESS != ret)
+	{
+		printf("gl_ble_start_legacy_adv failed: %d\n", ret);
+		exit(-1);
+	}
+
 
 	uint8_t mac_buf[6];
 	ret = gl_ble_get_mac(mac_buf);
@@ -321,7 +340,7 @@ static void sigal_hander(int sig)
 {
 	printf("\nbleService exit!\n");
 
-	gl_ble_stop_adv();
+	gl_ble_stop_adv(adv_handle);
 	gl_ble_unsubscribe();
 	gl_ble_destroy();
 
@@ -333,12 +352,12 @@ static int hex2str(uint8_t* head, int len, char* value)
     int i = 0;
 
     // FIXME: (Sometime kernel don't mask all uart print) When wifi network up/down, it will recv a big message
-    if(len >= 256/2)    
-    {    
-        strcpy(value,"00");
-        // printf("recv a err msg! err len = %d\n",len);
-        return -1;
-    }
+    // if(len >= 256/2)    
+    // {    
+    //     strcpy(value,"00");
+    //     // printf("recv a err msg! err len = %d\n",len);
+    //     return -1;
+    // }
     
     while (i < len) {
         sprintf(value + i * 2, "%02x", head[i]);

@@ -2,7 +2,7 @@
  * @file  
  * @brief 
  *******************************************************************************
- Copyright 2020 GL-iNet. https://www.gl-inet.com/
+ Copyright 2022 GL-iNet. https://www.gl-inet.com/
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -33,11 +33,19 @@
 #define ble_hard_reset                  silabs_ble_hard_reset
 #define ble_local_mac                   silabs_ble_local_mac
 #define ble_set_power                   silabs_ble_set_power
-#define ble_discovery                   silabs_ble_discovery
+#define ble_start_discovery             silabs_ble_start_discovery
 #define ble_stop_discovery              silabs_ble_stop_discovery
-#define ble_start_adv                   silabs_ble_adv
-#define ble_adv_data                    silabs_ble_adv_data
+#define ble_start_synchronize           silabs_ble_start_synchronize
+#define ble_stop_synchronize            silabs_ble_stop_synchronize
+#define ble_create_adv_handle           silabs_ble_create_adv_handle
+#define ble_delete_adv_handle           silabs_ble_delete_adv_handle
+#define ble_start_legacy_adv            silabs_ble_start_legacy_adv
+#define ble_start_extended_adv          silabs_ble_start_extended_adv
+#define ble_start_periodic_adv          silabs_ble_start_periodic_adv
 #define ble_stop_adv                    silabs_ble_stop_adv
+#define ble_set_legacy_adv_data         silabs_ble_set_legacy_adv_data
+#define ble_set_extended_adv_data       silabs_ble_set_extended_adv_data
+#define ble_set_periodic_adv_data       silabs_ble_set_periodic_adv_data
 #define ble_send_notify                 silabs_ble_send_notify
 #define ble_connect                     silabs_ble_connect
 #define ble_disconnect                  silabs_ble_disconnect
@@ -47,6 +55,8 @@
 #define ble_read_char                   silabs_ble_read_char
 #define ble_write_char                  silabs_ble_write_char
 #define ble_set_notify                  silabs_ble_set_notify
+#define ble_set_gattdb                  silabs_ble_set_gattdb
+// #define ble_del_gattdb                  silabs_ble_del_gattdb
 
 #endif
 

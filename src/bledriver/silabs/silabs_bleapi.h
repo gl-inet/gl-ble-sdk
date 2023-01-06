@@ -2,7 +2,7 @@
  * @file 
  * @brief 
  *******************************************************************************
- Copyright 2020 GL-iNet. https://www.gl-inet.com/
+ Copyright 2022 GL-iNet. https://www.gl-inet.com/
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -22,22 +22,38 @@
 
 #include "gl_errno.h"
 
-
 GL_RET silabs_ble_enable(int);
 
 GL_RET silabs_ble_hard_reset(void);
 
 GL_RET silabs_ble_local_mac(BLE_MAC mac);
 
-GL_RET silabs_ble_discovery(int phys, int interval, int window, int type, int mode);
+GL_RET silabs_ble_start_discovery(uint8_t phys, uint16_t interval, uint16_t window, uint8_t type, uint8_t mode);
 
 GL_RET silabs_ble_stop_discovery(void);
 
-GL_RET silabs_ble_adv(int phys, int interval_min, int interval_max, int discover, int adv_conn);
+GL_RET silabs_ble_start_synchronize(uint16_t skip, uint16_t timeout, BLE_MAC address, uint8_t address_type, uint8_t adv_sid, uint16_t *handle);
 
-GL_RET silabs_ble_adv_data(int flag, char *data);
+GL_RET silabs_ble_stop_synchronize(uint16_t handle);
 
-GL_RET silabs_ble_stop_adv(void);
+GL_RET silabs_ble_create_adv_handle(uint8_t *handle);
+
+GL_RET silabs_ble_delete_adv_handle(uint8_t handle);
+
+GL_RET silabs_ble_start_legacy_adv(uint8_t handle, uint32_t interval_min, uint32_t interval_max, uint8_t discover, uint8_t connect);
+
+GL_RET silabs_ble_start_extended_adv(uint8_t handle, uint8_t primary_phy, uint8_t secondary_phy, 
+                        uint32_t interval_min, uint32_t interval_max, uint8_t discover, uint8_t connect);
+
+GL_RET silabs_ble_start_periodic_adv(uint8_t handle, uint8_t primary_phy, uint8_t secondary_phy, uint16_t interval_min, uint16_t interval_max);
+
+GL_RET silabs_ble_stop_adv(uint8_t handle);
+
+GL_RET silabs_ble_set_legacy_adv_data(uint8_t handle, uint8_t flag, char *data);
+
+GL_RET silabs_ble_set_extended_adv_data(uint8_t handle, char *data);
+
+GL_RET silabs_ble_set_periodic_adv_data(uint8_t handle, char *data);
 
 GL_RET silabs_ble_send_notify(BLE_MAC address, int char_handle, char *value);
 
@@ -59,5 +75,8 @@ GL_RET silabs_ble_write_char(BLE_MAC address, int char_handle, char *value, int 
 
 GL_RET silabs_ble_set_notify(BLE_MAC address, int char_handle, int flag);
 
+GL_RET silabs_ble_set_gattdb(char *uci_cfg_name);
+
+GL_RET silabs_ble_del_gattdb(void);
 
 #endif
