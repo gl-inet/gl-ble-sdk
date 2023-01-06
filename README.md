@@ -1,4 +1,4 @@
-# GL-Ble-SDK User Guide
+# GL-Ble-SDK User Guide v1.4.0
 
 
 ## What’s GL-Ble-SDK
