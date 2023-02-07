@@ -22,8 +22,8 @@
 hw_cfg_t GL_BLE_HW_LIST[] = 
 {
     {                                         
-        "x750",      // model name                                     
-        "/dev/ttyS0", // serial port name                              
+        "x750",         // model name                                     
+        "/dev/ttyS0",   // serial port name                              
         115200,         // baud rate (bits/second)                     
         0,              // true enables RTS/CTS flow control           
         1,              // rst trigger: 1 means high, 0 means low      
@@ -31,59 +31,67 @@ hw_cfg_t GL_BLE_HW_LIST[] =
     },
 
     {                                        
-        "s1300",      // model name                                    
+        "s1300",        // model name                                    
         "/dev/ttyMSM1", // serial port name                         
         115200,         // baud rate (bits/second)                     
         0,              // true enables RTS/CTS flow control           
         1,              // rst trigger: 1 means high, 0 means low      
-        48,              // RTS IO                                      
+        48,             // RTS IO                                      
     },
 
     {                                      
-        "xe300",      // model name                                  
-        "/dev/ttyS0", // serial port name                            
+        "xe300",        // model name                                  
+        "/dev/ttyS0",   // serial port name                            
         115200,         // baud rate (bits/second)                     
         0,              // true enables RTS/CTS flow control           
         1,              // rst trigger: 1 means high, 0 means low      
-        14,              // RTS IO                                      
+        14,             // RTS IO                                      
     },
 
     {                                                                    
-        "x300b",      // model name                                  
-        "/dev/ttyS0", // serial port name                            
+        "x300b",        // model name                                  
+        "/dev/ttyS0",   // serial port name                            
         115200,         // baud rate (bits/second)                     
         0,              // true enables RTS/CTS flow control           
         1,              // rst trigger: 1 means high, 0 means low      
-        16,              // RTS IO                                      
+        16,             // RTS IO                                      
     },
 
     {                                                                    
-        "ap1300",      // model name                                  
+        "ap1300",       // model name                                  
         "/dev/ttyUSB0", // serial port name                            
         115200,         // baud rate (bits/second)                     
         0,              // true enables RTS/CTS flow control           
         1,              // rst trigger: 1 means high, 0 means low      
-        62,              // RTS IO                                      
+        62,             // RTS IO                                      
     },
 
     {                                                                    
-        "b2200",      // model name                                  
+        "b2200",        // model name                                  
         "/dev/ttyMSM1", // serial port name                            
         115200,         // baud rate (bits/second)                     
         0,              // true enables RTS/CTS flow control           
         1,              // rst trigger: 1 means high, 0 means low      
-        42,              // RTS IO                                      
+        42,             // RTS IO                                      
     },
 
     {                                         
-        "s200",         // model name                                     
-        "/dev/ttyCH343USB1",   // serial port name                              
-        115200,         // baud rate (bits/second)                     
-        0,              // true enables RTS/CTS flow control           
-        1,              // rst trigger: 1 means high, 0 means low      
-        1,              // RTS IO                                      
+        "s200",                 // model name                                     
+        "/dev/ttyCH343USB1",    // serial port name                              
+        115200,                 // baud rate (bits/second)                     
+        0,                      // true enables RTS/CTS flow control           
+        1,                      // rst trigger: 1 means high, 0 means low      
+        1,                      // RTS IO                                      
     },
 
+    {                                         
+        "x3000",                // model name                                     
+        "/dev/ttyCH343USB0",    // serial port name                              
+        115200,                 // baud rate (bits/second)                     
+        0,                      // true enables RTS/CTS flow control           
+        1,                      // rst trigger: 1 means high, 0 means low      
+        26,                     // RTS IO                                      
+    },
 };	
 
 #endif
