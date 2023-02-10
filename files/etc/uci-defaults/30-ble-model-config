@@ -7,49 +7,37 @@ if [ ! -f "/etc/config/gl_ble_hw" ]; then
 fi
 
 board=$(board_name)
-boardname="${board#*-}"
-[ -n "$boardname" ] || {
-        loger "Unsupported model (model not in support-list)"
-        echo ""
-        return
-}
 
-case "$boardname" in
-        ar300m-nor|\
-        ar300m-nand)
+case "$board" in
+        *ar300m*)
                 model=ar300m
                 ;;
-        ar750s-nor|\
-        ar750s-nor-nand)
+        *ar750s*)
                 model=ar750s
                 ;;
-        e750-nor|\
-        e750-nor-nand)
+        *e750*)
                 model=e750
                 ;;
-        x750-nor|\
-        x750-nor-nand)
+        *x750*)
                 model=x750
                 ;;
-        x300b-nor|\
-        x300b-nor-nand)
+        *x300b*)
                 model=x300b
                 ;;
-        xe300-iot|\
-        xe300-nor|\
-        xe300-nor-nand)
+        *xe300*)
                 model=xe300
                 ;;
-        x1200-nor|\
-        x1200-nor-nand)
+        *x1200*)
                 model=x1200
                 ;;
-        s200-nor|\
-        s200-nor-nand)
+        *s200*)
                 model=s200
                 ;;
+        *x3000*)
+                model=x3000
+                ;;
         *)
-                model=$boardname
+                model=$board
                 ;;
 esac
 echo $model
