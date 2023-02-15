@@ -27,8 +27,6 @@
 #include <signal.h>
 #include <string.h>
 
-#include "sl_bt_api.h"
-
 #include "gl_bleapi.h"
 #include "gl_errno.h"
 #include "gl_type.h"

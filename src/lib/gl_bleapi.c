@@ -41,8 +41,8 @@ gl_ble_cbs ble_msg_cb;
 void *ble_driver_thread_ctx = NULL;
 void *ble_watcher_thread_ctx = NULL;
 
-// static int* msqid = NULL;
-static int msqid = -1;
+static int* msqid = NULL;
+
 static driver_param_t* _driver_param = NULL;
 static watcher_param_t* _watcher_param = NULL;
 
@@ -59,17 +59,17 @@ GL_RET gl_ble_init(void)
 	_driver_param = (driver_param_t*)malloc(sizeof(driver_param_t));
 	
 	// create an event message queue if it not exist
-	if(-1 == msqid)
+	if(NULL == msqid)
 	{
-		// msqid = (int*)malloc(sizeof(int));
-		msqid = msgget(IPC_PRIVATE, 0666 | IPC_CREAT);
-		if(msqid == -1)
+		msqid = (int*)malloc(sizeof(int));
+		*msqid = msgget(IPC_PRIVATE, 0666 | IPC_CREAT);
+		if(*msqid == -1)
 		{
 			log_err("create msg queue error!!!\n");
 			return GL_UNKNOW_ERR;
 		}
 	}
-	_driver_param->evt_msgid = msqid;
+	_driver_param->evt_msgid = *msqid;
 
 	/* Init device manage */
 	ble_dev_mgr_init();
@@ -111,14 +111,6 @@ GL_RET gl_ble_destroy(void)
 	free(_driver_param);
 	_driver_param = NULL;
 
-	// close event thread
-	HAL_ThreadDelete(ble_watcher_thread_ctx);
-	ble_watcher_thread_ctx = NULL;
-
-	// free watcher_param
-	free(_watcher_param);
-	_watcher_param = NULL;
-
 	// close hal fd
 	hal_destroy();
 
@@ -126,13 +118,13 @@ GL_RET gl_ble_destroy(void)
 	ble_dev_mgr_destroy();
 
 	// destroy evt msg queue
-	if(-1 == msgctl(msqid, IPC_RMID, NULL))
+	if(-1 == msgctl(*msqid, IPC_RMID, NULL))
 	{
 		log_err("msgctl error");
 		return GL_UNKNOW_ERR;
 	}
-	// free(msqid);
-	// msqid = NULL;
+	free(msqid);
+	msqid = NULL;
 
 	return GL_SUCCESS;
 }
@@ -153,17 +145,17 @@ GL_RET gl_ble_subscribe(gl_ble_cbs *callback)
 	_watcher_param = (watcher_param_t*)malloc(sizeof(watcher_param_t));
 
 	// create an event message queue if it not exist
-	if(-1 == msqid)
+	if(NULL == msqid)
 	{
-		// msqid = (int*)malloc(sizeof(int));
-		msqid = msgget(IPC_PRIVATE, 0666 | IPC_CREAT);
-		if(msqid == -1)
+		msqid = (int*)malloc(sizeof(int));
+		*msqid = msgget(IPC_PRIVATE, 0666 | IPC_CREAT);
+		if(*msqid == -1)
 		{
 			log_err("create msg queue error!!!\n");
 			return GL_UNKNOW_ERR;
 		}
 	}
-	_watcher_param->evt_msgid = msqid;
+	_watcher_param->evt_msgid = *msqid;
 	_watcher_param->cbs = callback;
 
     int ret;

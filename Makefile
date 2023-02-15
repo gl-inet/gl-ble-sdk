@@ -16,7 +16,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gl-ble-sdk
-PKG_VERSION:=2.0.0
+PKG_VERSION:=2.0.1
 
 TARGET_CFLAGS += -ggdb3
 
