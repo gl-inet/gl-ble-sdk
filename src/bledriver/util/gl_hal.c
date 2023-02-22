@@ -27,7 +27,6 @@
 #include "gl_hw_cfg.h"
 #include "gl_errno.h"
 
-
 unsigned char ENDIAN;
 
 char rston[64] = {0};
@@ -44,7 +43,6 @@ static GL_RET qsdk_check_ver(void);
 struct uci_context* guci2_init(void);
 int guci2_free(struct uci_context* ctx);
 int guci2_get(struct uci_context* ctx, const char* section_or_key, char value[]);
-
 
 static int check_endian(void)
 {

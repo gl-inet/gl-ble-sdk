@@ -42,6 +42,11 @@ static int gl_tools_hexStr2bytes(const char *hexstr, int strlen, unsigned char *
 static bool module_work = false;
 static uint8_t adv_handle = 0xff;
 
+// store the ble module version when ble module init success, For subsequent version check
+static int major = 0;
+static int minor = 0;
+static int patch = 0;
+
 static int ble_gap_cb(gl_ble_gap_event_t event, gl_ble_gap_data_t *data)
 {
 	char address[BLE_MAC_LEN] = {0};
@@ -236,14 +241,12 @@ static int ble_module_cb(gl_ble_module_event_t event, gl_ble_module_data_t *data
 		printf("MODULE_CB_MSG >> %s\n", temp);
 
 		json_object_put(o);
-		
-		if ((data->system_boot_data.major != 4) || (data->system_boot_data.minor != 2) || (data->system_boot_data.patch != 0))
-		{
-			printf("The ble module firmware version is not 4_2_0, please switch it.\n");
-			gl_ble_unsubscribe();
-			gl_ble_destroy();	
-			exit(0);
-		}
+
+		// For subsequent version check
+		major = data->system_boot_data.major;
+		minor = data->system_boot_data.minor;
+		patch = data->system_boot_data.patch;
+
 		module_work = true;
 
 		break;
@@ -289,6 +292,35 @@ int main(int argc, char *argv[])
 	while (!module_work)
 	{
 		usleep(100000);
+	}
+
+	// check ble module version, if not match will dfu
+	ret = gl_ble_check_module_version(major, minor, patch);
+	if(ret != GL_SUCCESS)
+	{
+		module_work = false;
+		// Deinit first, and the serial port is occupied anyway
+		gl_ble_unsubscribe();
+		gl_ble_destroy();
+
+		ret = gl_ble_module_dfu();
+		if(ret == GL_SUCCESS)
+		{
+			// Reinit if dfu success
+			gl_ble_init();
+			gl_ble_subscribe(&ble_cb);
+
+			// wait for module reset
+			while (!module_work)
+			{
+				usleep(100000);
+			}
+		}
+		else
+		{
+			printf("The ble module firmware version is not 4_2_0, please switch it.\n");
+			exit(-1);
+		}
 	}
 
 	// create adv handle

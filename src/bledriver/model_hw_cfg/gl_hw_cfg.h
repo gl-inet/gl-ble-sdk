@@ -27,7 +27,8 @@ hw_cfg_t GL_BLE_HW_LIST[] =
         115200,         // baud rate (bits/second)                     
         0,              // true enables RTS/CTS flow control           
         1,              // rst trigger: 1 means high, 0 means low      
-        1,              // RTS IO                                      
+        1,              // RTS IO  
+        0xff,           // DFU IO                                     
     },
 
     {                                        
@@ -36,7 +37,8 @@ hw_cfg_t GL_BLE_HW_LIST[] =
         115200,         // baud rate (bits/second)                     
         0,              // true enables RTS/CTS flow control           
         1,              // rst trigger: 1 means high, 0 means low      
-        48,             // RTS IO                                      
+        48,             // RTS IO   
+        0xff,           // DFU IO                                    
     },
 
     {                                      
@@ -45,7 +47,8 @@ hw_cfg_t GL_BLE_HW_LIST[] =
         115200,         // baud rate (bits/second)                     
         0,              // true enables RTS/CTS flow control           
         1,              // rst trigger: 1 means high, 0 means low      
-        14,             // RTS IO                                      
+        14,             // RTS IO    
+        0xff,           // DFU IO                                   
     },
 
     {                                                                    
@@ -54,7 +57,8 @@ hw_cfg_t GL_BLE_HW_LIST[] =
         115200,         // baud rate (bits/second)                     
         0,              // true enables RTS/CTS flow control           
         1,              // rst trigger: 1 means high, 0 means low      
-        16,             // RTS IO                                      
+        16,             // RTS IO   
+        0xff,           // DFU IO                                       
     },
 
     {                                                                    
@@ -63,7 +67,8 @@ hw_cfg_t GL_BLE_HW_LIST[] =
         115200,         // baud rate (bits/second)                     
         0,              // true enables RTS/CTS flow control           
         1,              // rst trigger: 1 means high, 0 means low      
-        62,             // RTS IO                                      
+        62,             // RTS IO    
+        0xff,           // DFU IO                                      
     },
 
     {                                                                    
@@ -72,7 +77,8 @@ hw_cfg_t GL_BLE_HW_LIST[] =
         115200,         // baud rate (bits/second)                     
         0,              // true enables RTS/CTS flow control           
         1,              // rst trigger: 1 means high, 0 means low      
-        42,             // RTS IO                                      
+        42,             // RTS IO   
+        0xff,           // DFU IO                                      
     },
 
     {                                         
@@ -81,7 +87,8 @@ hw_cfg_t GL_BLE_HW_LIST[] =
         115200,                 // baud rate (bits/second)                     
         0,                      // true enables RTS/CTS flow control           
         1,                      // rst trigger: 1 means high, 0 means low      
-        1,                      // RTS IO                                      
+        1,                      // RTS IO  
+        11,                     // DFU IO                                    
     },
 
     {                                         
@@ -90,7 +97,8 @@ hw_cfg_t GL_BLE_HW_LIST[] =
         115200,                 // baud rate (bits/second)                     
         0,                      // true enables RTS/CTS flow control           
         1,                      // rst trigger: 1 means high, 0 means low      
-        26,                     // RTS IO                                      
+        26,                     // RTS IO
+        27,                     // DFU IO                                         
     },
 };	
 

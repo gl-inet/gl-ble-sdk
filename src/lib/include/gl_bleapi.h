@@ -463,6 +463,32 @@ GL_RET gl_ble_set_notify(BLE_MAC address, int char_handle, int flag);
  */
 GL_RET gl_ble_set_gattdb(char *uci_cfg_name);
 
+/**
+ * @brief  This function will check the ble module firmware version whether match the gl-ble-sdk version.
+ * 
+ * @param major : Major version number
+ * 
+ * @param minor : Minor version number
+ * 
+ * @param patch : Patch number
+ * 
+ * @return GL-RETURN-CODE 
+ * 
+ * @note   Please to store the major, minor and patch number when get the ble module firmware version in event "MODULE_BLE_SYSTEM_BOOT_EVT".
+ *         And calling this function when initialing.  
+ */
+GL_RET gl_ble_check_module_version(int major, int minor, int patch);
+
+/**
+ * @brief  This function will dfu the ble module firmware to appropriate version.
+ * 
+ * @return GL-RETURN-CODE 
+ * 
+ * @note   Before using this function, please check the ble module firmware version firstly.
+ *         It will not support some early devices.
+ */
+GL_RET gl_ble_module_dfu(void);
+
 // /**
 //  *  @brief  Act as BLE slave, Delete Local GATT DataBase and make it unvisible to remote GATT clients.
 //  * 

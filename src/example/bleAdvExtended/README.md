@@ -69,7 +69,7 @@ When Extended advertising packet is more than 254 bytes and short advertising in
 
 **note**
 
-Make sure your ble module firmware version is 4_2_0. If not, the example is not working.
+This example will detect whether the ble module firmware version is 4_2_0. If it is not, it will upgrade to the corresponding firmware version. However, the previous devices does not support this automatic upgrade method, which needs to be upgraded in other ways.
 
 ```shell
 root@OpenWrt:~# bleAdvExtended 

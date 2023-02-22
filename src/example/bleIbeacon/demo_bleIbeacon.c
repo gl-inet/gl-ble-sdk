@@ -49,6 +49,11 @@ static int ble_module_cb(gl_ble_module_event_t event, gl_ble_module_data_t *data
 static void sigal_ibeacon_hander(int sig);
 static int mode = -1;
 
+// store the ble module version when ble module init success, For subsequent version check
+static int major = 0;
+static int minor = 0;
+static int patch = 0;
+
 int main(int argc, char *argv[])
 {
 	int ret = -1;
@@ -58,12 +63,6 @@ int main(int argc, char *argv[])
         fprintf(stderr, "ubus_pthread_create: %s\n", strerror(ret));
         return -1;
     }
-
-	// wait for module reset
-	while (!ibeacon_module_work)
-	{
-		usleep(100000);
-	}
 
 	mode = mode_check(argc);
 
@@ -124,6 +123,41 @@ static void *ble_start(void *arg)
 		exit(-1);
 	}
 
+	// wait for module reset
+	while (!ibeacon_module_work)
+	{
+		usleep(100000);
+	}
+
+	// check ble module version, if not match will dfu
+	ret = gl_ble_check_module_version(major, minor, patch);
+	if(ret != GL_SUCCESS)
+	{
+		ibeacon_module_work = false;
+		// Deinit first, and the serial port is occupied anyway
+		gl_ble_unsubscribe();
+		gl_ble_destroy();
+
+		ret = gl_ble_module_dfu();
+		if(ret == GL_SUCCESS)
+		{
+			// Reinit if dfu success
+			gl_ble_init();
+			gl_ble_subscribe(&ble_ibeacon_cb);
+
+			// wait for module reset
+			while (!ibeacon_module_work)
+			{
+				usleep(100000);
+			}
+		}
+		else
+		{
+			printf("The ble module firmware version is not 4_2_0, please switch it.\n");
+			exit(-1);
+		}
+	}
+
 	pthread_join(tid_ble, NULL);
 }
 
@@ -166,13 +200,11 @@ static int ble_module_cb(gl_ble_module_event_t event, gl_ble_module_data_t *data
 
 		json_object_put(o);
 
-		if ((data->system_boot_data.major != 4) || (data->system_boot_data.minor != 2) || (data->system_boot_data.patch != 0))
-		{
-			printf("The ble module firmware version is not 4_2_0, please switch it.\n");
-			gl_ble_unsubscribe();
-			gl_ble_destroy();	
-			exit(0);
-		}
+		// For subsequent version check
+		major = data->system_boot_data.major;
+		minor = data->system_boot_data.minor;
+		patch = data->system_boot_data.patch;
+
 		ibeacon_module_work = true;
 
 		break;

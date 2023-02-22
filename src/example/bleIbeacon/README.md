@@ -42,6 +42,18 @@ opkg install gl-bleIbeacon_2.0.0_mips_24kc.ipk
 
 ### Using
 
+**note**
+
+This example will detect whether the ble module firmware version is 4_2_0. If it is not, it will upgrade to the corresponding firmware version. However, the previous devices does not support this automatic upgrade method, which needs to be upgraded in other ways.
+
+```shell
+root@OpenWrt:~# bleIbeacon 
+MODULE_CB_MSG >> { "type": "module_start", "major": 2, "minor": 13, "patch": 10, "build": 423, "bootloader": 17563648, "hw": 1, "ble_hash": "4d5a9661" }
+The ble module firmware version is not 4_2_0, please switch it.
+```
+
+
+
 #### Foreground mode
 
 ##### send

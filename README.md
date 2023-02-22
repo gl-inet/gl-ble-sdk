@@ -84,12 +84,12 @@ We provide a series of examples(src/example) to help users better understand and
 bleAdvertiserLegacy    -------------------->  A Ble Legacy advertiser with configurable parameters
 bleAdvertiserExtended  -------------------->  A Ble Extended advertiser with configurable parameters 
 bleAdvertiserPeriodic  -------------------->  A Ble Periodic advertiser with configurable parameters 
-bleScanner   	       -------------------->  A Ble scanner that can configure scan parameters
-bleSynchronize		   -------------------->  A Ble Synchronize that can configure scan parameters
-bleIbeacon			   -------------------->  A Ble Ibeacon that can configure send or receive.
-bleService   		   -------------------->  A Ble server wait for connected
-bleClient   		   -------------------->  A Ble client with configurable parameters
-bletool   			   -------------------->  A tool that integrates all BLE API functions
+bleScanner             -------------------->  A Ble scanner that can configure scan parameters
+bleSynchronize         -------------------->  A Ble Synchronize that can configure scan parameters
+bleIbeacon             -------------------->  A Ble Ibeacon that can configure send or receive.
+bleService             -------------------->  A Ble server wait for connected
+bleClient              -------------------->  A Ble client with configurable parameters
+bletool                -------------------->  A tool that integrates all BLE API functions
 ```
 
 We'll keep updating the example, so let us know if you have any good ideas :D

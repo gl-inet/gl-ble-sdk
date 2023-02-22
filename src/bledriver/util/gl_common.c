@@ -18,11 +18,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "sl_bt_api.h"
 #include "gl_common.h"
 #include "gl_errno.h"
-
 
 
 int addr2str(BLE_MAC adr, char* str) {

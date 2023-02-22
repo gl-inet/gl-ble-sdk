@@ -1,0 +1,76 @@
+#!/bin/sh
+
+EXEC_NAME=gl-ble-dfu
+
+device_name=$1
+uart_tty=$2
+gpio_rst=$3
+gpio_dfu=$4
+
+dfu_mode_exit() {
+    echo 1 > /sys/class/gpio/gpio$gpio_dfu/value
+    usleep 100000
+    echo 0 > /sys/class/gpio/gpio$gpio_rst/value
+    usleep 100000
+    echo 1 > /sys/class/gpio/gpio$gpio_rst/value
+    usleep 100000
+
+    err_code=$1
+    [ -n "$err_code" ] && {
+        if [ $err_code != 0 ]; then
+            exit 1
+        else
+            exit 0
+        fi
+    }
+}
+
+dfu_mode_enter() {
+    echo 0 > /sys/class/gpio/gpio$gpio_rst/value
+    usleep 100000
+    echo 0 > /sys/class/gpio/gpio$gpio_dfu/value
+    usleep 100000
+    echo 1 > /sys/class/gpio/gpio$gpio_rst/value
+    usleep 100000
+
+    echo -n "\n" > $uart_tty
+    usleep 100000
+    echo 1 > $uart_tty
+}
+
+
+[ -z "$(which stty)" ] && {
+    echo "stty not found, dfu failed."
+    exit 1
+}
+
+[ ! -e "$uart_tty" ] && {
+    echo "$uart_tty not found, dfu failed."
+    exit 1
+}
+
+# Check whether the dfu_file is exist
+dfu_files=$(ls /etc/ble/*.gbl 2>/dev/null)
+[ ! -f "$dfu_files" ] && {
+    echo "dfu file not found, dfu failed."
+    exit 1
+}
+
+# Enter DFU mode
+echo "dfu start..."
+
+stty -F $uart_tty 115200 cs8 -parenb -cstopb -crtscts -echo raw
+
+dfu_mode_enter
+
+# Tranfer image
+# err_code=$(timeout 50 sz -4 -u -X $dfu_files > $uart_tty < $uart_tty; echo $?) #This will unlink the file.
+err_code=$(timeout 50 sz -4 -X $dfu_files > $uart_tty < $uart_tty; echo $?)
+if [ $err_code != 0 ]; then
+    echo "dfu failed. err_code = $err_code"
+else
+    echo "dfu success."
+fi
+
+# Exit DFU mode
+dfu_mode_exit $err_code

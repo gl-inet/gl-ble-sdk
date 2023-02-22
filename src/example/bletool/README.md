@@ -38,6 +38,18 @@ opkg install gl-bletool_2.0.0_mipsel_24kc.ipk
 
 ### Using
 
+**note**
+
+This example will detect whether the ble module firmware version is 4_2_0. If it is not, it will upgrade to the corresponding firmware version. However, the previous devices does not support this automatic upgrade method, which needs to be upgraded in other ways.
+
+```shell
+root@OpenWrt:~# bletool 
+MODULE_CB_MSG >> { "type": "module_start", "major": 2, "minor": 13, "patch": 10, "build": 423, "bootloader": 17563648, "hw": 1, "ble_hash": "4d5a9661" }
+The ble module firmware version is not 4_2_0, please switch it.
+```
+
+
+
 You can use the help command to quickly view the currently supported commands. 
 
 ```shell
@@ -76,6 +88,8 @@ write_value                    Write characteristic value
 ```
 
 You can also use the TAB completion command and the up and down key to view the history commands.
+
+
 
 ### CLI Command Instruction
 

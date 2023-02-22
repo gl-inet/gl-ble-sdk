@@ -116,6 +116,12 @@ define Package/libglble/install
 	$(INSTALL_BIN) files/etc/uci-defaults/30-ble-model-config $(1)/etc/uci-defaults/30-ble-model-config
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_BIN) files/etc/config/gl_gattdb_cfg $(1)/etc/config/gl_gattdb_cfg
+
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) files/usr/bin/* $(1)/usr/bin/
+
+	$(INSTALL_DIR) $(1)/etc/ble
+	$(CP) files/etc/ble/* $(1)/etc/ble
 endef
 
 define Package/gl-bleScanner/install

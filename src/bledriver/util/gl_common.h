@@ -21,6 +21,7 @@
 #include <stdint.h>
 #include "gl_type.h"
 #include "sl_status.h"
+#include "sl_bt_version.h"
 
 /***********************************************************************************************//**
  *  \brief  The MAC address of uint8_t type convets to string.
@@ -62,6 +63,11 @@ int hex2str(uint8_t* head, int len, char* value);
  **************************************************************************************************/
 void reverse_endian(uint8_t* header, uint8_t length);
 
+/***********************************************************************************************//**
+ *  \brief  Write long data in specify buffer. 
+ *  \param[in]   len        The length of the value.
+ *  \param[in]   adv_data   The Data value to be written.
+ **************************************************************************************************/
 sl_status_t ble_write_long_data(uint16_t len, uint8_t *adv_data);
 
 #endif
