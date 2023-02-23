@@ -76,12 +76,24 @@ GL_RET gl_ble_init(void)
 
 	/* Init device manage */
 	ble_dev_mgr_init();
-	
+
+	int ret;
 	// init hal
-	hal_init();
+	ret = hal_init();
+	if (ret == GL_UNKNOW_ERR)
+	{
+		log_err("hal init failed!\n");
+		// free driver_param_t & driver ctx
+		free(_driver_param);
+		_driver_param = NULL;
+		ble_driver_thread_ctx = NULL;
+		
+		// destroy device list
+		ble_dev_mgr_destroy();
+        return GL_UNKNOW_ERR;
+	}
 
 	// create a thread to recv module message
-    int ret;
     ret = HAL_ThreadCreate(&ble_driver_thread_ctx, ble_driver, _driver_param, NULL, NULL);
     if (ret != 0) {
         log_err("pthread_create ble_driver_thread_ctx failed!\n");
