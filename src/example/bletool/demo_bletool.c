@@ -56,10 +56,7 @@ static uint8_t adv_handle_p = 0;
 static BLE_MAC mac_filter = {0};
 static bool mac_filter_flag = false;
 
-// store the ble module version when ble module init success, For subsequent version check
-static int major = 0;
-static int minor = 0;
-static int patch = 0;
+
 
 /* System functions */
 GL_RET cmd_enable(int argc, char **argv)
@@ -290,7 +287,7 @@ GL_RET cmd_set_legacy_adv_data(int argc, char **argv)
 	// init adv data param
 	uint8_t legacy_adv_handle;
 	uint8_t flag;
-	char *adv_data = NULL;
+	const char *adv_data = NULL;
 	json_object *file_o = NULL;
 
 	if (argc != 2)
@@ -350,7 +347,7 @@ exit:
 GL_RET cmd_set_extended_adv_data(int argc, char **argv)
 {
 	uint8_t extended_adv_handle;
-	char *adv_data = NULL;
+	const char *adv_data = NULL;
 	json_object *file_o = NULL;
 
 	if (argc != 2)
@@ -403,7 +400,7 @@ exit:
 GL_RET cmd_set_periodic_adv_data(int argc, char **argv)
 {
 	uint8_t periodic_adv_handle;
-	char *adv_data = NULL;
+	const char *adv_data = NULL;
 	json_object *file_o = NULL;
 
 	if (argc != 2)
@@ -1360,11 +1357,6 @@ static int ble_module_cb(gl_ble_module_event_t event, gl_ble_module_data_t *data
 			
 			json_object_put(o);
 
-			// For subsequent version check
-			major = data->system_boot_data.major;
-			minor = data->system_boot_data.minor;
-			patch = data->system_boot_data.patch;
-
 			module_work = true;
 
 			break;
@@ -1760,9 +1752,11 @@ int main(int argc, char *argv[])
 		usleep(100000);
 	}
 
-	// check ble module version, if not match will dfu
-	GL_RET ret = gl_ble_check_module_version(major, minor, patch);
-	if(ret != GL_SUCCESS)
+	GL_RET ret;
+// check ble module version, if not match will dfu
+ble_module_check:
+	ret = gl_ble_check_module_version();
+	if(GL_SUCCESS != ret)
 	{
 		module_work = false;
 		// Deinit first, and the serial port is occupied anyway
@@ -1770,7 +1764,7 @@ int main(int argc, char *argv[])
 		gl_ble_destroy();
 
 		ret = gl_ble_module_dfu();
-		if(ret == GL_SUCCESS)
+		if(GL_SUCCESS == ret)
 		{
 			// Reinit if dfu success
 			gl_ble_init();
@@ -1781,6 +1775,8 @@ int main(int argc, char *argv[])
 			{
 				usleep(100000);
 			}
+			
+			goto ble_module_check;
 		}
 		else
 		{

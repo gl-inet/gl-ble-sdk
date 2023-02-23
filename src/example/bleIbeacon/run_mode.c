@@ -123,14 +123,16 @@ int foreground_param_check(int argc, char *argv[])
 
 int foreground(char *argv[])
 {   
+    int ret = -1;
     if(!strcmp(argv[1], IBEACON_RECIEVER))
 	{
-        return foreground_ibeacon_reciever();
+        ret = foreground_ibeacon_reciever();
     }
     else if(!strcmp(argv[1], IBEACON_SENDER))
 	{
-        return foreground_ibeacon_sender(argv);
+        ret =  foreground_ibeacon_sender(argv);
     }
+    return ret;
 }
 
 int foreground_ibeacon_reciever(void)
@@ -204,7 +206,8 @@ int foreground_ibeacon_sender(char *argv[])
 		exit(-1);
 	}
 
-    ret = gl_ble_set_legacy_adv_data(adv_handle, 0, ibeacon_packet_snd);
+    const char *data = ibeacon_packet_snd;
+    ret = gl_ble_set_legacy_adv_data(adv_handle, 0, data);
     if (GL_SUCCESS != ret)
     {
         printf("gl_ble_set_legacy_adv_data failed: %d\n", ret);
@@ -212,7 +215,7 @@ int foreground_ibeacon_sender(char *argv[])
     }
     if(scan_respone == 1)
     {
-        ret = gl_ble_set_legacy_adv_data(adv_handle, 1, ibeacon_packet_snd);
+        ret = gl_ble_set_legacy_adv_data(adv_handle, 1, data);
         if (GL_SUCCESS != ret)
         {
             printf("gl_ble_set_legacy_adv_data failed: %d\n", ret);

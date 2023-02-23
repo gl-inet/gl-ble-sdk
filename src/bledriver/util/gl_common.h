@@ -45,7 +45,7 @@ int str2addr(char* str, BLE_MAC address);
  *  \param[out]   dst The uint8_t array used for storing the result.
  *  \return 0 means success, None-zero means failed.
  **************************************************************************************************/
-int str2array(uint8_t* dst, char* src, int len);
+int str2array(uint8_t* dst, const char* src, int len);
 
 /***********************************************************************************************//**
  *  \brief  Hexadecimal conversion to a string.

@@ -123,7 +123,7 @@ GL_RET gl_ble_set_power(int power, int *current_power);
  * 
  *  @note  Before calling this function, make sure that the Advertising set handle is created.
  */
-GL_RET gl_ble_set_legacy_adv_data(uint8_t handle, uint8_t flag, char *data);
+GL_RET gl_ble_set_legacy_adv_data(uint8_t handle, uint8_t flag, const char *data);
 
 /**
  *  @brief  Act as BLE slave, set user defined data in extended advertising packets.
@@ -136,7 +136,7 @@ GL_RET gl_ble_set_legacy_adv_data(uint8_t handle, uint8_t flag, char *data);
  * 
  *  @note  Before calling this function, make sure that the Advertising set handle is created.
  */
-GL_RET gl_ble_set_extended_adv_data(uint8_t handle, char *data);
+GL_RET gl_ble_set_extended_adv_data(uint8_t handle, const char *data);
 
 /**
  *  @brief  Act as BLE slave, set user defined data in periodic advertising packets.
@@ -149,7 +149,7 @@ GL_RET gl_ble_set_extended_adv_data(uint8_t handle, char *data);
  * 
  *  @note  Before calling this function, make sure that the Advertising set handle is created.
  */
-GL_RET gl_ble_set_periodic_adv_data(uint8_t handle, char *data);
+GL_RET gl_ble_set_periodic_adv_data(uint8_t handle, const char *data);
 
 /**
  *  @brief  Act as BLE slave, create Advertising set handle.
@@ -466,18 +466,11 @@ GL_RET gl_ble_set_gattdb(char *uci_cfg_name);
 /**
  * @brief  This function will check the ble module firmware version whether match the gl-ble-sdk version.
  * 
- * @param major : Major version number
- * 
- * @param minor : Minor version number
- * 
- * @param patch : Patch number
- * 
  * @return GL-RETURN-CODE 
  * 
- * @note   Please to store the major, minor and patch number when get the ble module firmware version in event "MODULE_BLE_SYSTEM_BOOT_EVT".
- *         And calling this function when initialing.  
+ * @note   If the ble module version matched, will return GL_SUCCESS. Other return situation are not matched.
  */
-GL_RET gl_ble_check_module_version(int major, int minor, int patch);
+GL_RET gl_ble_check_module_version(void);
 
 /**
  * @brief  This function will dfu the ble module firmware to appropriate version.

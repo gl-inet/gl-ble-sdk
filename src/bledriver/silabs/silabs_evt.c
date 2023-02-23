@@ -15,6 +15,7 @@
  ******************************************************************************/
 
 #include <stdio.h>
+#include <stdbool.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
@@ -33,9 +34,13 @@
 
 #include "silabs_evt.h"
 #include "sli_bt_api.h"
+#include "sl_bt_version.h"
 
 static int evt_msgid;
 static silabs_msg_queue_t queue_data;
+
+//global var
+bool ble_version_match = false;
 
 void *silabs_watcher(void *arg)
 {
@@ -70,6 +75,15 @@ void *silabs_watcher(void *arg)
             data.system_boot_data.bootloader = p->data.evt_system_boot.bootloader;
             data.system_boot_data.hw = p->data.evt_system_boot.hw;
             hex2str((uint8_t *)&p->data.evt_system_boot.hash, sizeof(uint32_t), data.system_boot_data.ble_hash);
+
+            if(ble_version_match == false)
+            {
+                if((data.system_boot_data.major == BG_VERSION_MAJOR) && (data.system_boot_data.minor == BG_VERSION_MINOR) 
+                    && (data.system_boot_data.patch == BG_VERSION_PATCH))
+                {
+                    ble_version_match = true;
+                }
+            }
 
             if (ble_msg_cb->ble_module_event)
             {

@@ -330,7 +330,7 @@ exit:
     return GL_UNKNOW_ERR;
 }
 
-GL_RET silabs_ble_set_legacy_adv_data(uint8_t handle, uint8_t flag, char *data)
+GL_RET silabs_ble_set_legacy_adv_data(uint8_t handle, uint8_t flag, const char *data)
 {
     if ((!data) || (strlen(data) % 2) || (strlen(data) / 2) > MAX_LEGACY_ADV_DATA_LEN)
     {
@@ -351,7 +351,7 @@ GL_RET silabs_ble_set_legacy_adv_data(uint8_t handle, uint8_t flag, char *data)
     return GL_SUCCESS;
 }
 
-GL_RET silabs_ble_set_extended_adv_data(uint8_t handle, char *data)
+GL_RET silabs_ble_set_extended_adv_data(uint8_t handle, const char *data)
 {
     if ((!data) || (strlen(data) % 2) || (strlen(data) / 2) > MAX_ADV_DATA_LEN)
     {
@@ -400,7 +400,7 @@ GL_RET silabs_ble_set_extended_adv_data(uint8_t handle, char *data)
     return GL_SUCCESS;
 }
 
-GL_RET silabs_ble_set_periodic_adv_data(uint8_t handle, char *data)
+GL_RET silabs_ble_set_periodic_adv_data(uint8_t handle, const char *data)
 {
     if ((!data) || (strlen(data) % 2) || (strlen(data) / 2) > MAX_ADV_DATA_LEN)
     {

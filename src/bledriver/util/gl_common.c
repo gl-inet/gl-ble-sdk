@@ -44,7 +44,7 @@ int str2addr(char* str, BLE_MAC address) {
     return 0;
 }
 
-int str2array(uint8_t* dst, char* src, int len) {
+int str2array(uint8_t* dst, const char* src, int len) {
     int i = 0;
     int tmp;
     while (i < len) {

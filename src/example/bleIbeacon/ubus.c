@@ -492,5 +492,5 @@ static void *ibeacon_data_upload_start(void *arg)
 
         ubus_send_event(ctx, UBUS_EVENT, _b.head);
     }
-    return;
+    return NULL;
 }

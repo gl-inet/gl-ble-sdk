@@ -49,11 +49,6 @@ static int ble_module_cb(gl_ble_module_event_t event, gl_ble_module_data_t *data
 static void sigal_ibeacon_hander(int sig);
 static int mode = -1;
 
-// store the ble module version when ble module init success, For subsequent version check
-static int major = 0;
-static int minor = 0;
-static int patch = 0;
-
 int main(int argc, char *argv[])
 {
 	int ret = -1;
@@ -129,9 +124,10 @@ static void *ble_start(void *arg)
 		usleep(100000);
 	}
 
-	// check ble module version, if not match will dfu
-	ret = gl_ble_check_module_version(major, minor, patch);
-	if(ret != GL_SUCCESS)
+// check ble module version, if not match will dfu
+ble_module_check:
+	ret = gl_ble_check_module_version();
+	if(GL_SUCCESS != ret)
 	{
 		ibeacon_module_work = false;
 		// Deinit first, and the serial port is occupied anyway
@@ -139,7 +135,7 @@ static void *ble_start(void *arg)
 		gl_ble_destroy();
 
 		ret = gl_ble_module_dfu();
-		if(ret == GL_SUCCESS)
+		if(GL_SUCCESS == ret)
 		{
 			// Reinit if dfu success
 			gl_ble_init();
@@ -150,6 +146,8 @@ static void *ble_start(void *arg)
 			{
 				usleep(100000);
 			}
+			
+			goto ble_module_check;
 		}
 		else
 		{
@@ -159,6 +157,7 @@ static void *ble_start(void *arg)
 	}
 
 	pthread_join(tid_ble, NULL);
+	return NULL;
 }
 
 static int ble_gap_cb(gl_ble_gap_event_t event, gl_ble_gap_data_t *data)
@@ -199,11 +198,6 @@ static int ble_module_cb(gl_ble_module_event_t event, gl_ble_module_data_t *data
 		printf("MODULE_CB_MSG >> %s\n", temp);
 
 		json_object_put(o);
-
-		// For subsequent version check
-		major = data->system_boot_data.major;
-		minor = data->system_boot_data.minor;
-		patch = data->system_boot_data.patch;
 
 		ibeacon_module_work = true;
 

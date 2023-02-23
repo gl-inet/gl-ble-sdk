@@ -35,6 +35,7 @@
 #include "silabs_evt.h"
 
 extern hw_cfg_t* ble_hw_cfg;
+extern bool ble_version_match;
 
 gl_ble_cbs ble_msg_cb;
 
@@ -238,17 +239,17 @@ GL_RET gl_ble_stop_adv(uint8_t handle)
 	return ble_stop_adv(handle);
 }
 
-GL_RET gl_ble_set_legacy_adv_data(uint8_t handle, uint8_t flag, char *data)
+GL_RET gl_ble_set_legacy_adv_data(uint8_t handle, uint8_t flag, const char *data)
 {
 	return ble_set_legacy_adv_data(handle, flag, data);
 }
 
-GL_RET gl_ble_set_extended_adv_data(uint8_t handle, char *data)
+GL_RET gl_ble_set_extended_adv_data(uint8_t handle, const char *data)
 {
 	return ble_set_extended_adv_data(handle, data);
 }
 
-GL_RET gl_ble_set_periodic_adv_data(uint8_t handle, char *data)
+GL_RET gl_ble_set_periodic_adv_data(uint8_t handle, const char *data)
 {
 	return ble_set_periodic_adv_data(handle, data);
 }
@@ -323,14 +324,13 @@ GL_RET gl_ble_set_gattdb(char *uci_cfg_name)
 	return ble_set_gattdb(uci_cfg_name);
 }
 
-GL_RET gl_ble_check_module_version(int major, int minor, int patch)
+GL_RET gl_ble_check_module_version(void)
 {
-	if ((major != BG_VERSION_MAJOR) || (minor != BG_VERSION_MINOR) || (patch != BG_VERSION_PATCH))
+	if(ble_version_match)
 	{
-		printf("The ble module firmware version is not match.\n");
-		return GL_UNKNOW_ERR;
+		return GL_SUCCESS;
 	}
-	return GL_SUCCESS;
+	return GL_UNKNOW_ERR;
 }
 
 GL_RET gl_ble_module_dfu(void)

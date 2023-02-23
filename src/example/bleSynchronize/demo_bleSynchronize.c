@@ -47,10 +47,7 @@ static uint8_t address_type;
 static uint8_t adv_sid;
 static uint16_t handle = 0xffff;
 
-// store the ble module version when ble module init success, For subsequent version check
-static int major = 0;
-static int minor = 0;
-static int patch = 0;
+
 
 int main(int argc, char *argv[])
 {
@@ -109,9 +106,10 @@ int main(int argc, char *argv[])
 		usleep(100000);
 	}
 
-	// check ble module version, if not match will dfu
-	ret = gl_ble_check_module_version(major, minor, patch);
-	if(ret != GL_SUCCESS)
+// check ble module version, if not match will dfu
+ble_module_check:
+	ret = gl_ble_check_module_version();
+	if(GL_SUCCESS != ret)
 	{
 		module_work = false;
 		// Deinit first, and the serial port is occupied anyway
@@ -119,7 +117,7 @@ int main(int argc, char *argv[])
 		gl_ble_destroy();
 
 		ret = gl_ble_module_dfu();
-		if(ret == GL_SUCCESS)
+		if(GL_SUCCESS == ret)
 		{
 			// Reinit if dfu success
 			gl_ble_init();
@@ -130,6 +128,8 @@ int main(int argc, char *argv[])
 			{
 				usleep(100000);
 			}
+			
+			goto ble_module_check;
 		}
 		else
 		{
@@ -319,10 +319,7 @@ static int ble_module_cb(gl_ble_module_event_t event, gl_ble_module_data_t *data
 
 		json_object_put(o);
 
-		// For subsequent version check
-		major = data->system_boot_data.major;
-		minor = data->system_boot_data.minor;
-		patch = data->system_boot_data.patch;
+		
 
 		module_work = true;
 

@@ -49,11 +49,11 @@ GL_RET silabs_ble_start_periodic_adv(uint8_t handle, uint8_t primary_phy, uint8_
 
 GL_RET silabs_ble_stop_adv(uint8_t handle);
 
-GL_RET silabs_ble_set_legacy_adv_data(uint8_t handle, uint8_t flag, char *data);
+GL_RET silabs_ble_set_legacy_adv_data(uint8_t handle, uint8_t flag, const char *data);
 
-GL_RET silabs_ble_set_extended_adv_data(uint8_t handle, char *data);
+GL_RET silabs_ble_set_extended_adv_data(uint8_t handle, const char *data);
 
-GL_RET silabs_ble_set_periodic_adv_data(uint8_t handle, char *data);
+GL_RET silabs_ble_set_periodic_adv_data(uint8_t handle, const char *data);
 
 GL_RET silabs_ble_send_notify(BLE_MAC address, int char_handle, char *value);
 
