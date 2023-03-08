@@ -14,9 +14,11 @@
  # limitations under the License.
  ####################################################################
 include $(TOPDIR)/rules.mk
+include version.mk
 
 PKG_NAME:=gl-ble-sdk
-PKG_VERSION:=2.0.1
+PKG_VERSION:=$(strip $(call findrev))
+PKG_RELEASE:=2
 
 TARGET_CFLAGS += -ggdb3
 

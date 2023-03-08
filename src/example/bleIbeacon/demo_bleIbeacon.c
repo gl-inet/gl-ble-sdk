@@ -118,42 +118,19 @@ static void *ble_start(void *arg)
 		exit(-1);
 	}
 
+	// ble module check, will auto update firmware if module firmware not work. 
+	// after update firmware if not work, will exit the program.
+	ret = gl_ble_check_module(&ble_ibeacon_cb);
+	if(ret != GL_SUCCESS)
+	{
+		printf("The ble module firmware not work.\n");
+		exit(-1);
+	}
+
 	// wait for module reset
 	while (!ibeacon_module_work)
 	{
 		usleep(100000);
-	}
-
-// check ble module version, if not match will dfu
-ble_module_check:
-	ret = gl_ble_check_module_version();
-	if(GL_SUCCESS != ret)
-	{
-		ibeacon_module_work = false;
-		// Deinit first, and the serial port is occupied anyway
-		gl_ble_unsubscribe();
-		gl_ble_destroy();
-
-		ret = gl_ble_module_dfu();
-		if(GL_SUCCESS == ret)
-		{
-			// Reinit if dfu success
-			gl_ble_init();
-			gl_ble_subscribe(&ble_ibeacon_cb);
-
-			// wait for module reset
-			while (!ibeacon_module_work)
-			{
-				usleep(100000);
-			}
-			
-			goto ble_module_check;
-		}
-		else
-		{
-			printf("The ble module firmware version is not 4_2_0, please switch it.\n");
-			exit(-1);
-		}
 	}
 
 	pthread_join(tid_ble, NULL);

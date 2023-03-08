@@ -41,6 +41,7 @@ static silabs_msg_queue_t queue_data;
 
 //global var
 bool ble_version_match = false;
+bool module_boot = false;
 
 void *silabs_watcher(void *arg)
 {
@@ -84,6 +85,7 @@ void *silabs_watcher(void *arg)
                     ble_version_match = true;
                 }
             }
+            module_boot = true;
 
             if (ble_msg_cb->ble_module_event)
             {
@@ -217,16 +219,16 @@ void *silabs_watcher(void *arg)
             gl_ble_gap_data_t data;
 
             // if periodic adv exist
-            data.extended_scan_rst.periodic_interval = p->data.evt_scanner_extended_advertisement_report.periodic_interval;
-            if(data.extended_scan_rst.periodic_interval)
+            if(p->data.evt_scanner_extended_advertisement_report.periodic_interval)
             {
-                data.extended_scan_rst.rssi = p->data.evt_scanner_extended_advertisement_report.rssi;
-                data.extended_scan_rst.adv_sid = p->data.evt_scanner_extended_advertisement_report.adv_sid;
-                data.extended_scan_rst.ble_addr_type = p->data.evt_scanner_extended_advertisement_report.address_type;
-                memcpy(data.extended_scan_rst.address, p->data.evt_scanner_extended_advertisement_report.address.addr, 6);
+                data.periodic_scan_rst.periodic_interval = p->data.evt_scanner_extended_advertisement_report.periodic_interval;
+                data.periodic_scan_rst.rssi = p->data.evt_scanner_extended_advertisement_report.rssi;
+                data.periodic_scan_rst.adv_sid = p->data.evt_scanner_extended_advertisement_report.adv_sid;
+                data.periodic_scan_rst.ble_addr_type = p->data.evt_scanner_extended_advertisement_report.address_type;
+                memcpy(data.periodic_scan_rst.address, p->data.evt_scanner_extended_advertisement_report.address.addr, 6);
                 if (ble_msg_cb->ble_gap_event)
                 {
-                    ble_msg_cb->ble_gap_event(GAP_BLE_EXTENDED_SCAN_RESULT_EVT, &data);
+                    ble_msg_cb->ble_gap_event(GAP_BLE_PERIODIC_SCAN_RESULT_EVT, &data);    
                 }
                 break;
             }
@@ -307,6 +309,7 @@ void *silabs_watcher(void *arg)
         {
             static uint8_t  long_sync_data[MAX_ADV_DATA_LEN];
             static int16_t  rssi_sync = 0;
+            static int16_t  tx_power_sync = 0;
             static uint8_t  chain_count_sync = 0;
             static uint8_t  data_status_last = 0xff;
             static uint8_t  data_status_current = 0xff;
@@ -315,6 +318,7 @@ void *silabs_watcher(void *arg)
             gl_ble_gap_data_t data;
             
             rssi_sync += (int16_t)p->data.evt_sync_data.rssi;
+            tx_power_sync += (int16_t)p->data.evt_sync_data.tx_power;
             ++chain_count_sync;
 
             data_status_current = p->data.evt_sync_data.data_status;
@@ -329,18 +333,21 @@ void *silabs_watcher(void *arg)
                 {
                     data.sync_scan_rst.ble_adv_len = sync_data_len_current;
                     data.sync_scan_rst.rssi = rssi_sync / chain_count_sync;
+                    data.sync_scan_rst.tx_power = tx_power_sync / chain_count_sync;
                     memcpy(data.sync_scan_rst.ble_adv, p->data.evt_sync_data.data.data, sync_data_len_current);
                 }
                 else if (data_status_last == 1)
                 {
                     data.sync_scan_rst.ble_adv_len = sync_data_len_current + sync_data_len_p;
                     data.sync_scan_rst.rssi = rssi_sync / chain_count_sync;
+                    data.sync_scan_rst.tx_power = tx_power_sync / chain_count_sync;
                     memcpy(&long_sync_data[sync_data_len_p], p->data.evt_sync_data.data.data, sync_data_len_current);
                     memcpy(data.sync_scan_rst.ble_adv, long_sync_data, data.sync_scan_rst.ble_adv_len);
                 }
                 data_status_last = 0xff;
                 sync_data_len_p = 0;
                 rssi_sync = 0;
+                tx_power_sync = 0;
                 chain_count_sync = 0;
             }
             else if (data_status_current == 1)
@@ -363,6 +370,7 @@ void *silabs_watcher(void *arg)
                     data_status_last = 0xff;
                     sync_data_len_p = 0;
                     rssi_sync = 0;
+                    tx_power_sync = 0;
                     chain_count_sync = 0;
                 }
 
@@ -373,6 +381,7 @@ void *silabs_watcher(void *arg)
                 data_status_last = 0xff;
                 sync_data_len_p = 0;
                 rssi_sync = 0;
+                tx_power_sync = 0;
                 chain_count_sync = 0;
                 break;
             }

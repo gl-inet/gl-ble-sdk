@@ -280,42 +280,19 @@ int main(int argc, char *argv[])
 		exit(-1);
 	}
 
+	// ble module check, will auto update firmware if module firmware not work. 
+	// after update firmware if not work, will exit the program.
+	ret = gl_ble_check_module(&ble_cb);
+	if(ret != GL_SUCCESS)
+	{
+		printf("The ble module firmware not work.\n");
+		exit(-1);
+	}
+
 	// wait for module reset
 	while (!module_work)
 	{
 		usleep(100000);
-	}
-
-// check ble module version, if not match will dfu
-ble_module_check:
-	ret = gl_ble_check_module_version();
-	if(GL_SUCCESS != ret)
-	{
-		module_work = false;
-		// Deinit first, and the serial port is occupied anyway
-		gl_ble_unsubscribe();
-		gl_ble_destroy();
-
-		ret = gl_ble_module_dfu();
-		if(GL_SUCCESS == ret)
-		{
-			// Reinit if dfu success
-			gl_ble_init();
-			gl_ble_subscribe(&ble_cb);
-
-			// wait for module reset
-			while (!module_work)
-			{
-				usleep(100000);
-			}
-			
-			goto ble_module_check;
-		}
-		else
-		{
-			printf("The ble module firmware version is not 4_2_0, please switch it.\n");
-			exit(-1);
-		}
 	}
 
 	// create adv handle

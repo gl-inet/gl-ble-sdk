@@ -35,6 +35,8 @@
 #define MAX_LEGACY_ADV_DATA_LEN     31
 #define MAX_ADV_DATA_LEN            1024
 #define MAX_HASH_DATA_LEN           255
+#define MAX_ADV_HANDLE              4
+#define MAX_SYNC_HANDLE             4
 
 /**
  * @brief BLE 48-bit MAC.
@@ -157,6 +159,7 @@ typedef union {
 typedef enum {
     GAP_BLE_LEGACY_SCAN_RESULT_EVT = 0,
     GAP_BLE_EXTENDED_SCAN_RESULT_EVT,
+    GAP_BLE_PERIODIC_SCAN_RESULT_EVT,
     GAP_BLE_SYNC_SCAN_RESULT_EVT,
     GAP_BLE_SYNC_CLOSED_EVT,
     GAP_BLE_UPDATE_CONN_EVT,
@@ -199,11 +202,25 @@ typedef union {
         uint16_t periodic_interval;
     } extended_scan_rst;
 
-    struct ble_sync_result_evt_data {
+    struct ble_periodic_result_evt_data {
+        BLE_MAC  address;
+        gl_ble_addr_type_t ble_addr_type;  
         int8_t   rssi;  
+        uint8_t  adv_sid;
+        uint16_t periodic_interval;
+    } periodic_scan_rst;
+
+    struct ble_sync_result_evt_data {
+        int8_t   tx_power;
+        int8_t   rssi;  
+        uint16_t sync_handle;
         uint16_t ble_adv_len;
         uint8_t  ble_adv[MAX_ADV_DATA_LEN];
     } sync_scan_rst;
+
+    struct ble_sync_closed_evt_data {
+        uint16_t sync_handle;
+    } sync_closed_rst;
 
     struct ble_update_conn_evt_data {
         BLE_MAC address;

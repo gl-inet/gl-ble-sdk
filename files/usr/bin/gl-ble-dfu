@@ -64,8 +64,8 @@ stty -F $uart_tty 115200 cs8 -parenb -cstopb -crtscts -echo raw
 dfu_mode_enter
 
 # Tranfer image
-# err_code=$(timeout 50 sz -4 -u -X $dfu_files > $uart_tty < $uart_tty; echo $?) #This will unlink the file.
-err_code=$(timeout 50 sz -4 -X $dfu_files > $uart_tty < $uart_tty; echo $?)
+err_code=$(timeout 60 sz -4 -u -X $dfu_files > $uart_tty < $uart_tty; echo $?) #This will unlink the file.
+# err_code=$(timeout 60 sz -4 -X $dfu_files > $uart_tty < $uart_tty; echo $?)
 if [ $err_code != 0 ]; then
     echo "dfu failed. err_code = $err_code"
 else

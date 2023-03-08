@@ -36,6 +36,7 @@
 
 extern hw_cfg_t* ble_hw_cfg;
 extern bool ble_version_match;
+extern bool module_boot;
 
 gl_ble_cbs ble_msg_cb;
 
@@ -336,15 +337,6 @@ GL_RET gl_ble_set_gattdb(char *uci_cfg_name)
 	return ble_set_gattdb(uci_cfg_name);
 }
 
-GL_RET gl_ble_check_module_version(void)
-{
-	if(ble_version_match)
-	{
-		return GL_SUCCESS;
-	}
-	return GL_UNKNOW_ERR;
-}
-
 GL_RET gl_ble_module_dfu(void)
 {
     char command[128] = {0};
@@ -357,12 +349,57 @@ GL_RET gl_ble_module_dfu(void)
 
     sprintf(command, "/usr/bin/gl-ble-dfu %s %s %d %d", ble_hw_cfg->model, ble_hw_cfg->port, ble_hw_cfg->rst_gpio, ble_hw_cfg->dfu_gpio);
 
-    if( system(command) == -1 )
+    if( system(command) != 0 )
 	{
 		perror("system");
 		return GL_UNKNOW_ERR;
     }
     return GL_SUCCESS;
+}
+
+GL_RET gl_ble_check_module(gl_ble_cbs *callback)
+{
+	GL_RET ret;
+	uint8_t count = 0;
+	while (!module_boot)
+	{
+		usleep(100000);
+		if(++count == 30) //timeout 3 sec
+		{
+			goto start_dfu;
+		}
+	}
+	
+	if(ble_version_match)
+	{
+		module_boot = false;
+		return GL_SUCCESS;
+	}
+	else
+	{
+		goto start_dfu;
+	}
+
+start_dfu:	
+	module_boot = false;
+	// Deinit first, and the serial port is occupied anyway
+	gl_ble_unsubscribe();
+	gl_ble_destroy();
+
+	//force to DFU
+	ret = gl_ble_module_dfu();
+	printf("dfu ret: %d\n", ret);
+	if(GL_SUCCESS == ret)
+	{
+		gl_ble_init();
+		gl_ble_subscribe(callback);
+
+		return GL_SUCCESS;
+	}
+	else 
+	{
+		return GL_UNKNOW_ERR;
+	}
 }
 
 // GL_RET gl_ble_del_gattdb(void)

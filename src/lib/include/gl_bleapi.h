@@ -464,15 +464,6 @@ GL_RET gl_ble_set_notify(BLE_MAC address, int char_handle, int flag);
 GL_RET gl_ble_set_gattdb(char *uci_cfg_name);
 
 /**
- * @brief  This function will check the ble module firmware version whether match the gl-ble-sdk version.
- * 
- * @return GL-RETURN-CODE 
- * 
- * @note   If the ble module version matched, will return GL_SUCCESS. Other return situation are not matched.
- */
-GL_RET gl_ble_check_module_version(void);
-
-/**
  * @brief  This function will dfu the ble module firmware to appropriate version.
  * 
  * @return GL-RETURN-CODE 
@@ -481,6 +472,17 @@ GL_RET gl_ble_check_module_version(void);
  *         It will not support some early devices.
  */
 GL_RET gl_ble_module_dfu(void);
+
+/**
+ * @brief  This function will check the ble module whether boot and check the firmware version whether match the gl-ble-sdk version.
+ *         If not, it will call the function gl_ble_module_dfu to update the ble module.
+ * @param  callback : This callback will be called when module receive a system boot, GAP and GATT event. 
+ * 
+ * @return GL-RETURN-CODE 
+ * 
+ * @note   If the ble module can booted and version matched, will return GL_SUCCESS. Other return situation are not matched.
+ */
+GL_RET gl_ble_check_module(gl_ble_cbs *callback);
 
 // /**
 //  *  @brief  Act as BLE slave, Delete Local GATT DataBase and make it unvisible to remote GATT clients.
