@@ -32,9 +32,11 @@ GL_RET silabs_ble_start_discovery(uint8_t phys, uint16_t interval, uint16_t wind
 
 GL_RET silabs_ble_stop_discovery(void);
 
-GL_RET silabs_ble_start_synchronize(uint16_t skip, uint16_t timeout, BLE_MAC address, uint8_t address_type, uint8_t adv_sid, uint16_t *handle);
+GL_RET silabs_ble_set_sync_parameters(uint16_t skip, uint16_t timeout);
 
-GL_RET silabs_ble_stop_synchronize(uint16_t handle);
+GL_RET silabs_ble_start_sync(BLE_MAC address, uint8_t address_type, uint8_t adv_sid, uint16_t *handle);
+
+GL_RET silabs_ble_stop_sync(uint16_t handle);
 
 GL_RET silabs_ble_create_adv_handle(uint8_t *handle);
 
@@ -75,7 +77,7 @@ GL_RET silabs_ble_write_char(BLE_MAC address, int char_handle, char *value, int 
 
 GL_RET silabs_ble_set_notify(BLE_MAC address, int char_handle, int flag);
 
-GL_RET silabs_ble_set_gattdb(char *uci_cfg_name);
+GL_RET silabs_ble_set_gattdb(char *json_cfg_name);
 
 GL_RET silabs_ble_del_gattdb(void);
 

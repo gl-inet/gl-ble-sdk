@@ -282,14 +282,19 @@ GL_RET gl_ble_stop_discovery(void)
 	return ble_stop_discovery();
 }
 
-GL_RET gl_ble_start_synchronize(uint16_t skip, uint16_t timeout, BLE_MAC address, uint8_t address_type, uint8_t adv_sid, uint16_t *handle)
+GL_RET gl_ble_set_sync_parameters(uint16_t skip, uint16_t timeout)
 {
-	return ble_start_synchronize(skip, timeout, address, address_type, adv_sid, handle);
+	return ble_set_sync_parameters(skip, timeout);
 }
 
-GL_RET gl_ble_stop_synchronize(uint16_t handle)
+GL_RET gl_ble_start_sync(BLE_MAC address, uint8_t address_type, uint8_t adv_sid, uint16_t *handle)
 {
-	return ble_stop_synchronize(handle);
+	return ble_start_sync(address, address_type, adv_sid, handle);
+}
+
+GL_RET gl_ble_stop_sync(uint16_t handle)
+{
+	return ble_stop_sync(handle);
 }
 
 GL_RET gl_ble_connect(BLE_MAC address, int address_type, int phy)
@@ -332,9 +337,9 @@ GL_RET gl_ble_set_notify(BLE_MAC address, int char_handle, int flag)
 	return ble_set_notify(address, char_handle, flag);
 }
 
-GL_RET gl_ble_set_gattdb(char *uci_cfg_name)
+GL_RET gl_ble_set_gattdb(char *json_cfg_name)
 {
-	return ble_set_gattdb(uci_cfg_name);
+	return ble_set_gattdb(json_cfg_name);
 }
 
 GL_RET gl_ble_module_dfu(void)

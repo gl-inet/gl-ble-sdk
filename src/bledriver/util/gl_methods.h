@@ -35,8 +35,9 @@
 #define ble_set_power                   silabs_ble_set_power
 #define ble_start_discovery             silabs_ble_start_discovery
 #define ble_stop_discovery              silabs_ble_stop_discovery
-#define ble_start_synchronize           silabs_ble_start_synchronize
-#define ble_stop_synchronize            silabs_ble_stop_synchronize
+#define ble_set_sync_parameters         silabs_ble_set_sync_parameters
+#define ble_start_sync                  silabs_ble_start_sync
+#define ble_stop_sync                   silabs_ble_stop_sync
 #define ble_create_adv_handle           silabs_ble_create_adv_handle
 #define ble_delete_adv_handle           silabs_ble_delete_adv_handle
 #define ble_start_legacy_adv            silabs_ble_start_legacy_adv

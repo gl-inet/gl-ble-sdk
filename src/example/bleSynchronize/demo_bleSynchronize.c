@@ -39,11 +39,7 @@ static int str2addr(char* str, BLE_MAC address) ;
 static bool module_work = false;
 static bool is_specified = false;
 
-static uint16_t skip = 0;
-static uint16_t timeout = 100;
-static BLE_MAC address_u8;
-static uint8_t address_type;
-static uint8_t adv_sid;
+
 static uint16_t handle = 0xffff;
 
 int main(int argc, char *argv[])
@@ -61,6 +57,11 @@ int main(int argc, char *argv[])
 	ble_cb.ble_module_event = ble_module_cb;
 
 	// get synchronize param
+	uint16_t skip = 0;
+	uint16_t timeout = 100;
+	BLE_MAC address_u8;
+	uint8_t address_type;
+	uint8_t adv_sid;
 
 	if((argc != 1) && (argc != 6))
 	{
@@ -119,13 +120,21 @@ int main(int argc, char *argv[])
 		printf("Start ble scanner error!! Err code: %d\n", ret);
 		exit(-1);
 	}
+
+	ret = gl_ble_set_sync_parameters(skip, timeout);
+	if (ret != GL_SUCCESS)
+	{
+		printf("Set sync parameters error!! Err code: %d\n", ret);
+		exit(-1);
+	}
 	
 	// Start synchronizing the specified address
 	if(argc == 6)
 	{
-		ret = gl_ble_start_synchronize(skip, timeout, address_u8, address_type, adv_sid, &handle);
+		ret = gl_ble_start_sync(address_u8, address_type, adv_sid, &handle);
 		if (ret != GL_SUCCESS)
 		{
+			gl_ble_stop_discovery();
 			printf("Start ble synchronize error!! Err code: %d\n", ret);
 			exit(-1);
 		}
@@ -186,43 +195,45 @@ static int ble_gap_cb(gl_ble_gap_event_t event, gl_ble_gap_data_t *data)
 	char ble_adv[MAX_ADV_DATA_LEN * 2 + 1] = {0};
 	switch (event)
 	{
-		case GAP_BLE_PERIODIC_SCAN_RESULT_EVT:
+		case GAP_BLE_EXTENDED_SCAN_RESULT_EVT:
 		{	
-			// GL_RET ret;
-			// uint8_t i = 0;
-			addr2str(data->periodic_scan_rst.address, address);
+			addr2str(data->extended_scan_rst.address, address);
 
 			// json format
 			json_object* o = NULL;
 			o = json_object_new_object();
 			
-			json_object_object_add(o, "type", json_object_new_string("periodic_adv_result"));
+			hex2str(data->extended_scan_rst.ble_adv, data->extended_scan_rst.ble_adv_len, ble_adv);
+			json_object_object_add(o, "type", json_object_new_string("extended_adv_result"));
 			json_object_object_add(o, "mac", json_object_new_string(address));
-			json_object_object_add(o, "address_type", json_object_new_int(data->periodic_scan_rst.ble_addr_type));
-			json_object_object_add(o, "rssi", json_object_new_int(data->periodic_scan_rst.rssi));
-			json_object_object_add(o, "adv_sid", json_object_new_int(data->periodic_scan_rst.adv_sid));
-			json_object_object_add(o, "periodic_interval", json_object_new_int(data->periodic_scan_rst.periodic_interval));
+			json_object_object_add(o, "address_type", json_object_new_int(data->extended_scan_rst.ble_addr_type));
+			json_object_object_add(o, "rssi", json_object_new_int(data->extended_scan_rst.rssi));
+			json_object_object_add(o, "tx_power", json_object_new_int(data->extended_scan_rst.tx_power));
+			json_object_object_add(o, "event_flags", json_object_new_int(data->extended_scan_rst.event_flags));
+			json_object_object_add(o, "adv_sid", json_object_new_int(data->extended_scan_rst.adv_sid));
+			json_object_object_add(o, "periodic_interval", json_object_new_int(data->extended_scan_rst.periodic_interval));
+			json_object_object_add(o, "bonding", json_object_new_int(data->extended_scan_rst.bonding));
+			json_object_object_add(o, "data", json_object_new_string(ble_adv));
 			const char *temp = json_object_to_json_string(o);
 			printf("GAP_CB_MSG >> %s\n",temp);
 
 			json_object_put(o);
 
-			// if no synchronization address is specified, the first periodic broadcast packet scanned synchronously
-			if(!is_specified)
+			//if no synchronization address is specified, the first periodic broadcast packet scanned synchronously
+			if(data->extended_scan_rst.periodic_interval != 0)
 			{
-				is_specified = true;
-				memcpy(address_u8, data->periodic_scan_rst.address, DEVICE_MAC_LEN);
-				address_type = data->periodic_scan_rst.ble_addr_type;
-				adv_sid = data->periodic_scan_rst.adv_sid;
-				
-				GL_RET ret = gl_ble_start_synchronize(skip, timeout, address_u8, address_type, adv_sid, &handle);
-				if (ret != GL_SUCCESS)
+				if (!is_specified)
 				{
-					printf("Start ble synchronize error!! Err code: %d\n", ret);
+					GL_RET ret = gl_ble_start_sync(data->extended_scan_rst.address, data->extended_scan_rst.ble_addr_type, data->extended_scan_rst.adv_sid, &handle);
+					if (ret != GL_SUCCESS)
+					{
+						printf("Start ble synchronize error!! Err code: %d\n", ret);
+					}
+					gl_ble_stop_discovery();
 				}
-				gl_ble_stop_discovery();
-				// usleep(100*1000);
 			}
+				
+
 			break;
 		}
 
@@ -296,7 +307,7 @@ static void sigal_hander(int sig)
 	printf("\nbleScanner exit!\n");
 
 	is_specified = false;
-	gl_ble_stop_synchronize(handle);
+	gl_ble_stop_sync(handle);
 
 	gl_ble_unsubscribe();
 	gl_ble_destroy();

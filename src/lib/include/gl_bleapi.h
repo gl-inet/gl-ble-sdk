@@ -317,12 +317,21 @@ GL_RET gl_ble_start_discovery(uint8_t phys, uint16_t interval, uint16_t window, 
 GL_RET gl_ble_stop_discovery(void);
 
 /**
- *  @brief  Act as master, Set and start the BLE synchronize. 
+ * @brief Act as master, set the BLE synchronize parameters.
  * 
- *  @param skip : The maximum number of periodic advertising packets that can be skipped after a successful receive. \n
- *                 Range: 0x0000 to 0x01F3. \n
- *  @param timeout : The maximum permitted time between successful receives. If this time is exceeded, synchronization is lost. Unit: 10 ms. \n 
- *                    Range: 0x0A to 0x4000, Time Range: 100 ms to 163.84 s. \n 
+ * @param skip : The maximum number of periodic advertising packets that can be skipped after a successful receive. \n
+ *               Range: 0x0000 to 0x01F3. \n
+ * @param timeout : The maximum permitted time between successful receives. If this time is exceeded, synchronization is lost. Unit: 10 ms. \n 
+ *                  Range: 0x0A to 0x4000, Time Range: 100 ms to 163.84 s. \n 
+ * @retval GL-RETURN-CODE
+ * @note  The synchronize timeout you set should bigger than Periodic advertising interval. If not, it will breaks the established synchronization. \n
+ *        The specified parameters take effect immediately for all advertisers that have not already established synchronization.
+ */
+GL_RET gl_ble_set_sync_parameters(uint16_t skip, uint16_t timeout);
+
+/**
+ *  @brief  Act as master, start the BLE synchronize. 
+ *
  *  @param address : Address of the device to synchronize to. Like “11:22:33:44:55:66”. \n
  *  @param address_type : Address type of the device to connect to. \n
  *                         0: Public address. \n
@@ -334,9 +343,8 @@ GL_RET gl_ble_stop_discovery(void);
  * 
  *  @retval  GL-RETURN-CODE
  * 
- *  @note  The synchronize timeout you set should bigger than Periodic advertising interval. If not, it will breaks the established synchronization.
  */
-GL_RET gl_ble_start_synchronize(uint16_t skip, uint16_t timeout, BLE_MAC address, uint8_t address_type, uint8_t adv_sid, uint16_t *handle);
+GL_RET gl_ble_start_sync(BLE_MAC address, uint8_t address_type, uint8_t adv_sid, uint16_t *handle);
 
 /**
  *  @brief  Act as master, End the current GAP synchronize procedure.
@@ -345,7 +353,7 @@ GL_RET gl_ble_start_synchronize(uint16_t skip, uint16_t timeout, BLE_MAC address
  * 
  *  @param  GL-RETURN-CODE
  */
-GL_RET gl_ble_stop_synchronize(uint16_t handle);
+GL_RET gl_ble_stop_sync(uint16_t handle);
 
 /**
  *  @brief  Act as master, Start connect to a remote BLE device.
@@ -454,14 +462,14 @@ GL_RET gl_ble_set_notify(BLE_MAC address, int char_handle, int flag);
 /**
  *  @brief  Act as BLE slave, Set Local GATT DataBase and make it visible to remote GATT clients.
  * 
- *  @param  uci_cfg_name : The UCI file name that you want to set GATT database. \n
+ *  @param  json_cfg_name : The json file name that you want to set GATT database. \n
  * 
  *  @return GL-RETURN-CODE
  * 
- *  @note   Please refer to template of UCI file "/etc/config/gl_gattdb_cfg". \n
- *          After calling this function, the local GATT database will be cleared firstly. And then configure it according to the UCI file.
+ *  @note   Please refer to template of json file in bletool set_gattdb README. \n
+ *          After calling this function, the local GATT database will be cleared firstly. And then configure it according to the json file.
  */
-GL_RET gl_ble_set_gattdb(char *uci_cfg_name);
+GL_RET gl_ble_set_gattdb(char *json_cfg_name);
 
 /**
  * @brief  This function will dfu the ble module firmware to appropriate version.

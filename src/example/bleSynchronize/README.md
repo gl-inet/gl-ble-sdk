@@ -54,7 +54,7 @@ bleSynchronize [skip] [timeout] [address] [address_type] [adv_sid]
                 The adv_sid of a periodic advertising packet can be obtained by GAP_BLE_EXTENDED_SCAN_RESULT_EVT whether 						periodic_interval exists. Periodic_interval equal 0 indicates no periodic advertising packet.
 ```
 
-**Note:** The synchronize timeout you set should bigger than Periodic advertising interval. If not, it will breaks the established synchronization. 
+**Note:** **It will automationaly start ble scan on the simultaneous LE 1M and Coded PHY alternatively.** The synchronize timeout you set should bigger than Periodic advertising interval. If not, it will breaks the established synchronization. 
 
 
 

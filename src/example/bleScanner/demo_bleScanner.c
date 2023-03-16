@@ -234,76 +234,32 @@ static int ble_gap_cb(gl_ble_gap_event_t event, gl_ble_gap_data_t *data)
 					break;
 				}
 			}
+
 			addr2str(data->extended_scan_rst.address, address);
 
 			// json format
 			json_object* o = NULL;
 			o = json_object_new_object();
-
-			//periodic adv exist
-			if (data->extended_scan_rst.periodic_interval)
-			{
-				json_object_object_add(o, "type", json_object_new_string("periodic_adv_result"));
-				json_object_object_add(o, "mac", json_object_new_string(address));
-				json_object_object_add(o, "address_type", json_object_new_int(data->extended_scan_rst.ble_addr_type));
-				json_object_object_add(o, "rssi", json_object_new_int(data->extended_scan_rst.rssi));
-				json_object_object_add(o, "adv_sid", json_object_new_int(data->extended_scan_rst.adv_sid));
-				json_object_object_add(o, "periodic_interval", json_object_new_int(data->extended_scan_rst.periodic_interval));
-				const char *temp = json_object_to_json_string(o);
-				printf("GAP_CB_MSG >> %s\n",temp);
-
-				json_object_put(o);
-				break;
-			}
-
+			
 			hex2str(data->extended_scan_rst.ble_adv, data->extended_scan_rst.ble_adv_len, ble_adv);
-
 			json_object_object_add(o, "type", json_object_new_string("extended_adv_result"));
 			json_object_object_add(o, "mac", json_object_new_string(address));
 			json_object_object_add(o, "address_type", json_object_new_int(data->extended_scan_rst.ble_addr_type));
 			json_object_object_add(o, "rssi", json_object_new_int(data->extended_scan_rst.rssi));
+			json_object_object_add(o, "tx_power", json_object_new_int(data->extended_scan_rst.tx_power));
 			json_object_object_add(o, "event_flags", json_object_new_int(data->extended_scan_rst.event_flags));
+			json_object_object_add(o, "adv_sid", json_object_new_int(data->extended_scan_rst.adv_sid));
+			json_object_object_add(o, "periodic_interval", json_object_new_int(data->extended_scan_rst.periodic_interval));
 			json_object_object_add(o, "bonding", json_object_new_int(data->extended_scan_rst.bonding));
 			json_object_object_add(o, "data", json_object_new_string(ble_adv));
 			const char *temp = json_object_to_json_string(o);
 			printf("GAP_CB_MSG >> %s\n",temp);
 
 			json_object_put(o);
+
 			break;
 		}
-
-		// case  GAP_BLE_SYNC_SCAN_RESULT_EVT:
-		// {
-		// 	char ble_adv[data->sync_scan_rst.ble_adv_len * 2];
-		// 	memset(ble_adv, 0, data->sync_scan_rst.ble_adv_len * 2);
-		// 	hex2str(data->sync_scan_rst.ble_adv, data->sync_scan_rst.ble_adv_len, ble_adv);
-
-		// 	// json format
-		// 	json_object* o = NULL;
-		// 	o = json_object_new_object();
-		// 	json_object_object_add(o, "type", json_object_new_string("sync_result"));
-		// 	json_object_object_add(o, "rssi", json_object_new_int(data->sync_scan_rst.rssi));
-		// 	json_object_object_add(o, "data", json_object_new_string(sync_data));
-		// 	const char *temp = json_object_to_json_string(o);
-		// 	printf("GAP_CB_MSG >> %s\n",temp);
-
-		// 	json_object_put(o);
-		// 	break;
-		// }
-
-		// case GAP_BLE_SYNC_CLOSED_EVT:
-		// {
-		// 	printf("sync closed\n");
-		// 	// If the synchronous closed is not ordered, it will to restart synchronize
-		// 	int status = -1;
-		// 	if (!is_stop_sync)
-		// 	{
-		// 		status = gl_ble_start_synchronize(&synchronize_param);
-		// 		printf("restart sync status: %d\n", status);
-		// 	}
-				
-		// 	break;
-		// }
+		
 		default:
 			break;
 	}

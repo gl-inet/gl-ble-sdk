@@ -39,61 +39,21 @@
 #define MAX_SYNC_HANDLE             4
 
 /**
+ * @brief  Indicate the advertiser clock accuracy in a periodic advertising synchronization.
+ */
+#define GL_CLOCK_ACCURACY_500_PPM   (0x1f4)
+#define GL_CLOCK_ACCURACY_250_PPM   (0xfa) 
+#define GL_CLOCK_ACCURACY_150_PPM   (0x96) 
+#define GL_CLOCK_ACCURACY_100_PPM   (0x64)
+#define GL_CLOCK_ACCURACY_75_PPM    (0x4b) 
+#define GL_CLOCK_ACCURACY_50_PPM    (0x32) 
+#define GL_CLOCK_ACCURACY_30_PPM    (0x1e) 
+#define GL_CLOCK_ACCURACY_20_PPM    (0x14)
+
+/**
  * @brief BLE 48-bit MAC.
  */
 typedef uint8_t BLE_MAC[DEVICE_MAC_LEN];
-
-/**
- * @brief BLE Mac type. 
- */
-typedef enum {
-  PUBLIC_ADDRESS = 0,
-  RANDOM_ADDRESS,
-} gl_ble_ble_mac_type_e;
-
-/**
- * @brief gatt database service param
- * 
- */
-typedef struct {
-    uint8_t property;
-    size_t uuid_len;
-    uint8_t *uuid;
-    char service_name[64];
-} gl_ble_gattdb_service_param_t;
-
-/**
- * @brief gatt database characteristic param
- * 
- */
-typedef struct {
-    uint16_t property;
-    uint8_t flag;
-    uint8_t uuid_len;
-    uint8_t uuid_16[2];
-    uint8_t uuid_128[16];
-    uint8_t value_type;
-    uint16_t maxlen;
-    size_t value_len;
-    uint8_t *value;
-    char char_name[64];
-} gl_ble_gattdb_char_param_t;
-
-/**
- * @brief gatt database descriptor param
- * 
- */
-typedef struct {
-    uint16_t property;
-    uint8_t uuid_len;
-    uint8_t uuid_16[2];
-    uint8_t uuid_128[16];
-    uint8_t value_type;
-    uint16_t maxlen;
-    size_t value_len;
-    uint8_t *value;
-    char descriptor_name[64];
-} gl_ble_gattdb_descriptor_param_t;
 
 /**
  * @brief service node.
@@ -128,7 +88,6 @@ typedef struct {
     ble_characteristic_node_t list[LIST_LENGTHE_MAX]; ///< array of characteristic node
 } gl_ble_char_list_t;
 
-
 /**
  * @brief module callback event type.
  */
@@ -159,7 +118,7 @@ typedef union {
 typedef enum {
     GAP_BLE_LEGACY_SCAN_RESULT_EVT = 0,
     GAP_BLE_EXTENDED_SCAN_RESULT_EVT,
-    GAP_BLE_PERIODIC_SCAN_RESULT_EVT,
+    GAP_BLE_SYNC_OPENED_EVT,
     GAP_BLE_SYNC_SCAN_RESULT_EVT,
     GAP_BLE_SYNC_CLOSED_EVT,
     GAP_BLE_UPDATE_CONN_EVT,
@@ -198,17 +157,21 @@ typedef union {
         uint16_t ble_adv_len;
         uint8_t  ble_adv[MAX_ADV_DATA_LEN];
         int32_t  bonding;
+        int8_t   tx_power;
         uint8_t  adv_sid;
         uint16_t periodic_interval;
     } extended_scan_rst;
 
-    struct ble_periodic_result_evt_data {
-        BLE_MAC  address;
-        gl_ble_addr_type_t ble_addr_type;  
-        int8_t   rssi;  
+    struct ble_sync_opened_evt_data {
+        uint16_t sync_handle;
         uint8_t  adv_sid;
+        BLE_MAC  address;
+        gl_ble_addr_type_t ble_addr_type;
+        uint8_t  adv_phy;
         uint16_t periodic_interval;
-    } periodic_scan_rst;
+        uint16_t clock_accuracy;
+        uint8_t  bonding;
+    } sync_opened_rst;
 
     struct ble_sync_result_evt_data {
         int8_t   tx_power;

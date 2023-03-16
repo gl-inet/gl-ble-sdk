@@ -319,6 +319,7 @@ void silabs_event_handler(struct sl_bt_packet *p)
     case sl_bt_evt_gatt_server_characteristic_status_id:
     case sl_bt_evt_scanner_legacy_advertisement_report_id:
     case sl_bt_evt_scanner_extended_advertisement_report_id:
+    case sl_bt_evt_sync_opened_id:
     case sl_bt_evt_sync_data_id:
     case sl_bt_evt_sync_closed_id:
     case sl_bt_evt_connection_parameters_id:

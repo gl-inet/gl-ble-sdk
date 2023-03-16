@@ -11,7 +11,7 @@ include_directories( ${PROJECT_SOURCE_DIR}/bledriver/silabs )
 add_executable( ${EXEC_NAME} ${SOURCES} )
 
 # link_directories( ${PROJECT_SOURCE_DIR}/build/lib )
-target_link_libraries( ${EXEC_NAME} PRIVATE json-c glbleapi readline ncurses )
+target_link_libraries( ${EXEC_NAME} PRIVATE json-c glbleapi readline ncurses)
 
 
 install( 

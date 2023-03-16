@@ -94,7 +94,7 @@ bletool                -------------------->  A tool that integrates all BLE API
 
 We'll keep updating the example, so let us know if you have any good ideas :D
 
-**Note: The above example will check the BLE module firmware version, if the version of BLE module firmware is not v4.2.0, it will exit. Please see [DFU DOCS](./dfu).**
+**Note: The above example will check the BLE module firmware version, if the version of BLE module firmware is not v4.2.0, it will update. However, it may not be supported for previous devices. Please see [DFU DOCS](./dfu).**
 
 
 

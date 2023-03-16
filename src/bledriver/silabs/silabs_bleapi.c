@@ -164,25 +164,22 @@ GL_RET silabs_ble_stop_discovery(void)
     return GL_SUCCESS;
 }
 
-GL_RET silabs_ble_start_synchronize(uint16_t skip, uint16_t timeout, BLE_MAC address, uint8_t address_type, uint8_t adv_sid, uint16_t *handle)
+GL_RET silabs_ble_set_sync_parameters(uint16_t skip, uint16_t timeout)
 {
-    bd_addr addr;
-    memcpy(addr.addr, address, 6);
     sl_status_t status = SL_STATUS_FAIL;
-
-    // // stop scanner, in case scanning is enabled in the stack
-    // status = sl_bt_scanner_stop();
-    // if (status != SL_STATUS_OK)
-    // {
-    //     return GL_UNKNOW_ERR;
-    // }
-
-    // set sync and start
     status = sl_bt_sync_set_parameters(skip, timeout, 0);
     if (status != SL_STATUS_OK)
     {
         return GL_UNKNOW_ERR;
     }
+    return GL_SUCCESS;
+}
+
+GL_RET silabs_ble_start_sync(BLE_MAC address, uint8_t address_type, uint8_t adv_sid, uint16_t *handle)
+{
+    bd_addr addr;
+    memcpy(addr.addr, address, 6);
+    sl_status_t status = SL_STATUS_FAIL;
 
     status = sl_bt_sync_open(addr, address_type, adv_sid, handle);
     if (status != SL_STATUS_OK)
@@ -193,7 +190,7 @@ GL_RET silabs_ble_start_synchronize(uint16_t skip, uint16_t timeout, BLE_MAC add
     return GL_SUCCESS;
 }
 
-GL_RET silabs_ble_stop_synchronize(uint16_t handle)
+GL_RET silabs_ble_stop_sync(uint16_t handle)
 {
     sl_status_t status = SL_STATUS_FAIL;
     
@@ -296,7 +293,7 @@ GL_RET silabs_ble_start_extended_adv(uint8_t handle, uint8_t primary_phy, uint8_
             goto exit;
         }
     }
-    status = sl_bt_extended_advertiser_start(handle, connect, 0);
+    status = sl_bt_extended_advertiser_start(handle, connect, SL_BT_EXTENDED_ADVERTISER_INCLUDE_TX_POWER);
     if (status != SL_STATUS_OK)
     {
         goto exit;
@@ -318,7 +315,7 @@ GL_RET silabs_ble_start_periodic_adv(uint8_t handle, uint8_t primary_phy, uint8_
         goto exit;
     }
 
-    status = sl_bt_periodic_advertiser_start(handle, interval_min, interval_max, SL_BT_PERIODIC_ADVERTISER_AUTO_START_EXTENDED_ADVERTISING);
+    status = sl_bt_periodic_advertiser_start(handle, interval_min, interval_max, SL_BT_PERIODIC_ADVERTISER_AUTO_START_EXTENDED_ADVERTISING|SL_BT_EXTENDED_ADVERTISER_INCLUDE_TX_POWER);
     if (status != SL_STATUS_OK)
     {
         goto exit;
@@ -812,44 +809,64 @@ GL_RET silabs_ble_set_notify(BLE_MAC address, int char_handle, int flag)
     return GL_SUCCESS;
 }
 
-GL_RET silabs_ble_set_gattdb(char *uci_cfg_name)
+GL_RET silabs_ble_set_gattdb(char *json_cfg_name)
 {
     GL_RET ret = silabs_ble_del_gattdb();
     if(ret != GL_SUCCESS)
     {
-        printf("delete local gatt data base failed!\n");
+        // printf("delete local gatt data base failed!\n");
         return GL_UNKNOW_ERR;
     }
+
+    sl_bt_uuid_16_t uuid_2B;
+    uuid_128 uuid_16B;
 
     uint16_t session_handle = 0xffff;
     uint16_t service_handle = 0xffff;
     uint16_t characteristic_handle = 0xffff;
     uint16_t descriptor_handle = 0xffff;
+    json_object *root;
+    json_object *service_list_obj;
+    json_object *service_obj;
 
-    static char tmp[64];
-    const char s[2] = " ";
-    int i, j, k;
-    char *buf;
-    char *end_str;
-    char str_section[64];
+    json_object *property_obj;
+    uint8_t  service_property;
+    uint16_t char_property;
+    uint16_t despt_property;
 
-    sl_bt_uuid_16_t uuid_2B;
-    uuid_128 uuid_16B;
+    json_object *uuid_len_obj;
+    size_t uuid_len;
 
-    uint8_t service_num = 0;
-    gl_ble_gattdb_service_param_t *service_param = NULL;
-    char *service_name = NULL;
-    uint8_t *uuid_service = NULL;
+    json_object *uuid_obj;
+    const char *uuid;
+    uint8_t *uuid_u8 = NULL;
 
-    uint8_t char_num;
-    gl_ble_gattdb_char_param_t *char_param = NULL;
-    char *char_name = NULL;
-    uint8_t *char_value = NULL;
     
-    uint8_t descriptor_num;
-    gl_ble_gattdb_descriptor_param_t *descriptor_param = NULL;
-    char *descriptor_name = NULL;
-    uint8_t *descriptor_value = NULL;
+    json_object *char_list_obj;
+    json_object *char_obj;
+
+    json_object *flag_obj;
+    uint8_t flag;
+
+    json_object *value_type_obj;
+    uint8_t value_type;
+
+    json_object *maxlen_obj;
+    uint16_t maxlen;
+
+    json_object *value_len_obj;
+    size_t value_len;
+
+    json_object *value_obj;
+    const char *value;
+    uint8_t *value_u8 = NULL;
+
+
+    json_object *despt_list_obj;
+    json_object *despt_obj;
+
+    json_bool json_ret;
+
 
     sl_status_t status = SL_STATUS_FAIL;
     status = sl_bt_gattdb_new_session(&session_handle);
@@ -857,421 +874,262 @@ GL_RET silabs_ble_set_gattdb(char *uci_cfg_name)
     {
         return GL_UNKNOW_ERR;
     }
-    
-    static struct uci_context* ctx = NULL;
-    ctx = guci_init();
-    if(ctx == NULL)
+
+    root = json_object_from_file(json_cfg_name);
+    if(root == NULL)
     {
-        printf("uci init fail.\n");
-        status = SL_STATUS_FAIL;
-        goto exit;
+        sl_bt_gattdb_abort(session_handle);
+        return GL_UNKNOW_ERR;
     }
-
-    memset(tmp, 0, sizeof(tmp));
-    memset(str_section, 0, sizeof(str_section));
-    sprintf(str_section, "%s.gattdb.service_num", uci_cfg_name);
-    if(GL_SUCCESS != guci_get(ctx, str_section, tmp))
+    else
     {
-        status = SL_STATUS_FAIL;
-        goto exit;
-    }
-    service_num = atoi(tmp);
-    
-    if(service_num == 0)
-    {
-        printf("local gatt dataBase no service\n");
-        status = SL_STATUS_FAIL;
-        goto exit;
-    }
-
-    service_param = (gl_ble_gattdb_service_param_t*)calloc(service_num, sizeof(gl_ble_gattdb_service_param_t));
-
-    memset(tmp, 0, sizeof(tmp));
-    memset(str_section, 0, sizeof(str_section));
-    sprintf(str_section, "%s.gattdb.service", uci_cfg_name);
-    if(GL_SUCCESS != guci_get(ctx, str_section, tmp))
-    {
-        status = SL_STATUS_FAIL;
-        goto exit;
-    }
-
-    buf = tmp;
-    for(i = 0; i < service_num; ++i)
-    {
-        service_name = strtok_r(buf, s, &end_str);
-        if(service_name != NULL)
+        json_ret = json_object_object_get_ex(root, "service", &service_list_obj);
+        if(json_ret == 0)
         {
-            memcpy(service_param[i].service_name, service_name, 64);
-        }else{
-            printf("Split service name error\n");
-            status = SL_STATUS_FAIL;
-            goto exit;
-        }
-        buf = NULL;
-    }
-    service_name = NULL;
-    
-    for(i = 0; i < service_num; ++i)
-    {
-        memset(str_section, 0, sizeof(str_section));
-        sprintf(str_section, "%s.%s.property", uci_cfg_name, service_param[i].service_name);
-        memset(tmp, 0, sizeof(tmp));
-        if(GL_SUCCESS != guci_get(ctx, str_section, tmp))
-        {
-            status = SL_STATUS_FAIL;
-            goto exit;
-        }
-        service_param[i].property = atoi(tmp);
-
-        memset(str_section, 0, sizeof(str_section));
-        sprintf(str_section, "%s.%s.uuid_len", uci_cfg_name, service_param[i].service_name);
-        memset(tmp, 0, sizeof(tmp));
-        if(GL_SUCCESS != guci_get(ctx, str_section, tmp))
-        {
-            status = SL_STATUS_FAIL;
-            goto exit;
-        }
-        service_param[i].uuid_len = atoi(tmp);
-        
-
-        memset(str_section, 0, sizeof(str_section));
-        sprintf(str_section, "%s.%s.uuid", uci_cfg_name, service_param[i].service_name);
-        memset(tmp, 0, sizeof(tmp));
-        if(GL_SUCCESS != guci_get(ctx, str_section, tmp))
-        {
-            status = SL_STATUS_FAIL;
-            goto exit;
-        }
-        uuid_service = calloc(1, service_param[i].uuid_len);
-        str2array(uuid_service, tmp, service_param[i].uuid_len);
-        if(ENDIAN)
-        {
-            reverse_endian(uuid_service, service_param[i].uuid_len);
-        }
-        service_param[i].uuid = uuid_service;
-
-        status = sl_bt_gattdb_add_service(session_handle, sl_bt_gattdb_primary_service, 
-                                          service_param[i].property, service_param[i].uuid_len, service_param[i].uuid, &service_handle);
-        if (status != SL_STATUS_OK)
-        {
-            goto exit;
-        }
-        free(uuid_service);
-        uuid_service = NULL;
-
-        memset(str_section, 0, sizeof(str_section));
-        sprintf(str_section, "%s.%s.characteristic_num", uci_cfg_name, service_param[i].service_name);
-        memset(tmp, 0, sizeof(tmp));
-        if(GL_SUCCESS != guci_get(ctx, str_section, tmp))
-        {
-            status = SL_STATUS_FAIL;
-            goto exit;
-        }
-        char_num = atoi(tmp);
-
-        if(char_num == 0)
-        {
-            continue;
+            // printf("service_list_obj:%s\n",json_object_to_json_string(service_list_obj));   
+            
+            goto exit; 
         }
 
-        char_param = (gl_ble_gattdb_char_param_t*)calloc(char_num, sizeof(gl_ble_gattdb_char_param_t));
-        
-        memset(str_section, 0, sizeof(str_section));
-        sprintf(str_section, "%s.%s.characteristic", uci_cfg_name, service_param[i].service_name);
-        memset(tmp, 0, sizeof(tmp));
-        if(GL_SUCCESS != guci_get(ctx, str_section, tmp))
+        size_t service_num = json_object_array_length(service_list_obj);
+        // printf("service_num: %d\n", service_num);
+        for(uint8_t i = 0; i < service_num; ++i)
         {
-            status = SL_STATUS_FAIL;
-            goto exit;
-        }
-        buf = tmp;
-        for(j = 0; j < char_num; ++j)
-        {
-            char_name = strtok_r(buf, s, &end_str);
-            if(char_name != NULL)
-            {
-                memcpy(char_param[j].char_name, char_name, 64);
-            }else{
-                printf("Split characteristic name error\n");
-                status = SL_STATUS_FAIL;
-                goto exit;
-            }
-            buf = NULL;
-        }
-        char_name = NULL;
+            service_obj = json_object_array_get_idx(service_list_obj, i); 
 
-        for(j = 0; j < char_num; ++j)
-        {
-            memset(str_section, 0, sizeof(str_section));
-            sprintf(str_section, "%s.%s.property", uci_cfg_name, char_param[j].char_name);
-            memset(tmp, 0, sizeof(tmp));
-            if(GL_SUCCESS != guci_get(ctx, str_section, tmp))
+            json_ret = json_object_object_get_ex(service_obj, "service_property", &property_obj);
+            if(json_ret == 0)
             {
-                status = SL_STATUS_FAIL;
-                goto exit;
+                goto exit; 
             }
-            char_param[j].property = atoi(tmp);
+            service_property = json_object_get_int(property_obj);
 
-            memset(str_section, 0, sizeof(str_section));
-            sprintf(str_section, "%s.%s.flag", uci_cfg_name, char_param[j].char_name);
-            memset(tmp, 0, sizeof(tmp));
-            if(GL_SUCCESS != guci_get(ctx, str_section, tmp))
+            json_ret = json_object_object_get_ex(service_obj, "service_uuid_len", &uuid_len_obj);
+            if(json_ret == 0)
             {
-                status = SL_STATUS_FAIL;
-                goto exit;
+                goto exit; 
             }
-            char_param[j].flag = atoi(tmp);
+            uuid_len = json_object_get_int(uuid_len_obj);
 
-            memset(str_section, 0, sizeof(str_section));
-            sprintf(str_section, "%s.%s.uuid_len", uci_cfg_name, char_param[j].char_name);
-            memset(tmp, 0, sizeof(tmp));
-            if(GL_SUCCESS != guci_get(ctx, str_section, tmp))
+            json_ret = json_object_object_get_ex(service_obj, "service_uuid", &uuid_obj);
+            if(json_ret == 0)
             {
-                status = SL_STATUS_FAIL;
-                goto exit;
+                goto exit; 
             }
-            char_param[j].uuid_len = atoi(tmp);
-
-            memset(str_section, 0, sizeof(str_section));
-            sprintf(str_section, "%s.%s.uuid", uci_cfg_name, char_param[j].char_name);
-            memset(tmp, 0, sizeof(tmp));
-            if(GL_SUCCESS != guci_get(ctx, str_section, tmp))
+            uuid = json_object_get_string(uuid_obj);
+            uuid_u8 = calloc(1, uuid_len);
+            str2array(uuid_u8, uuid, uuid_len);
+            if(ENDIAN)
             {
-                status = SL_STATUS_FAIL;
-                goto exit;
-            }
-            if(char_param[j].uuid_len == 2)
-            {
-                str2array(char_param[j].uuid_16, tmp, char_param[j].uuid_len);
-                if(ENDIAN)
-                {
-                    reverse_endian(char_param[j].uuid_16, char_param[j].uuid_len);
-                }
-            }
-            else if(char_param[j].uuid_len == 16)
-            {
-                str2array(char_param[j].uuid_128, tmp, char_param[j].uuid_len);
-                if(ENDIAN)
-                {
-                    reverse_endian(char_param[j].uuid_128, char_param[j].uuid_len);
-                }
+                reverse_endian(uuid_u8, uuid_len);
             }
 
-            memset(str_section, 0, sizeof(str_section));
-            sprintf(str_section, "%s.%s.value_type", uci_cfg_name, char_param[j].char_name);
-            memset(tmp, 0, sizeof(tmp));
-            if(GL_SUCCESS != guci_get(ctx, str_section, tmp))
-            {
-                status = SL_STATUS_FAIL;
-                goto exit;
-            }
-            char_param[j].value_type = atoi(tmp);
-
-            memset(str_section, 0, sizeof(str_section));
-            sprintf(str_section, "%s.%s.maxlen", uci_cfg_name, char_param[j].char_name);
-            memset(tmp, 0, sizeof(tmp));
-            if(GL_SUCCESS != guci_get(ctx, str_section, tmp))
-            {
-                status = SL_STATUS_FAIL;
-                goto exit;
-            }
-            char_param[j].maxlen = atoi(tmp);
-
-            memset(str_section, 0, sizeof(str_section));
-            sprintf(str_section, "%s.%s.value_len", uci_cfg_name, char_param[j].char_name);
-            memset(tmp, 0, sizeof(tmp));
-            if(GL_SUCCESS != guci_get(ctx, str_section, tmp))
-            {
-                status = SL_STATUS_FAIL;
-                goto exit;
-            }
-            char_param[j].value_len = atoi(tmp);
-
-            memset(str_section, 0, sizeof(str_section));
-            sprintf(str_section, "%s.%s.value", uci_cfg_name, char_param[j].char_name);
-            memset(tmp, 0, sizeof(tmp));
-            if(GL_SUCCESS != guci_get(ctx, str_section, tmp))
-            {
-                status = SL_STATUS_FAIL;
-                goto exit;
-            }
-            char_value = calloc(1, char_param[j].value_len);
-            str2array(char_value, tmp, char_param[j].value_len);
-            char_param[j].value = char_value;
-
-            if(char_param[j].uuid_len == 2)
-            {
-                memcpy(uuid_2B.data, char_param[j].uuid_16, 2);
-                status = sl_bt_gattdb_add_uuid16_characteristic(session_handle, service_handle, char_param[j].property, 0, char_param[j].flag, uuid_2B, 
-                                                char_param[j].value_type, char_param[j].maxlen, char_param[j].value_len, char_param[j].value, &characteristic_handle);
-            }
-            else if(char_param[j].uuid_len == 16)
-            {
-                memcpy(uuid_16B.data, char_param[j].uuid_128, 16);
-                status = sl_bt_gattdb_add_uuid128_characteristic(session_handle, service_handle, char_param[j].property, 0, char_param[j].flag, uuid_16B, 
-                                                char_param[j].value_type, char_param[j].maxlen, char_param[j].value_len, char_param[j].value, &characteristic_handle);
-            }
+            status = sl_bt_gattdb_add_service(session_handle, sl_bt_gattdb_primary_service, 
+                                          service_property, uuid_len, uuid_u8, &service_handle);
             if (status != SL_STATUS_OK)
             {
                 goto exit;
             }
-            free(char_value);
-            char_value = NULL;
+            free(uuid_u8);
+            uuid_u8 = NULL;
 
-            memset(str_section, 0, sizeof(str_section));
-            sprintf(str_section, "%s.%s.descriptor_num", uci_cfg_name, char_param[j].char_name);
-            memset(tmp, 0, sizeof(tmp));
-            if(GL_SUCCESS != guci_get(ctx, str_section, tmp))
+
+
+            json_ret = json_object_object_get_ex(service_obj, "characteristic", &char_list_obj);
+            if(json_ret == 0)
             {
-                status = SL_STATUS_FAIL;
-                goto exit;
-            }
-            descriptor_num = atoi(tmp);
-            if(descriptor_num == 0)
-            {
-                continue;
+                goto exit; 
             }
 
-            descriptor_param = (gl_ble_gattdb_descriptor_param_t*)calloc(descriptor_num, sizeof(gl_ble_gattdb_descriptor_param_t));
-            memset(str_section, 0, sizeof(str_section));
-            sprintf(str_section, "%s.%s.descriptor", uci_cfg_name, char_param[j].char_name);
-            memset(tmp, 0, sizeof(tmp));
-            if(GL_SUCCESS != guci_get(ctx, str_section, tmp))
+            size_t char_num = json_object_array_length(char_list_obj);
+            // printf("char_num: %d\n", char_num);
+            for(uint8_t j = 0; j < char_num; ++j)
             {
-                status = SL_STATUS_FAIL;
-                goto exit;
-            }
-            buf = tmp;
-            for(k = 0; k < descriptor_num; ++k)
-            {
-                descriptor_name = strtok_r(buf, s, &end_str);
-                if(descriptor_name != NULL)
-                {
-                    memcpy(descriptor_param[k].descriptor_name, descriptor_name, 64);
-                    // descriptor_param[k].descriptor_name = descriptor_name;
-                }else{
-                    printf("Split group name error\n");
-                    goto exit;
-                }
-                buf = NULL;
-            }
-            descriptor_name = NULL;
+                char_obj = json_object_array_get_idx(char_list_obj, j); 
 
-            for(k = 0; k < descriptor_num; ++k)
-            {
-                memset(str_section, 0, sizeof(str_section));
-                sprintf(str_section, "%s.%s.property", uci_cfg_name, descriptor_param[k].descriptor_name);
-                memset(tmp, 0, sizeof(tmp));
-                if(GL_SUCCESS != guci_get(ctx, str_section, tmp))
+                json_ret = json_object_object_get_ex(char_obj, "char_property", &property_obj);
+                if(json_ret == 0)
                 {
-                    status = SL_STATUS_FAIL;
-                    goto exit;
+                    goto exit; 
                 }
-                descriptor_param[k].property = atoi(tmp);
+                char_property = json_object_get_int(property_obj);
 
-                memset(str_section, 0, sizeof(str_section));
-                sprintf(str_section, "%s.%s.uuid_len", uci_cfg_name, descriptor_param[k].descriptor_name);
-                memset(tmp, 0, sizeof(tmp));
-                if(GL_SUCCESS != guci_get(ctx, str_section, tmp))
+                json_ret = json_object_object_get_ex(char_obj, "char_flag", &flag_obj);
+                if(json_ret == 0)
                 {
-                    status = SL_STATUS_FAIL;
-                    goto exit;
+                    goto exit; 
                 }
-                descriptor_param[k].uuid_len = atoi(tmp);
+                flag = json_object_get_int(flag_obj);
 
-                memset(str_section, 0, sizeof(str_section));
-                sprintf(str_section, "%s.%s.uuid", uci_cfg_name, descriptor_param[k].descriptor_name);
-                memset(tmp, 0, sizeof(tmp));
-                if(GL_SUCCESS != guci_get(ctx, str_section, tmp))
+                json_ret = json_object_object_get_ex(char_obj, "char_uuid_len", &uuid_len_obj);
+                if(json_ret == 0)
                 {
-                    status = SL_STATUS_FAIL;
-                    goto exit;
+                    goto exit; 
                 }
-                if(descriptor_param[k].uuid_len == 2)
+                uuid_len = json_object_get_int(uuid_len_obj);
+
+                json_ret = json_object_object_get_ex(char_obj, "char_uuid", &uuid_obj);
+                if(json_ret == 0)
                 {
-                    str2array(descriptor_param[k].uuid_16, tmp, descriptor_param[k].uuid_len);
-                    if(ENDIAN)
-                    {
-                        reverse_endian(descriptor_param[k].uuid_16, descriptor_param[k].uuid_len);
-                    }
+                    goto exit; 
                 }
-                else if(descriptor_param[k].uuid_len == 16)
+                uuid = json_object_get_string(uuid_obj);
+                uuid_u8 = calloc(1, uuid_len);
+                str2array(uuid_u8, uuid, uuid_len);
+                if(ENDIAN)
                 {
-                    str2array(descriptor_param[k].uuid_128, tmp, descriptor_param[k].uuid_len);
-                    if(ENDIAN)
-                    {
-                        reverse_endian(descriptor_param[k].uuid_128, descriptor_param[k].uuid_len);
-                    }
+                    reverse_endian(uuid_u8, uuid_len);
                 }
 
-                memset(str_section, 0, sizeof(str_section));
-                sprintf(str_section, "%s.%s.value_type", uci_cfg_name, descriptor_param[k].descriptor_name);
-                memset(tmp, 0, sizeof(tmp));
-                if(GL_SUCCESS != guci_get(ctx, str_section, tmp))
+                json_ret = json_object_object_get_ex(char_obj, "char_value_type", &value_type_obj);
+                if(json_ret == 0)
                 {
-                    status = SL_STATUS_FAIL;
-                    goto exit;
+                    goto exit; 
                 }
-                descriptor_param[k].value_type = atoi(tmp);
+                value_type = json_object_get_int(value_type_obj);
 
-                memset(str_section, 0, sizeof(str_section));
-                sprintf(str_section, "%s.%s.maxlen", uci_cfg_name, descriptor_param[k].descriptor_name);
-                memset(tmp, 0, sizeof(tmp));
-                if(GL_SUCCESS != guci_get(ctx, str_section, tmp))
+                json_ret = json_object_object_get_ex(char_obj, "char_maxlen", &maxlen_obj);
+                if(json_ret == 0)
                 {
-                    status = SL_STATUS_FAIL;
-                    goto exit;
+                    goto exit; 
                 }
-                descriptor_param[k].maxlen = atoi(tmp);
+                maxlen = json_object_get_int(maxlen_obj);
 
-                memset(str_section, 0, sizeof(str_section));
-                sprintf(str_section, "%s.%s.value_len", uci_cfg_name, descriptor_param[k].descriptor_name);
-                memset(tmp, 0, sizeof(tmp));
-                if(GL_SUCCESS != guci_get(ctx, str_section, tmp))
+                json_ret = json_object_object_get_ex(char_obj, "char_value_len", &value_len_obj);
+                if(json_ret == 0)
                 {
-                    status = SL_STATUS_FAIL;
-                    goto exit;
+                    goto exit; 
                 }
-                descriptor_param[k].value_len = atoi(tmp);
+                value_len = json_object_get_int(value_len_obj);
 
-                memset(str_section, 0, sizeof(str_section));
-                sprintf(str_section, "%s.%s.value", uci_cfg_name, descriptor_param[k].descriptor_name);
-                memset(tmp, 0, sizeof(tmp));
-                if(GL_SUCCESS != guci_get(ctx, str_section, tmp))
+                json_ret = json_object_object_get_ex(char_obj, "char_value", &value_obj);
+                if(json_ret == 0)
                 {
-                    status = SL_STATUS_FAIL;
-                    goto exit;
+                    goto exit; 
                 }
-                descriptor_value = calloc(1, descriptor_param[k].value_len);
-                str2array(descriptor_value, tmp, descriptor_param[k].value_len);
-                descriptor_param[k].value = descriptor_value;
+                value = json_object_get_string(value_obj);
+                value_u8 = calloc(1, value_len);
+                str2array(value_u8, value, value_len);
 
-                sl_bt_gattdb_commit(session_handle);
-                sl_bt_gattdb_new_session(&session_handle);
-                if(descriptor_param[k].uuid_len == 2)
+                if(uuid_len == 2)
                 {
-                    memcpy(uuid_2B.data, descriptor_param[k].uuid_16, 2);
-                    status = sl_bt_gattdb_add_uuid16_descriptor(session_handle, characteristic_handle, descriptor_param[k].property, 0, uuid_2B, descriptor_param[k].value_type,
-                                                descriptor_param[k].maxlen, descriptor_param[k].value_len, descriptor_param[k].value, &descriptor_handle);
+                    memcpy(uuid_2B.data, uuid_u8, 2);
+                    status = sl_bt_gattdb_add_uuid16_characteristic(session_handle, service_handle, char_property, 0, flag, uuid_2B, 
+                                                    value_type, maxlen, value_len, value_u8, &characteristic_handle);
                 }
-                else if(descriptor_param[k].uuid_len == 16)
+                else if(uuid_len == 16)
                 {
-                    memcpy(uuid_16B.data, descriptor_param[k].uuid_128, 16);
-                    status = sl_bt_gattdb_add_uuid128_descriptor(session_handle, characteristic_handle, descriptor_param[k].property, 0, uuid_16B, descriptor_param[k].value_type,
-                                                descriptor_param[k].value_len, descriptor_param[k].value_len, descriptor_param[k].value, &descriptor_handle);
+                    memcpy(uuid_16B.data, uuid_u8, 16);
+                    status = sl_bt_gattdb_add_uuid128_characteristic(session_handle, service_handle, char_property, 0, flag, uuid_16B, 
+                                                    value_type, maxlen, value_len, value_u8, &characteristic_handle);
                 }
                 if (status != SL_STATUS_OK)
                 {
                     goto exit;
                 }
-                free(descriptor_value);
-                descriptor_value = NULL;
+                free(value_u8);
+                value_u8 = NULL;
+                free(uuid_u8);
+                uuid_u8 = NULL;
+
+
+                json_ret = json_object_object_get_ex(char_obj, "descriptor", &despt_list_obj);
+                if(json_ret == 0)
+                {
+                    goto exit; 
+                }
+                
+                size_t despt_num = json_object_array_length(despt_list_obj);
+                // printf("despt_num: %d\n", despt_num);
+                for(uint8_t k = 0; k < despt_num; ++k)
+                {
+                    despt_obj = json_object_array_get_idx(despt_list_obj, k); 
+
+                    json_ret = json_object_object_get_ex(despt_obj, "despt_property", &property_obj);
+                    if(json_ret == 0)
+                    {
+                        goto exit; 
+                    }
+                    despt_property = json_object_get_int(property_obj);
+
+                    json_ret = json_object_object_get_ex(despt_obj, "despt_uuid_len", &uuid_len_obj);
+                    if(json_ret == 0)
+                    {
+                        goto exit; 
+                    }
+                    uuid_len = json_object_get_int(uuid_len_obj);
+
+                    json_ret = json_object_object_get_ex(despt_obj, "despt_uuid", &uuid_obj);
+                    if(json_ret == 0)
+                    {
+                        goto exit; 
+                    }
+                    uuid = json_object_get_string(uuid_obj);
+                    uuid_u8 = calloc(1, uuid_len);
+                    str2array(uuid_u8, uuid, uuid_len);
+                    if(ENDIAN)
+                    {
+                        reverse_endian(uuid_u8, uuid_len);
+                    }
+
+                    json_ret = json_object_object_get_ex(despt_obj, "despt_value_type", &value_type_obj);
+                    if(json_ret == 0)
+                    {
+                        goto exit; 
+                    }
+                    value_type = json_object_get_int(value_type_obj);
+
+                    json_ret = json_object_object_get_ex(despt_obj, "despt_maxlen", &maxlen_obj);
+                    if(json_ret == 0)
+                    {
+                        goto exit; 
+                    }
+                    maxlen = json_object_get_int(maxlen_obj);
+
+                    json_ret = json_object_object_get_ex(despt_obj, "despt_value_len", &value_len_obj);
+                    if(json_ret == 0)
+                    {
+                        goto exit; 
+                    }
+                    value_len = json_object_get_int(value_len_obj);
+
+                    json_ret = json_object_object_get_ex(despt_obj, "despt_value", &value_obj);
+                    if(json_ret == 0)
+                    {
+                        goto exit; 
+                    }
+                    value = json_object_get_string(value_obj);
+                    value_u8 = calloc(1, value_len);
+                    str2array(value_u8, value, value_len);
+                    if(uuid_len == 2)
+                    {
+                        memcpy(uuid_2B.data, uuid_u8, 2);
+                        status = sl_bt_gattdb_add_uuid16_descriptor(session_handle, characteristic_handle, despt_property, 0, uuid_2B, value_type,
+                                                    maxlen, value_len, value_u8, &descriptor_handle);
+                    }
+                    else if(uuid_len == 16)
+                    {
+                        memcpy(uuid_16B.data, uuid_u8, 16);
+                        status = sl_bt_gattdb_add_uuid128_descriptor(session_handle, characteristic_handle, despt_property, 0, uuid_16B, value_type,
+                                                    maxlen, value_len, value_u8, &descriptor_handle);
+                    }
+                    if (status != SL_STATUS_OK)
+                    {
+                        goto exit;
+                    }
+                    free(value_u8);
+                    value_u8 = NULL;
+                    free(uuid_u8);
+                    uuid_u8 = NULL;
+
+                }
+
             }
-        }
-        status = sl_bt_gattdb_start_service(session_handle, service_handle);
-        if (status != SL_STATUS_OK)
-        {
-            goto exit;
+            status = sl_bt_gattdb_start_service(session_handle, service_handle);
+            if (status != SL_STATUS_OK)
+            {
+                goto exit;
+            }
         }
     }
     status = sl_bt_gattdb_commit(session_handle);
@@ -1279,40 +1137,20 @@ GL_RET silabs_ble_set_gattdb(char *uci_cfg_name)
     {
         goto exit;
     }
+    json_object_put(root);
+    return GL_SUCCESS;
 
 exit:
-
-    if(service_param != NULL)
-    {
-        free(service_param);
-    }
-    if(uuid_service != NULL)
-    {
-        free(uuid_service);
-    }
-    if(char_param != NULL)
-    {
-        free(char_param);
-    }
-    if(char_value != NULL)
-    {
-        free(char_value);
-    }
-    if(descriptor_param != NULL)
-    {
-        free(descriptor_param);
-    }
-    if(descriptor_value != NULL)
-    {
-        free(descriptor_value);
-    }
-
-    if(status == GL_SUCCESS)
-    {
-        return GL_SUCCESS;
-    }
-    
     sl_bt_gattdb_abort(session_handle);
+    json_object_put(root);
+    if(value_u8 != NULL)
+    {
+        free(value_u8);
+    }
+    if(uuid_u8 != NULL)
+    {
+        free(uuid_u8);
+    }
     return GL_UNKNOW_ERR;
 }
 

@@ -218,21 +218,6 @@ void *silabs_watcher(void *arg)
             static uint8_t  ble_adv_len_current = 0;
             gl_ble_gap_data_t data;
 
-            // if periodic adv exist
-            if(p->data.evt_scanner_extended_advertisement_report.periodic_interval)
-            {
-                data.periodic_scan_rst.periodic_interval = p->data.evt_scanner_extended_advertisement_report.periodic_interval;
-                data.periodic_scan_rst.rssi = p->data.evt_scanner_extended_advertisement_report.rssi;
-                data.periodic_scan_rst.adv_sid = p->data.evt_scanner_extended_advertisement_report.adv_sid;
-                data.periodic_scan_rst.ble_addr_type = p->data.evt_scanner_extended_advertisement_report.address_type;
-                memcpy(data.periodic_scan_rst.address, p->data.evt_scanner_extended_advertisement_report.address.addr, 6);
-                if (ble_msg_cb->ble_gap_event)
-                {
-                    ble_msg_cb->ble_gap_event(GAP_BLE_PERIODIC_SCAN_RESULT_EVT, &data);    
-                }
-                break;
-            }
-
             data_completeness_current = p->data.evt_scanner_extended_advertisement_report.data_completeness;
             ble_adv_len_current = p->data.evt_scanner_extended_advertisement_report.data.len;
             rssi_extended += (int16_t)p->data.evt_scanner_extended_advertisement_report.rssi;
@@ -261,6 +246,9 @@ void *silabs_watcher(void *arg)
                 rssi_extended = 0;
                 chain_count_extended = 0;
             
+                data.extended_scan_rst.periodic_interval = p->data.evt_scanner_extended_advertisement_report.periodic_interval;
+                data.extended_scan_rst.adv_sid = p->data.evt_scanner_extended_advertisement_report.adv_sid;
+                data.extended_scan_rst.tx_power = p->data.evt_scanner_extended_advertisement_report.tx_power;
                 data.extended_scan_rst.bonding = p->data.evt_scanner_extended_advertisement_report.bonding;
                 data.extended_scan_rst.event_flags = p->data.evt_scanner_extended_advertisement_report.event_flags;
                 data.extended_scan_rst.ble_addr_type = p->data.evt_scanner_extended_advertisement_report.address_type;
@@ -303,6 +291,23 @@ void *silabs_watcher(void *arg)
                 chain_count_extended = 0;
             }
             
+            break;
+        }
+        case sl_bt_evt_sync_opened_id:
+        {
+            gl_ble_gap_data_t data;
+            data.sync_opened_rst.sync_handle = p->data.evt_sync_opened.sync;
+            data.sync_opened_rst.adv_sid = p->data.evt_sync_opened.adv_sid;
+            data.sync_opened_rst.ble_addr_type = p->data.evt_sync_opened.address_type;
+            memcpy(data.sync_opened_rst.address, p->data.evt_sync_opened.address.addr, 6);
+            data.sync_opened_rst.adv_phy = p->data.evt_sync_opened.adv_phy;
+            data.sync_opened_rst.periodic_interval = p->data.evt_sync_opened.adv_interval;
+            data.sync_opened_rst.clock_accuracy = p->data.evt_sync_opened.clock_accuracy;
+            data.sync_opened_rst.bonding = p->data.evt_sync_opened.bonding;
+            if (ble_msg_cb->ble_gap_event)
+            {
+                ble_msg_cb->ble_gap_event(GAP_BLE_SYNC_OPENED_EVT, &data);
+            }
             break;
         }
         case sl_bt_evt_sync_data_id:
@@ -394,9 +399,11 @@ void *silabs_watcher(void *arg)
         }
         case sl_bt_evt_sync_closed_id:
         {
+            gl_ble_gap_data_t data;
+            data.sync_closed_rst.sync_handle = p->data.evt_sync_closed.sync;
             if (ble_msg_cb->ble_gap_event)
             {
-                ble_msg_cb->ble_gap_event(GAP_BLE_SYNC_CLOSED_EVT, NULL);
+                ble_msg_cb->ble_gap_event(GAP_BLE_SYNC_CLOSED_EVT, &data);
             }
             break;
         }

@@ -411,7 +411,7 @@ bletool >> send_notify 56:38:ac:a7:5f:96 16 010203
 #### set_gattdb
 
 ```shell
-bletool >> set_gattdb gl_gattdb_cfg
+bletool >> set_gattdb ./gl_gattdb_cfg.json
 It will take a while, please waiting...
 { "code": 0 }
 ```
@@ -420,155 +420,118 @@ It will take a while, please waiting...
 
 **Parameters**:
 
-| Type   | Name          | Default Value | Description        |
-| ------ | ------------- | ------------- | ------------------ |
-| string | uci_file_name | _             | The uci file name. |
+| Type   | Name           | Default Value | Description         |
+| ------ | -------------- | ------------- | ------------------- |
+| string | json_file_name | _             | The json file name. |
 
-**uci file parameter**
+**json file parameter**
 
-```
-This file is a configuration file for the local GATT database, here will describes the structure of this UCI file.
+| Key              | Value_type | Descriptiion                                                 |
+| ---------------- | ---------- | ------------------------------------------------------------ |
+| service          | json array | Each array element is a service instance                     |
+| service_property | int32_t    | 0: The service should not be advertised<br/>1: The service should be advertised |
+| service_uuid_len | int32_t    | 2:  16 bits uuid by SIG<br/>4:  32 bits uuid by SIG<br/>16: 128 bits uuid by custom generate |
+| service_uuid     | string     | Service uuid                                                 |
+| characteristic   | json array | mean the characteristics contained in a service instance, can be empty |
 
-Firstly, there will be a section called 'gattdb'. This section has an option item which key is service_num to identify how many services need to config. At the same time, determine how many list items which key is service for this section based on the service_num. Each list item identifies a service.
-	-> option service_num: identifies how many services this local GATT database contains
-	-> list service: service name(The service name in the list item can not be same)
-	-> list service: service name(The service name in the list item can not be same)
-	
-Secondly, config a section named by list service item name in section called 'gattdb'. If there are more than one, config more than one. This section have four options, three of these are parameters that set the service, and the remaining one identifies how many characteristics the service contains. At the same time, determine how many list items which key is characteristic for this section based on the characteristic_num. Each list item identifies a characteristic.
-	-> option property: 
-						0: The service should not be advertised
-						1: The service should be advertised
-	-> option uuid_len:
-						2:  16 bits uuid by SIG
-						4:  32 bits uuid by SIG
-						16: 128 bits uuid by custom generate
-	-> option uuid: service uuid
-	-> option characteristic_num: identifies how many characteristics this service contains
-	-> list characteristic: characteristic name(The characteristic name in the list item can not be same) 
-	-> list characteristic: characteristic name(The characteristic name in the list item can not be same) 
 
-Thirdly, config a section named by the list characteristic item name in section which config in second step. If there are more than one, config more than one. This section have nine options, eight of these are parameters that set the characteristic, and the remaining one identifies how many descriptor the characteristic contains. At the same time, determine how many list items which key is descriptor for this section based on the descriptor_num. Each list item identifies a descriptor.
-	-> option property: A Characteristic Extended Properties descriptor is automatically added if the reliable write property is set.
-						2:  GATTDB_CHARACTERISTIC_READ
-						4:  GATTDB_CHARACTERISTIC_WRITE_NO_RESPONSE
-						8:  GATTDB_CHARACTERISTIC_WRITE
-						16: GATTDB_CHARACTERISTIC_NOTIFY
-						32: GATTDB_CHARACTERISTIC_INDICATE
-						128:GATTDB_CHARACTERISTIC_EXTENDED_PROPS
-						257:GATTDB_CHARACTERISTIC_RELIABLE_WRITE
-	-> option flag:
-					0: Automatically create a Client Characteristic Configuration descriptor
-   		  		       when adding a characteristic that has the notify or indicate property.
-					1: Do not automatically create a Client Characteristic Configuration descriptor 
-  					   when adding a characteristic that has the notify or indicate property.
-	-> option uuid_len:
-						2:  16 bits uuid by SIG
-						16: 128 bits uuid by custom generate
-	-> option uuid: Characteristic uuid
-	-> option value_type:
-						  1: fixed_length_value
-						  2: variable_length_value
-						  3: user_managed_value
-	-> option maxlen: The maximum length of the characteristic value. Ignored if value_type is user_managed_value.
-	-> option value_len: At most 240 bytes when uuid_len is 2 bytes, At most 226 bytes when uuid_len is 16 bytes				
-	-> option value: it should be hex format
-	-> option descriptor_num: identifies how many descriptor this characteristics contains
-	-> list descriptor: descriptor name(The descriptor name in the list item can not be same) 
 
-	-> list descriptor: descriptor name(The descriptor name in the list item can not be same)
+| Key             | Value_type | Descriptiion                                                 |
+| --------------- | ---------- | ------------------------------------------------------------ |
+| char_property   | int32_t    | A Characteristic Extended Properties descriptor is automatically added if the reliable write property is set.<br/>2:  GATTDB_CHARACTERISTIC_READ<br/>4:  GATTDB_CHARACTERISTIC_WRITE_NO_RESPONSE<br/>8:  GATTDB_CHARACTERISTIC_WRITE <br/>16: GATTDB_CHARACTERISTIC_NOTIFY <br/>32: GATTDB_CHARACTERISTIC_INDICATE <br/>128:GATTDB_CHARACTERISTIC_EXTENDED_PROPS <br/>257:GATTDB_CHARACTERISTIC_RELIABLE_WRITE |
+| char_flag       | int32_t    | 0: Automatically create a Client Characteristic Configuration descriptor when adding a characteristic that has the notify or indicate property.<br/>1: Do not automatically create a Client Characteristic Configuration descriptor when adding a characteristic that has the notify or indicate property. |
+| char_uuid_len   | int32_t    | 2:  16 bits uuid by SIG<br/>16: 128 bits uuid by custom generate |
+| char_uuid       | string     | Characteristic uuid                                          |
+| char_value_type | int32_t    | 1: fixed_length_value<br/>2: variable_length_value<br/>3: user_managed_value |
+| char_maxlen     | int32_t    | The maximum length of the characteristic value. Ignored if value_type is user_managed_value. |
+| char_value_len  | int32_t    | At most 240 bytes when uuid_len is 2 bytes, At most 226 bytes when uuid_len is 16 bytes |
+| char_value      | string     | it should be hex format                                      |
+| descriptor      | json array | mean the descriptors contained in a characteristic instance, can be empty |
 
-Finally, config a section named by the list descriptor item name in section which config in third step. If there are more than one, config more than one. This section have seven options, these are parameters that set the descriptor.
-	-> option property: 
-						1:   GATTDB_DESCRIPTOR_READ
-						2:   GATTDB_DESCRIPTOR_WRITE
-						512: GATTDB_DESCRIPTOR_LOCAL_ONLY
-	-> option uuid_len:
-						2:  16 bits uuid by SIG
-						16: 128 bits uuid by custom generate
-	-> option uuid: descriptor uuid
-	-> option value_type:
-						  1: fixed_length_value
-						  2: variable_length_value
-						  3: user_managed_value
-	-> option maxlen: The maximum length of the descriptor value. Ignored if value_type is user_managed_value, or if this is a Client Characteristic Configuration descriptor.
-	-> option value_len: At most 241 bytes when uuid_len is 2 bytes, At most 227 bytes when uuid_len is 16 bytes
-	-> option value: it should be hex format
 
-```
+
+| Key              | Value_type | Descriptiion                                                 |
+| ---------------- | ---------- | ------------------------------------------------------------ |
+| despt_property   | int32_t    | 1:  GATTDB_DESCRIPTOR_READ<br/> 2:  GATTDB_DESCRIPTOR_WRITE<br/>512: GATTDB_DESCRIPTOR_LOCAL_ONLY |
+| despt_uuid_len   | int32_t    | 2:  16 bits uuid by SIG<br/>16: 128 bits uuid by custom generate |
+| despt_uuid       | string     | Descriptor uuid                                              |
+| despt_value_type | int32_t    | 1: fixed_length_value<br/>2: variable_length_value<br/>3: user_managed_value |
+| despt_maxlen     | int32_t    | The maximum length of the descriptor value. Ignored if value_type is user_managed_value, or if this is a Client Characteristic Configuration descriptor. |
+| despt_value_len  | int32_t    | At most 241 bytes when uuid_len is 2 bytes, At most 227 bytes when uuid_len is 16 bytes |
+| despt_value      | string     | it should be hex format                                      |
+
+
 
 ```shell
-# The template of uci file
-config gatt_database 'gattdb'
-	option    service_num               2
-	list      service                   'service1'
-	list      service                   'service2'
-
-#----------------------------------------------------------------------------------------------------------------
-config service 'service1'
-	option    property			     0    
-	option    uuid_len				 2
-	option    uuid					 '180a'			          
-	option    characteristic_num     1
-	list      characteristic         'service1_char1'
-
-config characteristic 'service1_char1'
-	option	  property				 34
-	option	  flag					 0
-	option	  uuid_len				 16
-	option    uuid					 '0D77CC114AC149F2BFA9CD96AC7A92F8'	
-	option 	  value_type			 1 
-	option    maxlen				 5
-	option    value_len				 5
-	option    value 				 '342E322E30'  #"4.2.0"
-	option    descriptor_num     	 0
-
-#----------------------------------------------------------------------------------------------------------------
-config service 'service2'
-	option    property			     1    
-	option    uuid_len				 2
-	option    uuid					 '1800'	
-	option    characteristic_num     2
-	list      characteristic         'service2_char1'
-	list      characteristic         'service2_char2'
-
-config characteristic 'service2_char1'
-	option	  property				 2
-	option	  flag					 1
-	option	  uuid_len				 2
-	option    uuid					 '2A00'	
-	option 	  value_type			 1 
-	option    maxlen				 6
-	option    value_len				 6
-	option    value 				 '474C5F424C45' #"GL_BLE"
-	option    descriptor_num     	 1
-	list      descriptor   		 'service2_char1_descriptor1'
-
-config descriptor 'service2_char1_descriptor1'
-	option    property               1
-	option	  uuid_len				 2
-	option    uuid					 '2902'	
-	option 	  value_type		     1
-	option    maxlen				 2
-	option    value_len				 2
-	option    value 				 '3030'
-
-config characteristic 'service2_char2'
-	option	  property				 10
-	option	  flag					 1
-	option	  uuid_len				 2
-	option    uuid					 '2A80'	
-	option 	  value_type			 1 
-	option    maxlen				 2
-	option    value_len				 2
-	option    value 				 '3132' #"12"
-	option    descriptor_num     	 0
+# The template of json file
+{
+    "service": [
+        {
+            "service_property": 0,
+            "service_uuid_len": 2,
+            "service_uuid": "180a",
+            "characteristic": [
+                {
+                    "char_property": 34,
+                    "char_flag": 0,
+                    "char_uuid_len": 16,
+                    "char_uuid": "0D77CC114AC149F2BFA9CD96AC7A92F8",
+                    "char_value_type": 1,
+                    "char_maxlen": 5,
+                    "char_value_len": 5,
+                    "char_value": "342E322E30",
+                    "descriptor": []
+                }
+            ]
+        },
+        {
+            "service_property": 1,
+            "service_uuid_len": 2,
+            "service_uuid": "1800",
+            "characteristic": [
+                {
+                    "char_property": 2,
+                    "char_flag": 1,
+                    "char_uuid_len": 2,
+                    "char_uuid": "2A00",
+                    "char_value_type": 1,
+                    "char_maxlen": 6,
+                    "char_value_len": 6,
+                    "char_value": "474C5F424C45",
+                    "descriptor": [
+                        {
+                            "despt_property": 1,
+                            "despt_uuid_len": 2,
+                            "despt_uuid": "2902",
+                            "despt_value_type": 1,
+                            "despt_maxlen": 2,
+                            "despt_value_len": 2,
+                            "despt_value": "3030"
+                        }
+                    ]
+                },
+                {
+                    "char_property": 10,
+                    "char_flag": 1,
+                    "char_uuid_len": 2,
+                    "char_uuid": "2A23",
+                    "char_value_type": 1,
+                    "char_maxlen": 3,
+                    "char_value_len": 3,
+                    "char_value": "333231",
+                    "descriptor": []
+                }
+            ]
+        }
+    ]
+}
 ```
 
-**Note:** Please config UCI file(like /etc/config/gl_gattdb_cfg) before execute this command. It will remove default static gatt database first before set new gatt database. **When you exit bletool, it will recovery to the default static gatt database.**
+**Note:** Please config JSON file(like /etc/config/gl_gattdb_cfg.json) before execute this command. It will remove default static gatt database first before set new gatt database. **When you exit bletool, it will recovery to the default static gatt database.**
 
 
 
-#### discovery
+#### <span id="discovery">discovery</span>
 
 ```shell
 # Default parameters, not specify MAC address
@@ -640,7 +603,7 @@ bletool >> synchronize 0 100 94:de:b8:f1:23:f4 0 0
 | int32_t | address_type | NULL          | Address type of the device to connect to.<br/>0: public address<br/>1: random address |
 | int32_t | adv_sid      | NULL          | Advertising set identifiers. You can get adv_sid in GAP_CB_MSG, check more in CB_MSG->GAP_CB_MSG->[scan_result](#scan_result). |
 
-**Note:**  **It will automationaly start ble scan on the simultaneous LE 1M and Coded PHY alternatively.** And stop ble scan when established synchronization. If you don't need to customize the parameters, you can use the default parameters. It automatically synchronizes the first periodic broadcast package scanned into the environment.
+**Note:**  **Please use [discovery](#discover) to enable ble scanner firstly, after that you can stop it or keep it enable.** If you don't need to customize the parameters, you can use the default parameters. It automatically synchronizes the first periodic broadcast package scanned into the environment.
 
 
 
@@ -833,19 +796,19 @@ MODULE_CB_MSG >> { "type": "module_start", "major": 4, "minor": 2, "patch": 0, "
 This data is reported when scanning ble Legacy broadcast.
 
 ```shell
-GAP_CB_MSG >> { "type": "scan_result", "mac": "6c:56:69:93:db:3c", "address_type": 1, "rssi": -54, "packet_type": 0, "bonding": 255, "data": "02011a020a070bff4c0010060d1abc419e9c" }
+GAP_CB_MSG >> { "type": "legacy_adv_result", "mac": "6c:56:69:93:db:3c", "address_type": 1, "rssi": -54, "packet_type": 0, "bonding": 255, "data": "02011a020a070bff4c0010060d1abc419e9c" }
 ```
 
 This data is reported when scanning ble Extended broadcast.
 
 ```shell
-GAP_CB_MSG >> { "type": "extended_adv_result", "mac": "94:de:b8:f1:23:f4", "address_type": 0, "rssi": -25, "event_flags": 0, "bonding": 255, "data": "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890" }
+GAP_CB_MSG >> { "type": "extended_adv_result", "mac": "94:de:b8:f1:13:75", "address_type": 0, "rssi": -27, "tx_power": 127, "event_flags": 0, "adv_sid": 0, "periodic_interval": 120, "bonding": 255, "data": "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890" }
 ```
 
-This data is reported when scanning ble Periodic broadcast.
+This data is reported when sync ble Periodic broadcast.
 
 ```shell
-GAP_CB_MSG >> { "type": "periodic_adv_result", "mac": "94:de:b8:f1:23:f4", "address_type": 0, "rssi": -22, "adv_sid": 0, "periodic_interval": 120 }
+GAP_CB_MSG >> { "type": "sync_result", "tx_power": 127, "rssi": -29, "data": "123455" }
 ```
 
 ##### connect_update
