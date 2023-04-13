@@ -70,4 +70,10 @@ void reverse_endian(uint8_t* header, uint8_t length);
  **************************************************************************************************/
 sl_status_t ble_write_long_data(uint16_t len, uint8_t *adv_data);
 
+/***********************************************************************************************//**
+ *  \brief  get the adv packet type in scan event. 
+ *  \param[in]   adv_event_flag    Event Type Flags of Advertisement ReportsScanner.
+ **************************************************************************************************/
+gl_ble_adv_type_t ble_get_adv_type(uint8_t adv_event_flag);
+
 #endif

@@ -193,7 +193,7 @@ void *silabs_watcher(void *arg)
             gl_ble_gap_data_t data;
             data.legacy_scan_rst.rssi = p->data.evt_scanner_legacy_advertisement_report.rssi;
             data.legacy_scan_rst.bonding = p->data.evt_scanner_legacy_advertisement_report.bonding;
-            data.legacy_scan_rst.event_flags = p->data.evt_scanner_legacy_advertisement_report.event_flags;
+            data.legacy_scan_rst.event_flags = ble_get_adv_type(p->data.evt_scanner_legacy_advertisement_report.event_flags);
             data.legacy_scan_rst.ble_addr_type = p->data.evt_scanner_legacy_advertisement_report.address_type;
             data.legacy_scan_rst.ble_adv_len = p->data.evt_scanner_legacy_advertisement_report.data.len;
 
@@ -250,7 +250,7 @@ void *silabs_watcher(void *arg)
                 data.extended_scan_rst.adv_sid = p->data.evt_scanner_extended_advertisement_report.adv_sid;
                 data.extended_scan_rst.tx_power = p->data.evt_scanner_extended_advertisement_report.tx_power;
                 data.extended_scan_rst.bonding = p->data.evt_scanner_extended_advertisement_report.bonding;
-                data.extended_scan_rst.event_flags = p->data.evt_scanner_extended_advertisement_report.event_flags;
+                data.extended_scan_rst.event_flags = ble_get_adv_type(p->data.evt_scanner_extended_advertisement_report.event_flags);
                 data.extended_scan_rst.ble_addr_type = p->data.evt_scanner_extended_advertisement_report.address_type;
                 memcpy(data.extended_scan_rst.address, p->data.evt_scanner_extended_advertisement_report.address.addr, 6);
 
@@ -321,7 +321,7 @@ void *silabs_watcher(void *arg)
             static uint16_t sync_data_len_p = 0;
             static uint8_t  sync_data_len_current = 0;
             gl_ble_gap_data_t data;
-            
+
             rssi_sync += (int16_t)p->data.evt_sync_data.rssi;
             tx_power_sync += (int16_t)p->data.evt_sync_data.tx_power;
             ++chain_count_sync;
@@ -329,8 +329,6 @@ void *silabs_watcher(void *arg)
             data_status_current = p->data.evt_sync_data.data_status;
             sync_data_len_current = p->data.evt_sync_data.data.len;
 
-            // printf("data_status_current: %d\n", data_status_current);
-            // printf("sync_data_len_current: %d\n", sync_data_len_current);
             if (data_status_current == 0)
             {
                 memset(data.sync_scan_rst.ble_adv, 0, MAX_ADV_DATA_LEN);
@@ -391,6 +389,8 @@ void *silabs_watcher(void *arg)
                 break;
             }
 
+            // data.sync_scan_rst.tx_power = p->data.evt_sync_data.tx_power;
+            data.sync_scan_rst.sync_handle = p->data.evt_sync_data.sync;
             if (ble_msg_cb->ble_gap_event)
             {
                 ble_msg_cb->ble_gap_event(GAP_BLE_SYNC_SCAN_RESULT_EVT, &data);

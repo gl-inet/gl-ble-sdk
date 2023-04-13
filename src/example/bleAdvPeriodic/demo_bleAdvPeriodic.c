@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
 
 	// ble module check, will auto update firmware if module firmware not work. 
 	// after update firmware if not work, will exit the program.
-	ret = gl_ble_check_module(&ble_cb);
+	ret = gl_ble_check_module(&ble_cb, false);
 	if(ret != GL_SUCCESS)
 	{
 		printf("The ble module firmware not work.\n");

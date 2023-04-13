@@ -362,10 +362,11 @@ GL_RET gl_ble_module_dfu(void)
     return GL_SUCCESS;
 }
 
-GL_RET gl_ble_check_module(gl_ble_cbs *callback)
+GL_RET gl_ble_check_module(gl_ble_cbs *callback, bool force_dfu)
 {
 	GL_RET ret;
 	uint8_t count = 0;
+
 	while (!module_boot)
 	{
 		usleep(100000);
@@ -373,6 +374,11 @@ GL_RET gl_ble_check_module(gl_ble_cbs *callback)
 		{
 			goto start_dfu;
 		}
+	}
+
+	if(force_dfu)
+	{
+		goto start_dfu;
 	}
 	
 	if(ble_version_match)

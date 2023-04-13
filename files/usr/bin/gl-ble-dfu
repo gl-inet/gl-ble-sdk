@@ -49,11 +49,12 @@ dfu_mode_enter() {
     exit 1
 }
 
-# Check whether the dfu_file is exist
+# Check whether the dfu_file is exist,
+# After completing a module upgrade, the file will be deleted. If it does not exist, it will exit normally.
 dfu_files=$(ls /etc/ble/*.gbl 2>/dev/null)
 [ ! -f "$dfu_files" ] && {
-    echo "dfu file not found, dfu failed."
-    exit 1
+    echo "dfu file not found."
+    exit 0
 }
 
 # Enter DFU mode

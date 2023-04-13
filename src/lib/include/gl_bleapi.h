@@ -484,13 +484,15 @@ GL_RET gl_ble_module_dfu(void);
 /**
  * @brief  This function will check the ble module whether boot and check the firmware version whether match the gl-ble-sdk version.
  *         If not, it will call the function gl_ble_module_dfu to update the ble module.
- * @param  callback : This callback will be called when module receive a system boot, GAP and GATT event. 
+ * @param  callback : This callback will be called when module receive a system boot, GAP and GATT event.
+ * 
+ * @param  force_dfu : If the condition is true, the version will not be verified for forced upgrade, and if it is false, the version will be verified.
  * 
  * @return GL-RETURN-CODE 
  * 
  * @note   If the ble module can booted and version matched, will return GL_SUCCESS. Other return situation are not matched.
  */
-GL_RET gl_ble_check_module(gl_ble_cbs *callback);
+GL_RET gl_ble_check_module(gl_ble_cbs *callback, bool force_dfu);
 
 // /**
 //  *  @brief  Act as BLE slave, Delete Local GATT DataBase and make it unvisible to remote GATT clients.

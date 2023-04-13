@@ -113,3 +113,39 @@ sl_status_t ble_write_long_data(uint16_t len, uint8_t *adv_data)
 
     return GL_SUCCESS;
 }
+
+gl_ble_adv_type_t ble_get_adv_type(uint8_t adv_event_flag)
+{
+    if((SL_BT_SCANNER_EVENT_FLAG_CONNECTABLE | SL_BT_SCANNER_EVENT_FLAG_SCANNABLE) == adv_event_flag)
+    {
+        return CONNECTABLE_SCANNABLE_UNDIRECTED;  
+    }
+    else if(SL_BT_SCANNER_EVENT_FLAG_CONNECTABLE == adv_event_flag)
+    {
+        return CONNECTABLE_UNDIRECTED;
+    }
+    else if((SL_BT_SCANNER_EVENT_FLAG_CONNECTABLE | SL_BT_SCANNER_EVENT_FLAG_DIRECTED) == adv_event_flag)
+    {
+        return CONNECTABLE_DIRECTED;
+    }
+    else if(0 == adv_event_flag)
+    {
+        return NONCONNECTABLE_NONSCANNABLE_UNDIRECTED;
+    }
+    else if(SL_BT_SCANNER_EVENT_FLAG_DIRECTED == adv_event_flag)
+    {
+        return NONCONNECTABLE_NONSCANNABLE_DIRECTED;
+    }
+    else if(SL_BT_SCANNER_EVENT_FLAG_SCANNABLE == adv_event_flag)
+    {
+        return SCANNABLE_UNDIRECTED;
+    }
+    else if((SL_BT_SCANNER_EVENT_FLAG_SCANNABLE | SL_BT_SCANNER_EVENT_FLAG_DIRECTED) == adv_event_flag)
+    {
+        return SCANNABLE_DIRECTED;
+    }
+    else if(SL_BT_SCANNER_EVENT_FLAG_SCAN_RESPONSE & adv_event_flag)
+    {
+        return SCSN_RSPONE;
+    }
+} 

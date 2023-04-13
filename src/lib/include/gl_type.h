@@ -118,8 +118,8 @@ typedef union {
 typedef enum {
     GAP_BLE_LEGACY_SCAN_RESULT_EVT = 0,
     GAP_BLE_EXTENDED_SCAN_RESULT_EVT,
-    GAP_BLE_SYNC_OPENED_EVT,
     GAP_BLE_SYNC_SCAN_RESULT_EVT,
+    GAP_BLE_SYNC_OPENED_EVT,
     GAP_BLE_SYNC_CLOSED_EVT,
     GAP_BLE_UPDATE_CONN_EVT,
     GAP_BLE_CONNECT_EVT,
@@ -137,6 +137,20 @@ typedef enum {
     BLE_ANONYMOUS_ADVERTISING = 0xff,
 
 } gl_ble_addr_type_t;
+
+/**
+ * @brief BLE adv packet type
+ */
+typedef enum {
+    CONNECTABLE_SCANNABLE_UNDIRECTED = 0,
+    CONNECTABLE_UNDIRECTED,
+    CONNECTABLE_DIRECTED,
+    NONCONNECTABLE_NONSCANNABLE_UNDIRECTED,
+    NONCONNECTABLE_NONSCANNABLE_DIRECTED,
+    SCANNABLE_UNDIRECTED,
+    SCANNABLE_DIRECTED,
+    SCSN_RSPONE,
+} gl_ble_adv_type_t;
 
 typedef union {
     struct ble_scan_result_evt_data {
