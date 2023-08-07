@@ -74,11 +74,11 @@ static GL_RET normal_check_rst_io(void)
 	log_debug("%s\n", io);
 
 	char create_io[64] = {0};   
-	sprintf(create_io, "echo %d > /sys/class/gpio/export", ble_hw_cfg->rst_gpio);
+	sprintf(create_io, "((echo %d > /sys/class/gpio/export) 2>/dev/null)", ble_hw_cfg->rst_gpio);
 	log_debug("%s\n", create_io);
 
 	char create_io_direction[80] = {0};   
-	sprintf(create_io_direction, "echo out > /sys/class/gpio/gpio%d/direction", ble_hw_cfg->rst_gpio);
+	sprintf(create_io_direction, "((echo out > /sys/class/gpio/gpio%d/direction) 2>/dev/null)", ble_hw_cfg->rst_gpio);
 	log_debug("%s\n", create_io_direction);
 
 
@@ -139,12 +139,12 @@ static int serial_init(void)
 
 	if(ble_hw_cfg->rst_trigger == 1)
 	{
-		sprintf(rston, "echo 1 > /sys/class/gpio/gpio%d/value", ble_hw_cfg->rst_gpio);
-		sprintf(rstoff, "echo 0 > /sys/class/gpio/gpio%d/value", ble_hw_cfg->rst_gpio);
+		sprintf(rston, "((echo 1 > /sys/class/gpio/gpio%d/value) 2>/dev/null)", ble_hw_cfg->rst_gpio);
+		sprintf(rstoff, "((echo 0 > /sys/class/gpio/gpio%d/value) 2>/dev/null)", ble_hw_cfg->rst_gpio);
 
 	}else if(ble_hw_cfg->rst_trigger == 0){
-		sprintf(rston, "echo 0 > /sys/class/gpio/gpio%d/value", ble_hw_cfg->rst_gpio);
-		sprintf(rstoff, "echo 1 > /sys/class/gpio/gpio%d/value", ble_hw_cfg->rst_gpio);
+		sprintf(rston, "((echo 0 > /sys/class/gpio/gpio%d/value) 2>/dev/null)", ble_hw_cfg->rst_gpio);
+		sprintf(rstoff, "((echo 1 > /sys/class/gpio/gpio%d/value) 2>/dev/null)", ble_hw_cfg->rst_gpio);
 
 	}else{
 		log_err("hw rst trigger cfg error!\n");
