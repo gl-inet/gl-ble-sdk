@@ -23,6 +23,7 @@
 #include <sys/msg.h>
 #include <unistd.h>
 #include <errno.h>
+#include <pthread.h>
 
 #include "gl_bleapi.h"
 #include "gl_dev_mgr.h"
@@ -49,6 +50,7 @@ static int* msqid = NULL;
 
 static driver_param_t* _driver_param = NULL;
 static watcher_param_t* _watcher_param = NULL;
+static pthread_mutex_t _ble_mutex;
 
 /************************************************************************************************************************************/
 GL_RET gl_ble_init(void)
@@ -111,6 +113,9 @@ GL_RET gl_ble_init(void)
         return GL_UNKNOW_ERR;
     }
 
+	// create a thread mutex to protect thread data chaos
+	pthread_mutex_init(&_ble_mutex, NULL);
+
 	// reset ble module to make sure it is a usable mode
 	gl_ble_hard_reset();
 
@@ -129,6 +134,9 @@ GL_RET  gl_ble_destroy(void)
 
 	// close hal fd
 	hal_destroy();
+
+	// close thread mutex
+	pthread_mutex_destroy(&_ble_mutex);
 
 	// destroy device list
 	ble_dev_mgr_destroy();
@@ -202,153 +210,268 @@ GL_RET gl_ble_unsubscribe(void)
 
 GL_RET gl_ble_enable(int32_t enable)
 {
-	return ble_enable(enable);
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_enable(enable);
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
 }
 
 GL_RET gl_ble_hard_reset(void)
 {
-	return ble_hard_reset();
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_hard_reset();
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
 }
 
 GL_RET gl_ble_get_mac(BLE_MAC mac)
 {
-	return ble_local_mac(mac);
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_local_mac(mac);
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
 }
 
 GL_RET gl_ble_set_power(int power, int *current_power)
 {
-	return ble_set_power(power, current_power);
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_set_power(power, current_power);
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
 }
 
 GL_RET gl_ble_create_adv_handle(uint8_t *handle)
 {
-	return ble_create_adv_handle(handle);
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_create_adv_handle(handle);
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
 }
 
 GL_RET gl_ble_delete_adv_handle(uint8_t handle)
 {
-	return ble_delete_adv_handle(handle);
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_delete_adv_handle(handle);
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
 }
 
 GL_RET gl_ble_start_legacy_adv(uint8_t handle, uint32_t interval_min, uint32_t interval_max, uint8_t discover, uint8_t connect)
 {
-	return ble_start_legacy_adv(handle, interval_min, interval_max, discover, connect);
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_start_legacy_adv(handle, interval_min, interval_max, discover, connect);
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
 }
 
 GL_RET gl_ble_start_extended_adv(uint8_t handle, uint8_t primary_phy, uint8_t secondary_phy, 
                         uint32_t interval_min, uint32_t interval_max, uint8_t discover, uint8_t connect)
 {
-	return ble_start_extended_adv(handle, primary_phy, secondary_phy, interval_min, interval_max,
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_start_extended_adv(handle, primary_phy, secondary_phy, interval_min, interval_max,
 							 discover, connect);
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
 }
 
 GL_RET gl_ble_start_periodic_adv(uint8_t handle, uint8_t primary_phy, uint8_t secondary_phy, uint16_t interval_min, uint16_t interval_max)
 {
-	return ble_start_periodic_adv(handle, primary_phy, secondary_phy, interval_min, interval_max);
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_start_periodic_adv(handle, primary_phy, secondary_phy, interval_min, interval_max);
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
 }
 
 GL_RET gl_ble_stop_adv(uint8_t handle)
 {
-	return ble_stop_adv(handle);
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_stop_adv(handle);
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
 }
 
 GL_RET gl_ble_set_legacy_adv_data(uint8_t handle, uint8_t flag, const char *data)
 {
-	return ble_set_legacy_adv_data(handle, flag, data);
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_set_legacy_adv_data(handle, flag, data);
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
 }
 
 GL_RET gl_ble_set_extended_adv_data(uint8_t handle, const char *data)
 {
-	return ble_set_extended_adv_data(handle, data);
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_set_extended_adv_data(handle, data);
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
 }
 
 GL_RET gl_ble_set_periodic_adv_data(uint8_t handle, const char *data)
 {
-	return ble_set_periodic_adv_data(handle, data);
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_set_periodic_adv_data(handle, data);
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
 }
 
 GL_RET gl_ble_send_notify(BLE_MAC address, int char_handle, char *value)
 {
-	return ble_send_notify(address, char_handle, value);
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_send_notify(address, char_handle, value);
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
 }
 
 GL_RET gl_ble_start_discovery(uint8_t phys, uint16_t interval, uint16_t window, uint8_t type, uint8_t mode)
 {
-	return ble_start_discovery(phys, interval, window, type, mode);
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_start_discovery(phys, interval, window, type, mode);
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
 }
 
 GL_RET gl_ble_stop_discovery(void)
 {
-	return ble_stop_discovery();
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_stop_discovery();
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
 }
 
 GL_RET gl_ble_set_sync_parameters(uint16_t skip, uint16_t timeout)
 {
-	return ble_set_sync_parameters(skip, timeout);
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_set_sync_parameters(skip, timeout);
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
 }
 
 GL_RET gl_ble_start_sync(BLE_MAC address, uint8_t address_type, uint8_t adv_sid, uint16_t *handle)
 {
-	return ble_start_sync(address, address_type, adv_sid, handle);
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_start_sync(address, address_type, adv_sid, handle);
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
 }
 
 GL_RET gl_ble_stop_sync(uint16_t handle)
 {
-	return ble_stop_sync(handle);
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_stop_sync(handle);
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
 }
 
 GL_RET gl_ble_connect(BLE_MAC address, int address_type, int phy)
 {
-	return ble_connect(address, address_type, phy);
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_connect(address, address_type, phy);
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
 }
 
 GL_RET gl_ble_disconnect(BLE_MAC address)
 {
-	return ble_disconnect(address);
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_disconnect(address);
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
 }
 
 GL_RET gl_ble_get_rssi(BLE_MAC address, int32_t *rssi)
 {
-	return ble_get_rssi(address, rssi);
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_get_rssi(address, rssi);
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
 }
 
 GL_RET gl_ble_get_service(gl_ble_service_list_t *service_list, BLE_MAC address)
 {
-	return ble_get_service(service_list, address);
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_get_service(service_list, address);
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
 }
 
 GL_RET gl_ble_get_char(gl_ble_char_list_t *char_list, BLE_MAC address, int service_handle)
 {
-	return ble_get_char(char_list, address, service_handle);
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_get_char(char_list, address, service_handle);
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
 }
 
 GL_RET gl_ble_read_char(BLE_MAC address, int char_handle)
 {
-	return ble_read_char(address, char_handle);
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_read_char(address, char_handle);
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
 }
 
 GL_RET gl_ble_write_char(BLE_MAC address, int char_handle, char *value, int res)
 {
-	return ble_write_char(address, char_handle, value, res);
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_write_char(address, char_handle, value, res);
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
 }
 
 GL_RET gl_ble_set_notify(BLE_MAC address, int char_handle, int flag)
 {
-	return ble_set_notify(address, char_handle, flag);
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_set_notify(address, char_handle, flag);
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret; 
 }
 
 GL_RET gl_ble_set_gattdb(char *json_cfg_name)
 {
-	return ble_set_gattdb(json_cfg_name);
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_set_gattdb(json_cfg_name);
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
 }
 
 GL_RET gl_ble_module_dfu(void)
 {
+	pthread_mutex_lock(&_ble_mutex);
+	
     char command[128] = {0};
 
 	// The dfu io recognized by the device is 0xff, which means that the device cannot be upgraded in this way
 	if(ble_hw_cfg->dfu_gpio == 0xff) 
 	{
+		pthread_mutex_unlock(&_ble_mutex);
 		return GL_UNKNOW_ERR;
 	}
 
@@ -357,8 +480,11 @@ GL_RET gl_ble_module_dfu(void)
     if( system(command) != 0 )
 	{
 		perror("system");
+		pthread_mutex_unlock(&_ble_mutex);
 		return GL_UNKNOW_ERR;
     }
+
+	pthread_mutex_unlock(&_ble_mutex);
     return GL_SUCCESS;
 }
 
