@@ -30,7 +30,7 @@ define Package/libglble
 	SECTION:=base
 	CATEGORY:=gl-inet-ble
 	TITLE:=GL inet BLE driver library
-	DEPENDS:= +libuci +libpthread +gl-sdk4-uci 
+	DEPENDS:= +libuci +libpthread +gl-sdk4-uci +lrzsz +coreutils-stty
 endef
 
 define Package/gl-bleScanner
