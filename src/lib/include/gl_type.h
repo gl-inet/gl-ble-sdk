@@ -150,6 +150,7 @@ typedef enum {
     SCANNABLE_UNDIRECTED,
     SCANNABLE_DIRECTED,
     SCSN_RSPONE,
+    INVAILD_ADV_TYPE,
 } gl_ble_adv_type_t;
 
 typedef union {

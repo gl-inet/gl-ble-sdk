@@ -148,4 +148,5 @@ gl_ble_adv_type_t ble_get_adv_type(uint8_t adv_event_flag)
     {
         return SCSN_RSPONE;
     }
+    return INVAILD_ADV_TYPE;
 } 

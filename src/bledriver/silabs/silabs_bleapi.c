@@ -19,7 +19,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <guci.h>
 
 #include "sl_bt_api.h"
 #include "gl_uart.h"
