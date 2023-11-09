@@ -129,9 +129,12 @@ GL_RET  gl_ble_destroy(void)
 	ble_driver_thread_ctx = NULL;
 
 	// free driver_param_t
-	free(_driver_param);
-	_driver_param = NULL;
-
+	if(_driver_param)
+	{
+		free(_driver_param);
+		_driver_param = NULL;
+	}
+	
 	// close hal fd
 	hal_destroy();
 
@@ -147,9 +150,13 @@ GL_RET  gl_ble_destroy(void)
 		log_err("msgctl error");
 		return GL_UNKNOW_ERR;
 	}
-	free(msqid);
-	msqid = NULL;
 
+	if(msqid)
+	{
+		free(msqid);
+		msqid = NULL;
+	}
+		
 	return GL_SUCCESS;
 }
 
