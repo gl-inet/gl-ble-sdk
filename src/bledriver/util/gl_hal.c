@@ -69,6 +69,12 @@ static GL_RET normal_check_rst_io(void)
 		return GL_UNKNOW_ERR;
 	}
 
+	if(access("/sys/class/gpio/ble_rst", F_OK) == 0)
+	{
+		log_debug("Ble rst io exist.\n");
+		return GL_SUCCESS;
+	}
+
 	char io[32] = {0};
 	sprintf(io, "/sys/class/gpio/gpio%d", ble_hw_cfg->rst_gpio);
 	log_debug("%s\n", io);

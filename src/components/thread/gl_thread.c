@@ -167,7 +167,7 @@ void HAL_ThreadDetach(void *thread_handle)
 void HAL_ThreadDelete(void *thread_handle)
 {
     if (NULL == thread_handle) {
-        pthread_exit(0);
+        // pthread_exit(0);
     } else {
         /*main thread delete child thread*/
         pthread_cancel((pthread_t)thread_handle);

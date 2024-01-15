@@ -36,6 +36,9 @@ case "$board" in
         *x3000*)
                 model=x3000
                 ;;
+        *ap1300*)
+                model=ap1300
+                ;;
         *)
                 model=$board
                 ;;
