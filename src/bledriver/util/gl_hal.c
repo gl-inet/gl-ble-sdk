@@ -34,6 +34,7 @@ char rston[64] = {0};
 char rstoff[64] = {0};
 
 hw_cfg_t* ble_hw_cfg = NULL;
+static bool is_ble_rst_exist = false;
 
 static int check_endian(void);
 static int serial_init(void);
@@ -71,6 +72,7 @@ static GL_RET normal_check_rst_io(void)
 
 	if(access("/sys/class/gpio/ble_rst", F_OK) == 0)
 	{
+		is_ble_rst_exist = true;
 		log_debug("Ble rst io exist.\n");
 		return GL_SUCCESS;
 	}
@@ -143,18 +145,37 @@ static int serial_init(void)
 		return GL_UNKNOW_ERR;
 	}
 
-	if(ble_hw_cfg->rst_trigger == 1)
+	if(is_ble_rst_exist)
 	{
-		sprintf(rston, "((echo 1 > /sys/class/gpio/gpio%d/value) 2>/dev/null)", ble_hw_cfg->rst_gpio);
-		sprintf(rstoff, "((echo 0 > /sys/class/gpio/gpio%d/value) 2>/dev/null)", ble_hw_cfg->rst_gpio);
+		if(ble_hw_cfg->rst_trigger == 1)
+		{
+			strcpy(rston, "((echo 1 > /sys/class/gpio/ble_rst/value) 2>/dev/null)");
+			strcpy(rstoff, "((echo 0 > /sys/class/gpio/ble_rst/value) 2>/dev/null)");
 
-	}else if(ble_hw_cfg->rst_trigger == 0){
-		sprintf(rston, "((echo 0 > /sys/class/gpio/gpio%d/value) 2>/dev/null)", ble_hw_cfg->rst_gpio);
-		sprintf(rstoff, "((echo 1 > /sys/class/gpio/gpio%d/value) 2>/dev/null)", ble_hw_cfg->rst_gpio);
+		}else if(ble_hw_cfg->rst_trigger == 0){
+			strcpy(rston, "((echo 0 > /sys/class/gpio/ble_rst/value) 2>/dev/null)");
+			strcpy(rstoff, "((echo 1 > /sys/class/gpio/ble_rst/value) 2>/dev/null)");
 
-	}else{
-		log_err("hw rst trigger cfg error!\n");
-		return GL_UNKNOW_ERR;
+		}else{
+			log_err("hw rst trigger cfg error!\n");
+			return GL_UNKNOW_ERR;
+		}
+	}
+	else
+	{
+		if(ble_hw_cfg->rst_trigger == 1)
+		{
+			sprintf(rston, "((echo 1 > /sys/class/gpio/gpio%d/value) 2>/dev/null)", ble_hw_cfg->rst_gpio);
+			sprintf(rstoff, "((echo 0 > /sys/class/gpio/gpio%d/value) 2>/dev/null)", ble_hw_cfg->rst_gpio);
+
+		}else if(ble_hw_cfg->rst_trigger == 0){
+			sprintf(rston, "((echo 0 > /sys/class/gpio/gpio%d/value) 2>/dev/null)", ble_hw_cfg->rst_gpio);
+			sprintf(rstoff, "((echo 1 > /sys/class/gpio/gpio%d/value) 2>/dev/null)", ble_hw_cfg->rst_gpio);
+
+		}else{
+			log_err("hw rst trigger cfg error!\n");
+			return GL_UNKNOW_ERR;
+		}
 	}
 
     return uartOpen((int8_t*)ble_hw_cfg->port, ble_hw_cfg->baudRate, ble_hw_cfg->flowcontrol, 100);
