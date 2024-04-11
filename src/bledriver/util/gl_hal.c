@@ -38,7 +38,7 @@ static int check_endian(void);
 static int serial_init(void);
 static GL_RET get_model_hw_cfg(void);
 static GL_RET normal_check_rst_io(void);
-static GL_RET qsdk_check_ver(void);
+static GL_RET sdk_check_ver(void);
 
 struct uci_context* guci2_init(void);
 int guci2_free(struct uci_context* ctx);
@@ -106,11 +106,13 @@ static GL_RET normal_check_rst_io(void)
 }
 
 /* Check openwrt version
-	QSDK in official openwrt will have a special io base num.
+	SDK in official openwrt will have a special io base num.
 	If "/sys/class/gpio/gpiochip412" exist, all io shoule add 412.
+	If "/sys/class/gpio/gpiochip455" exist, all io shoule add 455.
 */
-#define SPECIAL_CHIP_IO 		"/sys/class/gpio/gpiochip412"
-static GL_RET qsdk_check_ver(void)
+#define SPECIAL_CHIP_IO412 		"/sys/class/gpio/gpiochip412"
+#define SPECIAL_CHIP_IO455 		"/sys/class/gpio/gpiochip455"
+static GL_RET sdk_check_ver(void)
 {
 	if(!ble_hw_cfg)
 	{
@@ -118,10 +120,15 @@ static GL_RET qsdk_check_ver(void)
 		return GL_UNKNOW_ERR;
 	}
 
-	if((access(SPECIAL_CHIP_IO, F_OK)) != -1)
+	if((access(SPECIAL_CHIP_IO412, F_OK)) != -1)
 	{
-		log_debug("QSDK gpiochip412 exist.\n");
+		log_debug("SDK gpiochip412 exist.\n");
 		ble_hw_cfg->rst_gpio += 412;
+	}
+	else if((access(SPECIAL_CHIP_IO455, F_OK)) != -1)
+	{
+		log_debug("SDK gpiochip455 exist.\n");
+		ble_hw_cfg->rst_gpio += 455;
 	}
 
 	return GL_SUCCESS;
@@ -162,7 +169,7 @@ static GL_RET find_model_hw(char *model_name)
 		if(0 == strcmp(model_name, GL_BLE_HW_LIST[i].model))
 		{
 			ble_hw_cfg = &GL_BLE_HW_LIST[i];
-			qsdk_check_ver();
+			sdk_check_ver();
 			return GL_SUCCESS;
 		}
 	}
