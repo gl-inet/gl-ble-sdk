@@ -133,6 +133,66 @@ GL_RET cmd_local_address(int argc, char **argv)
 	return GL_SUCCESS;
 }
 
+GL_RET cmd_set_identity_address(int argc, char **argv)
+{
+	char *addr = NULL;
+	int addr_type = -1;
+	if (argc != 3) {
+		printf(PARA_MISSING);
+		return GL_ERR_PARAM_MISSING;
+	}
+
+	addr_type = atoi(argv[1]);
+	addr = argv[2];
+
+	uint8_t addr_len = strlen(addr);
+	if (addr_len != (BLE_MAC_LEN - 1) || (addr_type != 0 && addr_type != 1))
+	{
+		printf(PARA_ERROR);
+		return GL_ERR_PARAM;
+	}
+
+	BLE_MAC address_u8;
+	str2addr(addr, address_u8);
+
+	GL_RET ret = gl_ble_set_identity_address(address_u8, addr_type);
+
+	json_object* o = NULL;
+	o = json_object_new_object();
+	json_object_object_add(o,"code",json_object_new_int(ret));
+	const char *temp = json_object_to_json_string(o);
+	printf("%s\n",temp);
+
+	json_object_put(o);
+
+	return GL_SUCCESS;
+}
+
+GL_RET cmd_get_identity_address(int argc, char **argv)
+{
+	BLE_MAC address;
+	char str_addr[20] = {0};
+	int addr_type = -1;
+	GL_RET ret = gl_ble_get_identity_address(address, &addr_type);
+
+	json_object* o = NULL;
+	o = json_object_new_object();
+	json_object_object_add(o,"code",json_object_new_int(ret));
+	if(ret == GL_SUCCESS)
+	{
+		addr2str(address, str_addr);
+		json_object_object_add(o, "mac", json_object_new_string(str_addr));
+		json_object_object_add(o, "mac_type", json_object_new_int(addr_type));
+	}
+	const char *temp = json_object_to_json_string(o);
+	printf("%s\n",temp);
+
+
+	json_object_put(o);
+
+	return GL_SUCCESS;
+}
+
 GL_RET cmd_set_power(int argc, char **argv)
 {
 	int power = 0;
@@ -1646,6 +1706,8 @@ command_t command_list[] = {
 	{"enable", cmd_enable, "Enable or disable the module"},
 	{"set_power", cmd_set_power, "Set the tx power level"},
 	{"local_address", cmd_local_address, "Get local Bluetooth module public address"},
+	{"set_identity_address", cmd_set_identity_address, "Set Bluetooth module identity address"},
+	{"get_identity_address", cmd_get_identity_address, "Get Bluetooth module identity address"},
 	/*BLE slave functions */
 	{"show_adv_handle_list", cmd_adv_handle_show, "Show adv handle list"},
 	{"create_adv_handle", cmd_adv_handle_create, "Create adv handle"},

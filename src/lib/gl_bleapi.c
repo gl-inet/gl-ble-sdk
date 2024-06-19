@@ -550,3 +550,21 @@ start_dfu:
 // {
 // 	return ble_del_gattdb();
 // }
+
+GL_RET gl_ble_set_identity_address(BLE_MAC address, int address_type)
+{
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_set_identity_address(address, address_type);
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
+}
+
+GL_RET gl_ble_get_identity_address(BLE_MAC address, int *address_type)
+{
+	GL_RET ret;
+	pthread_mutex_lock(&_ble_mutex);
+	ret = ble_get_identity_address(address, address_type);
+	pthread_mutex_unlock(&_ble_mutex);
+	return ret;
+}

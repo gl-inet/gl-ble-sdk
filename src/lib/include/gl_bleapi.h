@@ -501,4 +501,38 @@ GL_RET gl_ble_check_module(gl_ble_cbs *callback, bool force_dfu);
 //  */
 // GL_RET gl_ble_del_gattdb(void);
 
+/**
+ * @brief  Set the device's Bluetooth identity address. The address can be a public device address or a static device address.
+ *         A valid address set with this command will be written into persistent storage using NVM keys. The stack returns an 
+ *         error if the static device address does not conform to the Bluetooth specification.
+ *         The new address will be effective in the next system reboot. The stack will use the address in the NVM keys when present.
+ *         Otherwise, it uses the default Bluetooth public device address which is programmed at production.
+ *         The stack treats 00:00:00:00:00:00 and ff:ff:ff:ff:ff:ff as invalid addresses. Therefore, passing one of them into this command will
+ *         cause the stack to delete the NVM keys and use the default address in the next system reboot.
+ *
+ * @param  address : Bluetooth identity address.
+ *
+ * @param  address_type : Address type
+ *                          0: Public device address
+ *                          1: Static device address
+ *
+ * @return GL-RETURN-CODE
+ *
+ * @note   Because the NVM keys are located in flash and flash wearing can occur, avoid calling this command regularly.
+ */
+GL_RET gl_ble_set_identity_address(BLE_MAC address, int address_type);
+
+/**
+ * @brief  Read the Bluetooth identity address used by the device, which can be a public or random static device address.
+ *
+ * @param  address : Bluetooth public address.
+ *
+ * @param  address_type : Address type
+ *                          0: Public device address
+ *                          1: Static device address
+ *
+ * @return GL-RETURN-CODE
+ */
+GL_RET gl_ble_get_identity_address(BLE_MAC address, int *address_type);
+
 #endif

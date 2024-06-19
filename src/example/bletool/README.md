@@ -142,6 +142,44 @@ bletool >> local_address
 
 
 
+#### set_identity_address
+
+```shell
+bletool >> set_identity_address 0 94:de:b8:f1:35:10
+{ "code": 0 }
+```
+
+**Description**：Set the device's Bluetooth identity address.
+
+**Parameters**：
+
+| Type    | Name     | Default Value | Description                                                  |
+| ------- | -------- | ------------- | ------------------------------------------------------------ |
+| int32_t | mac_type | -             | **0:** Public device address <br />**1:** Static device address |
+| string  | mac      | _             | The MAC address of the device                                |
+
+**Note**: The new address will be effective in the next system reboot. Please use `enable 0` and `enable 1`  to reboot the module.  To 00:00:00:00:00:00 and ff:ff:ff:ff:ff:ff as invalid addresses, if the address is set to these two will use the default address in the next system reboot.
+
+
+
+#### get_identity_address
+
+```shell
+bletool >> get_identity_address
+{ "code": 0, "mac": "d4:de:b8:f1:2c:03", "mac_type": 1 }
+```
+
+**Description**：Get the Bluetooth identity address used by the device, which can be a public or random static device address.
+
+**Parameters**：
+
+| Type    | Name     | Default Value | Description                                                  |
+| ------- | -------- | ------------- | ------------------------------------------------------------ |
+| string  | mac      | _             | The MAC address of the device                                |
+| int32_t | mac_type | -             | **0:** Public device address <br />**1:** Static device address |
+
+
+
 #### <span id="create_adv_handle">create_adv_handle</span>
 
 ```shell

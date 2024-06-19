@@ -1225,3 +1225,35 @@ GL_RET silabs_ble_del_gattdb(void)
 
     return GL_SUCCESS;
 }
+
+GL_RET silabs_ble_set_identity_address(BLE_MAC address, int address_type)
+{
+    bd_addr addr;
+    memcpy(addr.addr, address, 6);
+    sl_status_t status = SL_STATUS_FAIL;
+
+    status = sl_bt_system_set_identity_address(addr, address_type);
+    if (status != SL_STATUS_OK)
+    {
+        return GL_UNKNOW_ERR;
+    }
+
+    return GL_SUCCESS;
+}
+
+GL_RET silabs_ble_get_identity_address(BLE_MAC address, int *address_type)
+{
+    sl_status_t status = SL_STATUS_FAIL;
+    uint8_t type = 0;
+    bzero(address, sizeof(BLE_MAC));
+
+    status = sl_bt_system_get_identity_address((bd_addr *)address, &type);
+    if (status != SL_STATUS_OK)
+    {
+        return GL_UNKNOW_ERR;
+    }
+
+    *address_type = type;
+
+    return GL_SUCCESS;
+}

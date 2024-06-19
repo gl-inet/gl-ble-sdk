@@ -81,4 +81,8 @@ GL_RET silabs_ble_set_gattdb(char *json_cfg_name);
 
 GL_RET silabs_ble_del_gattdb(void);
 
+GL_RET silabs_ble_set_identity_address(BLE_MAC address, int address_type);
+
+GL_RET silabs_ble_get_identity_address(BLE_MAC address, int *address_type);
+
 #endif

@@ -58,6 +58,8 @@
 #define ble_set_notify                  silabs_ble_set_notify
 #define ble_set_gattdb                  silabs_ble_set_gattdb
 // #define ble_del_gattdb                  silabs_ble_del_gattdb
+#define ble_set_identity_address        silabs_ble_set_identity_address
+#define ble_get_identity_address        silabs_ble_get_identity_address
 
 #endif
 
