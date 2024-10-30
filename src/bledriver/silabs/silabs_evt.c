@@ -36,12 +36,22 @@
 #include "sli_bt_api.h"
 #include "sl_bt_version.h"
 
-static int evt_msgid;
-static silabs_msg_queue_t queue_data;
+#define ADV_DATA_COMPLETE 0
+#define ADV_DATA_INCOMPLETE 1
+#define ADV_DATA_TRUNCATED 2
 
 //global var
 bool ble_version_match = false;
 bool module_boot = false;
+
+static int evt_msgid;
+static silabs_msg_queue_t queue_data;
+static uint8_t  long_extended_data[MAX_ADV_DATA_LEN];
+static uint16_t long_extended_data_len = 0;
+static uint8_t  long_sync_data[MAX_ADV_DATA_LEN];
+static uint16_t long_sync_data_len = 0;
+static bool extended_adv_data_constuct(struct sl_bt_packet *p_in);
+static bool periodic_adv_data_constuct(struct sl_bt_packet *p_in);
 
 void *silabs_watcher(void *arg)
 {
@@ -209,88 +219,24 @@ void *silabs_watcher(void *arg)
         }
         case sl_bt_evt_scanner_extended_advertisement_report_id:
         {
-            static uint8_t  long_extended_data[MAX_ADV_DATA_LEN];
-            static int16_t  rssi_extended = 0;
-            static uint8_t  chain_count_extended = 0;
-            static uint8_t  data_completeness_last = 0xff;
-            static uint8_t  data_completeness_current = 0xff;
-            static uint16_t ble_adv_len_p = 0;
-            static uint8_t  ble_adv_len_current = 0;
-            gl_ble_gap_data_t data;
-
-            data_completeness_current = p->data.evt_scanner_extended_advertisement_report.data_completeness;
-            ble_adv_len_current = p->data.evt_scanner_extended_advertisement_report.data.len;
-            rssi_extended += (int16_t)p->data.evt_scanner_extended_advertisement_report.rssi;
-            ++chain_count_extended;
-
-            // printf("data_completeness_current: %d\n", data_completeness_current);
-            // printf("ble_adv_len_current: %d\n", ble_adv_len_current);
-            if (data_completeness_current == 0)
+            if (extended_adv_data_constuct(p))
             {
-                memset(data.extended_scan_rst.ble_adv, 0, MAX_ADV_DATA_LEN);
-                if (data_completeness_last == 0xff)
-                {
-                    data.extended_scan_rst.ble_adv_len = ble_adv_len_current;
-                    data.extended_scan_rst.rssi = rssi_extended / chain_count_extended;
-                    memcpy(data.extended_scan_rst.ble_adv, p->data.evt_scanner_extended_advertisement_report.data.data, ble_adv_len_current);
-                }
-                else if (data_completeness_last == 1)
-                {
-                    data.extended_scan_rst.ble_adv_len = ble_adv_len_current + ble_adv_len_p;
-                    data.extended_scan_rst.rssi = rssi_extended / chain_count_extended;    
-                    memcpy(&long_extended_data[ble_adv_len_p], p->data.evt_scanner_extended_advertisement_report.data.data, ble_adv_len_current);
-                    memcpy(data.extended_scan_rst.ble_adv, long_extended_data, data.extended_scan_rst.ble_adv_len);
-                }
-                data_completeness_last = 0xff;
-                ble_adv_len_p = 0;
-                rssi_extended = 0;
-                chain_count_extended = 0;
-            
+                gl_ble_gap_data_t data;
                 data.extended_scan_rst.periodic_interval = p->data.evt_scanner_extended_advertisement_report.periodic_interval;
                 data.extended_scan_rst.adv_sid = p->data.evt_scanner_extended_advertisement_report.adv_sid;
                 data.extended_scan_rst.tx_power = p->data.evt_scanner_extended_advertisement_report.tx_power;
+                data.extended_scan_rst.rssi = p->data.evt_scanner_extended_advertisement_report.rssi;
                 data.extended_scan_rst.bonding = p->data.evt_scanner_extended_advertisement_report.bonding;
+                data.extended_scan_rst.ble_adv_len = long_extended_data_len;
                 data.extended_scan_rst.event_flags = ble_get_adv_type(p->data.evt_scanner_extended_advertisement_report.event_flags);
                 data.extended_scan_rst.ble_addr_type = p->data.evt_scanner_extended_advertisement_report.address_type;
                 memcpy(data.extended_scan_rst.address, p->data.evt_scanner_extended_advertisement_report.address.addr, 6);
-
+                memcpy(data.extended_scan_rst.ble_adv, long_extended_data, data.extended_scan_rst.ble_adv_len);
                 if (ble_msg_cb->ble_gap_event)
                 {
                     ble_msg_cb->ble_gap_event(GAP_BLE_EXTENDED_SCAN_RESULT_EVT, &data);
                 }
-
             }
-            else if (data_completeness_current == 1)
-            {
-                if (data_completeness_last == 0xff)
-                {
-                    memset(long_extended_data, 0, MAX_ADV_DATA_LEN);
-                    memcpy(long_extended_data, p->data.evt_scanner_extended_advertisement_report.data.data, ble_adv_len_current);
-                }
-                else if (data_completeness_last == 1)
-                {
-                    memcpy(&long_extended_data[ble_adv_len_p], p->data.evt_scanner_extended_advertisement_report.data.data, ble_adv_len_current);
-                }
-
-                data_completeness_last = data_completeness_current;
-                ble_adv_len_p += ble_adv_len_current;
-            }
-            else if (data_completeness_current == 2)
-            {
-                data_completeness_last = 0xff;
-                ble_adv_len_p = 0;
-                rssi_extended = 0;
-                chain_count_extended = 0;
-            }
-
-            if (ble_adv_len_p >= MAX_ADV_DATA_LEN)
-            {
-                data_completeness_last = 0xff;
-                ble_adv_len_p = 0;
-                rssi_extended = 0;
-                chain_count_extended = 0;
-            }
-            
             break;
         }
         case sl_bt_evt_sync_opened_id:
@@ -312,88 +258,18 @@ void *silabs_watcher(void *arg)
         }
         case sl_bt_evt_sync_data_id:
         {
-            static uint8_t  long_sync_data[MAX_ADV_DATA_LEN];
-            static int16_t  rssi_sync = 0;
-            static int16_t  tx_power_sync = 0;
-            static uint8_t  chain_count_sync = 0;
-            static uint8_t  data_status_last = 0xff;
-            static uint8_t  data_status_current = 0xff;
-            static uint16_t sync_data_len_p = 0;
-            static uint8_t  sync_data_len_current = 0;
-            gl_ble_gap_data_t data;
-
-            rssi_sync += (int16_t)p->data.evt_sync_data.rssi;
-            tx_power_sync += (int16_t)p->data.evt_sync_data.tx_power;
-            ++chain_count_sync;
-
-            data_status_current = p->data.evt_sync_data.data_status;
-            sync_data_len_current = p->data.evt_sync_data.data.len;
-
-            if (data_status_current == 0)
+            if (periodic_adv_data_constuct(p))
             {
-                memset(data.sync_scan_rst.ble_adv, 0, MAX_ADV_DATA_LEN);
-                if (data_status_last == 0xff)
+                gl_ble_gap_data_t data;
+                data.sync_scan_rst.ble_adv_len = long_sync_data_len;
+                data.sync_scan_rst.rssi = p->data.evt_sync_data.rssi;
+                data.sync_scan_rst.tx_power = p->data.evt_sync_data.tx_power;
+                data.sync_scan_rst.sync_handle = p->data.evt_sync_data.sync;
+                memcpy(data.sync_scan_rst.ble_adv, long_sync_data, data.sync_scan_rst.ble_adv_len);
+                if (ble_msg_cb->ble_gap_event)
                 {
-                    data.sync_scan_rst.ble_adv_len = sync_data_len_current;
-                    data.sync_scan_rst.rssi = rssi_sync / chain_count_sync;
-                    data.sync_scan_rst.tx_power = tx_power_sync / chain_count_sync;
-                    memcpy(data.sync_scan_rst.ble_adv, p->data.evt_sync_data.data.data, sync_data_len_current);
+                    ble_msg_cb->ble_gap_event(GAP_BLE_SYNC_SCAN_RESULT_EVT, &data);
                 }
-                else if (data_status_last == 1)
-                {
-                    data.sync_scan_rst.ble_adv_len = sync_data_len_current + sync_data_len_p;
-                    data.sync_scan_rst.rssi = rssi_sync / chain_count_sync;
-                    data.sync_scan_rst.tx_power = tx_power_sync / chain_count_sync;
-                    memcpy(&long_sync_data[sync_data_len_p], p->data.evt_sync_data.data.data, sync_data_len_current);
-                    memcpy(data.sync_scan_rst.ble_adv, long_sync_data, data.sync_scan_rst.ble_adv_len);
-                }
-                data_status_last = 0xff;
-                sync_data_len_p = 0;
-                rssi_sync = 0;
-                tx_power_sync = 0;
-                chain_count_sync = 0;
-            }
-            else if (data_status_current == 1)
-            {
-                if (data_status_last == 0xff)
-                {
-                    memset(long_sync_data, 0, MAX_ADV_DATA_LEN);
-                    memcpy(long_sync_data, p->data.evt_sync_data.data.data, sync_data_len_current);
-                }
-                else if (data_status_last == 1)
-                {
-                    memcpy(&long_sync_data[sync_data_len_p], p->data.evt_sync_data.data.data, sync_data_len_current);
-                }
-
-                data_status_last = data_status_current;
-                sync_data_len_p += sync_data_len_current;
-
-                if (sync_data_len_p >= MAX_ADV_DATA_LEN)
-                {
-                    data_status_last = 0xff;
-                    sync_data_len_p = 0;
-                    rssi_sync = 0;
-                    tx_power_sync = 0;
-                    chain_count_sync = 0;
-                }
-
-                break;
-            }
-            else if (data_status_current == 2)
-            {
-                data_status_last = 0xff;
-                sync_data_len_p = 0;
-                rssi_sync = 0;
-                tx_power_sync = 0;
-                chain_count_sync = 0;
-                break;
-            }
-
-            // data.sync_scan_rst.tx_power = p->data.evt_sync_data.tx_power;
-            data.sync_scan_rst.sync_handle = p->data.evt_sync_data.sync;
-            if (ble_msg_cb->ble_gap_event)
-            {
-                ble_msg_cb->ble_gap_event(GAP_BLE_SYNC_SCAN_RESULT_EVT, &data);
             }
             break;
         }
@@ -458,4 +334,120 @@ void *silabs_watcher(void *arg)
     }
 
     return NULL;
+}
+
+static bool extended_adv_data_constuct(struct sl_bt_packet *p_in)
+{
+    static uint16_t long_extended_data_len_p = 0;
+    static uint8_t addr_type_record;
+    static bd_addr addr_record;
+    static uint8_t sid_record;
+    static bool is_record = false;
+
+    if (p_in->data.evt_scanner_extended_advertisement_report.data_completeness == ADV_DATA_TRUNCATED)
+    {
+        is_record = false;
+        memset(long_extended_data, 0, MAX_ADV_DATA_LEN);
+        long_extended_data_len_p = 0;
+        return false;
+    }
+
+    if (p_in->data.evt_scanner_extended_advertisement_report.data_completeness == ADV_DATA_INCOMPLETE)
+    {
+        if (!is_record)
+        {
+            is_record = true;
+            memset(long_extended_data, 0, MAX_ADV_DATA_LEN);
+            long_extended_data_len_p = 0;
+            addr_type_record = p_in->data.evt_scanner_extended_advertisement_report.address_type;
+            memcpy(&addr_record, &(p_in->data.evt_scanner_extended_advertisement_report.address), sizeof(bd_addr));
+            sid_record = p_in->data.evt_scanner_extended_advertisement_report.adv_sid;
+        }
+        else
+        {
+            if (addr_type_record != p_in->data.evt_scanner_extended_advertisement_report.address_type ||
+                memcmp(&addr_record, &(p_in->data.evt_scanner_extended_advertisement_report.address), sizeof(bd_addr)) ||
+                sid_record != p_in->data.evt_scanner_extended_advertisement_report.adv_sid)
+            {
+                return false;
+            }
+            else
+            {
+                if ((long_extended_data_len_p + p_in->data.evt_scanner_extended_advertisement_report.data.len) >= MAX_ADV_DATA_LEN)
+                {
+                    is_record = false;
+                    memset(long_extended_data, 0, MAX_ADV_DATA_LEN);
+                    long_extended_data_len_p = 0;
+                    return false;
+                }
+            }
+        }
+    }
+
+    memcpy(&long_extended_data[long_extended_data_len_p], p_in->data.evt_scanner_extended_advertisement_report.data.data,
+            p_in->data.evt_scanner_extended_advertisement_report.data.len);
+    long_extended_data_len_p += p_in->data.evt_scanner_extended_advertisement_report.data.len;
+
+    if (p_in->data.evt_scanner_extended_advertisement_report.data_completeness == ADV_DATA_COMPLETE)
+    {
+        is_record = false;
+        long_extended_data_len = long_extended_data_len_p;
+        long_extended_data_len_p = 0;
+        return true;
+    }
+}
+
+static bool periodic_adv_data_constuct(struct sl_bt_packet *p_in)
+{
+    static uint16_t long_sync_data_len_p = 0;
+    static uint16_t sync_handle_record;
+    static bool is_record = false;
+
+    if (p_in->data.evt_sync_data.data_status == ADV_DATA_TRUNCATED)
+    {
+        is_record = false;
+        memset(long_sync_data, 0, MAX_ADV_DATA_LEN);
+        long_sync_data_len_p = 0;
+        return false;
+    }
+
+    if (p_in->data.evt_sync_data.data_status == ADV_DATA_INCOMPLETE)
+    {
+        if (!is_record)
+        {
+            is_record = true;
+            memset(long_sync_data, 0, MAX_ADV_DATA_LEN);
+            long_sync_data_len_p = 0;
+            sync_handle_record = p_in->data.evt_sync_data.sync;
+        }
+        else
+        {
+            if (sync_handle_record != p_in->data.evt_sync_data.sync)
+            {
+                return false;
+            }
+            else
+            {
+                if ((long_sync_data_len_p + p_in->data.evt_sync_data.data.len) >= MAX_ADV_DATA_LEN)
+                {
+                    is_record = false;
+                    memset(long_sync_data, 0, MAX_ADV_DATA_LEN);
+                    long_sync_data_len_p = 0;
+                    return false;
+                }
+            }
+        }
+    }
+
+    memcpy(&long_sync_data[long_sync_data_len_p], p_in->data.evt_sync_data.data.data,
+            p_in->data.evt_sync_data.data.len);
+    long_sync_data_len_p += p_in->data.evt_sync_data.data.len;
+
+    if (p_in->data.evt_sync_data.data_status == ADV_DATA_COMPLETE)
+    {
+        is_record = false;
+        long_sync_data_len = long_sync_data_len_p;
+        long_sync_data_len_p = 0;
+        return true;
+    }
 }
