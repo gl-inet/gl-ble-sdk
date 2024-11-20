@@ -375,9 +375,7 @@ static bool extended_adv_data_constuct(struct sl_bt_packet *p_in)
             {
                 if ((long_extended_data_len_p + p_in->data.evt_scanner_extended_advertisement_report.data.len) >= MAX_ADV_DATA_LEN)
                 {
-                    is_record = false;
-                    memset(long_extended_data, 0, MAX_ADV_DATA_LEN);
-                    long_extended_data_len_p = 0;
+                    long_extended_data_len_p += p_in->data.evt_scanner_extended_advertisement_report.data.len;
                     return false;
                 }
             }
@@ -391,10 +389,21 @@ static bool extended_adv_data_constuct(struct sl_bt_packet *p_in)
     if (p_in->data.evt_scanner_extended_advertisement_report.data_completeness == ADV_DATA_COMPLETE)
     {
         is_record = false;
-        long_extended_data_len = long_extended_data_len_p;
-        long_extended_data_len_p = 0;
-        return true;
+        if(long_extended_data_len_p > MAX_ADV_DATA_LEN)
+        {
+            memset(long_extended_data, 0, MAX_ADV_DATA_LEN);
+            long_extended_data_len_p = 0;
+            return false;
+        }
+        else
+        {
+            long_extended_data_len = long_extended_data_len_p;
+            long_extended_data_len_p = 0;
+            return true;
+        }
     }
+
+    return false;
 }
 
 static bool periodic_adv_data_constuct(struct sl_bt_packet *p_in)
@@ -430,9 +439,7 @@ static bool periodic_adv_data_constuct(struct sl_bt_packet *p_in)
             {
                 if ((long_sync_data_len_p + p_in->data.evt_sync_data.data.len) >= MAX_ADV_DATA_LEN)
                 {
-                    is_record = false;
-                    memset(long_sync_data, 0, MAX_ADV_DATA_LEN);
-                    long_sync_data_len_p = 0;
+                    long_sync_data_len_p += p_in->data.evt_sync_data.data.len;
                     return false;
                 }
             }
@@ -446,8 +453,19 @@ static bool periodic_adv_data_constuct(struct sl_bt_packet *p_in)
     if (p_in->data.evt_sync_data.data_status == ADV_DATA_COMPLETE)
     {
         is_record = false;
-        long_sync_data_len = long_sync_data_len_p;
-        long_sync_data_len_p = 0;
-        return true;
+        if(long_sync_data_len_p > MAX_ADV_DATA_LEN)
+        {
+            memset(long_sync_data, 0, MAX_ADV_DATA_LEN);
+            long_sync_data_len_p = 0;
+            return false;
+        }
+        else
+        {
+            long_sync_data_len = long_sync_data_len_p;
+            long_sync_data_len_p = 0;
+            return true;
+        }
     }
+
+    return false;
 }
