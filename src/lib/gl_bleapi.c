@@ -482,7 +482,15 @@ GL_RET gl_ble_module_dfu(void)
 		return GL_UNKNOW_ERR;
 	}
 
-    sprintf(command, "/usr/bin/gl-ble-dfu %s %s %d %d", ble_hw_cfg->model, ble_hw_cfg->port, ble_hw_cfg->rst_gpio, ble_hw_cfg->dfu_gpio);
+	if(access("/sys/class/gpio/ble_rst", F_OK) == 0 && 
+		access("/sys/class/gpio/dfu_rst", F_OK) == 0)
+	{
+		sprintf(command, "/usr/bin/gl-ble-dfu %s %s ble_rst dfu_rst", ble_hw_cfg->model, ble_hw_cfg->port);
+	}
+	else
+	{
+		sprintf(command, "/usr/bin/gl-ble-dfu %s %s %d %d", ble_hw_cfg->model, ble_hw_cfg->port, ble_hw_cfg->rst_gpio, ble_hw_cfg->dfu_gpio);
+	}
 
     if( system(command) != 0 )
 	{
