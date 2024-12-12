@@ -117,7 +117,7 @@ define Package/libglble/install
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) files/etc/uci-defaults/30-ble-model-config $(1)/etc/uci-defaults/30-ble-model-config
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_BIN) files/etc/config/gl_gattdb_cfg.json $(1)/etc/config/gl_gattdb_cfg.json
+	$(INSTALL_BIN) files/etc/gl_gattdb_cfg.json $(1)/etc/gl_gattdb_cfg.json
 
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) files/usr/bin/* $(1)/usr/bin/
