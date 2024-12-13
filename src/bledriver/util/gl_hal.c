@@ -24,8 +24,9 @@
 #include "gl_uart.h"
 #include "gl_log.h"
 #include "gl_hal.h"
-#include "gl_hw_cfg.h"
 #include "gl_errno.h"
+
+#define UCI_PACKAGE "ble"
 
 unsigned char ENDIAN;
 
@@ -117,9 +118,11 @@ static GL_RET normal_check_rst_io(void)
 	SDK in official openwrt will have a special io base num.
 	If "/sys/class/gpio/gpiochip412" exist, all io shoule add 412.
 	If "/sys/class/gpio/gpiochip455" exist, all io shoule add 455.
+	If "/sys/class/gpio/gpiochip512" exist, all io shoule add 512.
 */
 #define SPECIAL_CHIP_IO412 		"/sys/class/gpio/gpiochip412"
 #define SPECIAL_CHIP_IO455 		"/sys/class/gpio/gpiochip455"
+#define SPECIAL_CHIP_IO512 		"/sys/class/gpio/gpiochip512"
 static GL_RET sdk_check_ver(void)
 {
 	if(!ble_hw_cfg)
@@ -137,6 +140,11 @@ static GL_RET sdk_check_ver(void)
 	{
 		log_debug("SDK gpiochip455 exist.\n");
 		ble_hw_cfg->rst_gpio += 455;
+	}
+	else if((access(SPECIAL_CHIP_IO512, F_OK)) != -1)
+	{
+		log_debug("SDK gpiochip512 exist.\n");
+		ble_hw_cfg->rst_gpio += 512;
 	}
 
 	return GL_SUCCESS;
@@ -186,27 +194,15 @@ static int serial_init(void)
     return uartOpen((int8_t*)ble_hw_cfg->port, ble_hw_cfg->baudRate, ble_hw_cfg->flowcontrol, 100);
 }
 
-static GL_RET find_model_hw(char *model_name)
-{
-
-	int support_model_nums = sizeof(GL_BLE_HW_LIST)/sizeof(GL_BLE_HW_LIST[0]);
-	
-	for(int i = 0; i < support_model_nums; i++)
-	{
-		if(0 == strcmp(model_name, GL_BLE_HW_LIST[i].model))
-		{
-			ble_hw_cfg = &GL_BLE_HW_LIST[i];
-			sdk_check_ver();
-			return GL_SUCCESS;
-		}
-	}
-
-	return GL_ERR_UNSUPPORT_MODEL;
-}
-
 static GL_RET get_model_hw_cfg(void)
 {
-	char model[48] = {0};
+	char uart_baudrate[16] = {0};
+	char flowcontrol[8] = {0};
+	char rst_trigger[8] = {0};
+	char gpio_rst[8] = {0};
+	char gpio_dfu[8] = {0};
+	char uart_tty[32] = {0};
+
     struct uci_context* ctx = guci2_init();
 	if(!ctx)
 	{
@@ -214,21 +210,65 @@ static GL_RET get_model_hw_cfg(void)
 		return GL_UNKNOW_ERR;
 	}
 
-    if(guci2_get(ctx,"gl_ble_hw.model",model) < 0)
+    if(guci2_get(ctx,"uart_baudrate",uart_baudrate) < 0)
     {
-		log_err("Get hw model uci config error!\n");
+		log_err("Get hw uart_baudrate error!\n");
 		return GL_UNKNOW_ERR;
 	}else{
-		log_debug("Get model: %s\n", model);
+		log_debug("Get uart_baudrate: %s\n", uart_baudrate);
+	}
+
+	if(guci2_get(ctx,"uart_flowcontrol",flowcontrol) < 0)
+    {
+		log_err("Get hw flowcontrol error!\n");
+		return GL_UNKNOW_ERR;
+	}else{
+		log_debug("Get flowcontrol: %s\n", flowcontrol);
+	}
+
+	if(guci2_get(ctx,"rst_trigger",rst_trigger) < 0)
+    {
+		log_err("Get hw rst_trigger error!\n");
+		return GL_UNKNOW_ERR;
+	}else{
+		log_debug("Get rst_trigger: %s\n", rst_trigger);
+	}
+
+	if(guci2_get(ctx,"gpio_rst",gpio_rst) < 0)
+    {
+		log_err("Get hw gpio_rst error!\n");
+		return GL_UNKNOW_ERR;
+	}else{
+		log_debug("Get gpio_rst: %s\n", gpio_rst);
+	}
+
+	if(guci2_get(ctx,"gpio_dfu",gpio_dfu) < 0)
+    {
+		log_err("Get hw gpio_dfu error!\n");
+		return GL_UNKNOW_ERR;
+	}else{
+		log_debug("Get gpio_dfu: %s\n", gpio_dfu);
+	}
+
+	if(guci2_get(ctx,"uart_tty",uart_tty) < 0)
+    {
+		log_err("Get hw uart_tty error!\n");
+		return GL_UNKNOW_ERR;
+	}else{
+		log_debug("Get uart_tty: %s\n", uart_tty);
 	}
 
 	guci2_free(ctx);
 
-	if(GL_SUCCESS != find_model_hw(model))
-	{
-		return GL_ERR_UNSUPPORT_MODEL;
-	}
-	
+	ble_hw_cfg = malloc(sizeof(hw_cfg_t));
+	ble_hw_cfg->baudRate = atoi(uart_baudrate);
+	ble_hw_cfg->flowcontrol = atoi(flowcontrol);
+	ble_hw_cfg->rst_trigger = atoi(rst_trigger);
+	ble_hw_cfg->rst_gpio = atoi(gpio_rst);
+	ble_hw_cfg->dfu_gpio = atoi(gpio_dfu);
+	memcpy(ble_hw_cfg->port, uart_tty, sizeof(uart_tty));
+	sdk_check_ver();
+
 	normal_check_rst_io();
 
 	return GL_SUCCESS;
@@ -242,7 +282,6 @@ int hal_init(void)
 
 	// Manual clean uart cache: fix tcflush() not work on some model
 	// uartCacheClean();
-	
 
     int serialFd = serial_init();
     if( serialFd < 0 )
@@ -274,65 +313,30 @@ int guci2_free(struct uci_context* ctx)
 	return 0;
 }
 
-static const char *delimiter = " ";
-
-static void uci_show_value(struct uci_option *o, char value[]){
-	struct uci_element *e;
-	bool sep = false;
-//	char *space;
-
-	switch(o->type) {
-	case UCI_TYPE_STRING:
-		sprintf(value,"%s", o->v.string);
-		break;
-	case UCI_TYPE_LIST:
-		uci_foreach_element(&o->v.list, e) {
-			sprintf(value,"%s", (sep ? delimiter : ""));
-			//space = strpbrk(e->name, " \t\r\n");
-			//if (!space )
-				sprintf(value,"%s", e->name);
-			//sep = true;
-		}
-		break;
-	default:
-		strcpy(value,"");
-		break;
-	}
-}
-
-int guci2_get(struct uci_context* ctx, const char* section_or_key, char value[])
+int guci2_get(struct uci_context* ctx, const char* section_or_key, char out_value[])
 {
-	struct uci_ptr ptr;
-	struct uci_element *e;
+	struct uci_package *pkg;
+    struct uci_section *sec;
+    const char *value = NULL;
 	int ret = UCI_OK;
-	char *str=(char*)malloc(strlen(section_or_key)+1); //must not use a const value
-	strcpy(str,section_or_key);
-	if (uci_lookup_ptr(ctx, &ptr, str, true) != UCI_OK) {
-		ret=-1;
-		strcpy(value,"");
-		goto out;
-	}
-	if (!(ptr.flags & UCI_LOOKUP_COMPLETE)) {
-		ctx->err = UCI_ERR_NOTFOUND;
-		ret=-1;
-		strcpy(value,"");
-		goto out;
-	}
-	e = ptr.last;
-	switch(e->type) {
-	case UCI_TYPE_SECTION:
-		sprintf(value,"%s", ptr.s->type);
-		break;
-	case UCI_TYPE_OPTION:
-		uci_show_value(ptr.o, value);
-		break;
-	default:
-		strcpy(value,"");
-		ret=-1;
-		goto out;
-		break;
-	}
-out:
-	free(str);
+
+    if (uci_load(ctx, UCI_PACKAGE, &pkg)) {
+        return -1;
+    }
+
+    sec = uci_lookup_section(ctx, pkg, UCI_PACKAGE);
+    if (!sec) {
+		uci_unload(ctx, pkg);
+        return -1;
+    }
+
+    value = uci_lookup_option_string(ctx, sec, section_or_key);
+    if (value) {
+		strcpy(out_value, value);
+    } else {
+        fprintf(stderr, "Failed to get option value\n");
+    }
+
+	uci_unload(ctx, pkg);
 	return ret;
 }

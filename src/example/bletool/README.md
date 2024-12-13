@@ -565,7 +565,7 @@ It will take a while, please waiting...
 }
 ```
 
-**Note:** Please config JSON file(like /etc/gl_gattdb_cfg.json) before execute this command. It will remove default static gatt database first before set new gatt database. **When you exit bletool, it will recovery to the default static gatt database.**
+**Note:** Please config JSON file(like /etc/ble/gl_gattdb_cfg.json) before execute this command. It will remove default static gatt database first before set new gatt database. **When you exit bletool, it will recovery to the default static gatt database.**
 
 
 

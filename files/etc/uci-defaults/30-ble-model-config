@@ -2,45 +2,99 @@
 
 . /lib/functions.sh
 
-if [ ! -f "/etc/config/gl_ble_hw" ]; then
-    touch "/etc/config/gl_ble_hw"
-fi
-
+tty=""
 board=$(board_name)
-
 case "$board" in
-        *ar300m*)
-                model=ar300m
-                ;;
-        *ar750s*)
-                model=ar750s
-                ;;
-        *e750*)
-                model=e750
-                ;;
-        *x750*)
-                model=x750
-                ;;
-        *x300b*)
-                model=x300b
-                ;;
-        *xe300*)
-                model=xe300
-                ;;
-        *x1200*)
-                model=x1200
-                ;;
-        *s200*)
-                model=s200
-                ;;
-        *x3000*)
-                model=x3000
-                ;;
-        *)
-                model=$board
-                ;;
+	*x750*)
+        uci set ble.ble.model="x750"
+        uci set ble.ble.uart_flowcontrol="0"
+        uci set ble.ble.rst_trigger="1"
+		uci set ble.ble.uart_baudrate="115200"
+        uci set ble.ble.uart_fc="&uart-flow-control"
+        uci set ble.ble.gpio_rst="1"
+        uci set ble.ble.gpio_dfu="255"
+        uci set ble.ble.uart_tty='/dev/ttyS0'
+        ;;
+	*s1300*)
+        uci set ble.ble.model="s1300"
+        uci set ble.ble.uart_flowcontrol="0"
+        uci set ble.ble.rst_trigger="1"
+		uci set ble.ble.uart_baudrate="115200"
+        uci set ble.ble.uart_fc="&uart-flow-control"
+        uci set ble.ble.gpio_rst="48"
+        uci set ble.ble.gpio_dfu="255"
+        uci set ble.ble.uart_tty='/dev/ttyMSM1'
+        ;;
+	*xe300*)
+        uci set ble.ble.model="xe300"
+        uci set ble.ble.uart_flowcontrol="0"
+        uci set ble.ble.rst_trigger="1"
+		uci set ble.ble.uart_baudrate="115200"
+        uci set ble.ble.uart_fc="&uart-flow-control"
+        uci set ble.ble.gpio_rst="14"
+        uci set ble.ble.gpio_dfu="255"
+        uci set ble.ble.uart_tty='/dev/ttyS0'
+        ;;
+	*x300b*)
+        uci set ble.ble.model="x300b"
+        uci set ble.ble.uart_flowcontrol="0"
+        uci set ble.ble.rst_trigger="1"
+		uci set ble.ble.uart_baudrate="115200"
+        uci set ble.ble.uart_fc="&uart-flow-control"
+        uci set ble.ble.gpio_rst="16"
+        uci set ble.ble.gpio_dfu="255"
+        uci set ble.ble.uart_tty='/dev/ttyS0'
+        ;;
+	*ap1300*)
+        uci set ble.ble.model="ap1300"
+        uci set ble.ble.uart_flowcontrol="0"
+        uci set ble.ble.rst_trigger="1"
+		uci set ble.ble.uart_baudrate="115200"
+        uci set ble.ble.uart_fc="&uart-flow-control"
+        uci set ble.ble.gpio_rst="62"
+        uci set ble.ble.gpio_dfu="255"
+        uci set ble.ble.uart_tty='/dev/ttyUSB0'
+        ;;
+	*b2200*)
+        uci set ble.ble.model="b2200"
+        uci set ble.ble.uart_flowcontrol="0"
+        uci set ble.ble.rst_trigger="1"
+		uci set ble.ble.uart_baudrate="115200"
+        uci set ble.ble.uart_fc="&uart-flow-control"
+        uci set ble.ble.gpio_rst="42"
+        uci set ble.ble.gpio_dfu="255"
+        uci set ble.ble.uart_tty='/dev/ttyMSM1'
+        ;;
+	*s200*)
+        uci set ble.ble.model="s200"
+        uci set ble.ble.uart_flowcontrol="0"
+        uci set ble.ble.rst_trigger="1"
+		uci set ble.ble.uart_baudrate="115200"
+        uci set ble.ble.uart_fc="&uart-flow-control"
+        uci set ble.ble.gpio_rst="1"
+        uci set ble.ble.gpio_dfu="11"
+        uci set ble.ble.uart_tty='/dev/ttyCH343USB1'
+        ;;
+	*x3000*)
+        uci set ble.ble.model="x3000"
+        uci set ble.ble.uart_flowcontrol="0"
+        uci set ble.ble.rst_trigger="1"
+		uci set ble.ble.uart_baudrate="115200"
+        uci set ble.ble.uart_fc="&uart-flow-control"
+        uci set ble.ble.gpio_rst="26"
+        uci set ble.ble.gpio_dfu="27"
+        uci set ble.ble.uart_tty='/dev/ttyCH343USB0'
+        ;;
+	*)
+        uci set ble.ble.model="GL"
+        uci set ble.ble.uart_flowcontrol="0"
+        uci set ble.ble.rst_trigger="1"
+		tty=$(ls /dev/ttyACM* 2>/dev/null)
+        [ -z "$tty" ] && tty=$(ls /dev/ttyUSB0 2>/dev/null)
+        [ -n "$tty" ] && {
+            uci set ble.ble.uart_tty="$tty"
+            uci set ble.ble.uart_baudrate="115200"
+        }
+        ;;
 esac
-echo $model
-
-uci set gl_ble_hw.model=$model
-uci commit gl_ble_hw
+uci commit ble

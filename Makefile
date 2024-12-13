@@ -116,6 +116,8 @@ define Package/libglble/install
 	$(LN) /usr/lib/gl/libglbleapi.so $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) files/etc/uci-defaults/30-ble-model-config $(1)/etc/uci-defaults/30-ble-model-config
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_BIN) files/etc/config/ble $(1)/etc/config/ble
 
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) files/usr/bin/* $(1)/usr/bin/
