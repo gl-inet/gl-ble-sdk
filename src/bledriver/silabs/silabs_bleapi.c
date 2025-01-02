@@ -494,15 +494,9 @@ GL_RET silabs_ble_send_notify(BLE_MAC address, int char_handle, char *value)
     str2array(hex_value, value, len);
 
     sl_status_t status = SL_STATUS_FAIL;
-    uint16_t send_len = 0;
 
-    status = sl_bt_gatt_write_characteristic_value_without_response((uint8_t)connection, (uint16_t)char_handle, (size_t)len, (uint8_t *)hex_value, (uint16_t *)&send_len);
+    status = sl_bt_gatt_server_send_notification((uint8_t)connection, (uint16_t)char_handle, (size_t)len, (uint8_t *)hex_value);
     if (status != SL_STATUS_OK)
-    {
-        free(hex_value);
-        return GL_UNKNOW_ERR;
-    }
-    if (send_len == 0)
     {
         free(hex_value);
         return GL_UNKNOW_ERR;
