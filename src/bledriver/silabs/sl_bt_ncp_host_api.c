@@ -255,11 +255,22 @@ sl_status_t sl_bt_system_get_tx_power_setting(int16_t *support_min,
 
 
     sl_bt_host_handle_command();
+
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&rsp->data.rsp_system_get_tx_power_setting.support_min, 2);
+        reverse_endian((uint8_t *)&rsp->data.rsp_system_get_tx_power_setting.support_max, 2);
+        reverse_endian((uint8_t *)&rsp->data.rsp_system_get_tx_power_setting.set_min, 2);
+        reverse_endian((uint8_t *)&rsp->data.rsp_system_get_tx_power_setting.set_max, 2);
+        reverse_endian((uint8_t *)&rsp->data.rsp_system_get_tx_power_setting.rf_path_gain, 2);
+    }
+
     *support_min = rsp->data.rsp_system_get_tx_power_setting.support_min;
     *support_max = rsp->data.rsp_system_get_tx_power_setting.support_max;
     *set_min = rsp->data.rsp_system_get_tx_power_setting.set_min;
     *set_max = rsp->data.rsp_system_get_tx_power_setting.set_max;
     *rf_path_gain = rsp->data.rsp_system_get_tx_power_setting.rf_path_gain;
+
     return rsp->data.rsp_system_get_tx_power_setting.result;
 
 }
@@ -368,6 +379,15 @@ sl_status_t sl_bt_system_get_counters(uint8_t reset,
 
 
     sl_bt_host_handle_command();
+
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&rsp->data.rsp_system_get_counters.tx_packets, 2);
+        reverse_endian((uint8_t *)&rsp->data.rsp_system_get_counters.rx_packets, 2);
+        reverse_endian((uint8_t *)&rsp->data.rsp_system_get_counters.crc_errors, 2);
+        reverse_endian((uint8_t *)&rsp->data.rsp_system_get_counters.failures, 2);
+    }
+
     *tx_packets = rsp->data.rsp_system_get_counters.tx_packets;
     *rx_packets = rsp->data.rsp_system_get_counters.rx_packets;
     *crc_errors = rsp->data.rsp_system_get_counters.crc_errors;
@@ -383,6 +403,12 @@ sl_status_t sl_bt_system_set_lazy_soft_timer(uint32_t time,
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&time, 4);
+        reverse_endian((uint8_t *)&slack, 4);
+    }
 
     cmd->data.cmd_system_set_lazy_soft_timer.time=time;
     cmd->data.cmd_system_set_lazy_soft_timer.slack=slack;
@@ -469,6 +495,11 @@ sl_status_t sl_bt_advertiser_configure(uint8_t advertising_set, uint32_t flags) 
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&flags, 4);
+    }
+
     cmd->data.cmd_advertiser_configure.advertising_set=advertising_set;
     cmd->data.cmd_advertiser_configure.flags=flags;
 
@@ -534,6 +565,11 @@ sl_status_t sl_bt_advertiser_set_tx_power(uint8_t advertising_set,
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&power, 2);
+    }
+
     cmd->data.cmd_advertiser_set_tx_power.advertising_set=advertising_set;
     cmd->data.cmd_advertiser_set_tx_power.power=power;
 
@@ -541,6 +577,12 @@ sl_status_t sl_bt_advertiser_set_tx_power(uint8_t advertising_set,
 
 
     sl_bt_host_handle_command();
+
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&rsp->data.rsp_advertiser_set_tx_power.set_power, 2);
+    }
+
     *set_power = rsp->data.rsp_advertiser_set_tx_power.set_power;
     return rsp->data.rsp_advertiser_set_tx_power.result;
 
@@ -654,6 +696,11 @@ SL_BGAPI_DEPRECATED sl_status_t sl_bt_advertiser_set_configuration(uint8_t adver
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&configurations, 4);
+    }
+
     cmd->data.cmd_advertiser_set_configuration.advertising_set=advertising_set;
     cmd->data.cmd_advertiser_set_configuration.configurations=configurations;
 
@@ -670,6 +717,11 @@ SL_BGAPI_DEPRECATED sl_status_t sl_bt_advertiser_clear_configuration(uint8_t adv
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&configurations, 4);
+    }
 
     cmd->data.cmd_advertiser_clear_configuration.advertising_set=advertising_set;
     cmd->data.cmd_advertiser_clear_configuration.configurations=configurations;
@@ -750,6 +802,13 @@ SL_BGAPI_DEPRECATED sl_status_t sl_bt_advertiser_start_periodic_advertising(uint
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&interval_min, 2);
+        reverse_endian((uint8_t *)&interval_max, 2);
+        reverse_endian((uint8_t *)&flags, 4);
+    }
 
     cmd->data.cmd_advertiser_start_periodic_advertising.advertising_set=advertising_set;
     cmd->data.cmd_advertiser_start_periodic_advertising.interval_min=interval_min;
@@ -966,6 +1025,11 @@ sl_status_t sl_bt_extended_advertiser_start_directed(uint8_t advertising_set,
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&flags, 4);
+    }
+
     cmd->data.cmd_extended_advertiser_start_directed.advertising_set=advertising_set;
     cmd->data.cmd_extended_advertiser_start_directed.connect=connect;
     cmd->data.cmd_extended_advertiser_start_directed.flags=flags;
@@ -1107,6 +1171,12 @@ sl_status_t sl_bt_scanner_set_timing(uint8_t phys,
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&scan_interval, 2);
+        reverse_endian((uint8_t *)&scan_window, 2);
+    }
+
     cmd->data.cmd_scanner_set_timing.phys=phys;
     cmd->data.cmd_scanner_set_timing.scan_interval=scan_interval;
     cmd->data.cmd_scanner_set_timing.scan_window=scan_window;
@@ -1193,6 +1263,12 @@ sl_status_t sl_bt_sync_open(bd_addr address,
 
 
     sl_bt_host_handle_command();
+
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&rsp->data.rsp_sync_open.sync, 2);
+    }
+
     *sync = rsp->data.rsp_sync_open.sync;
     return rsp->data.rsp_sync_open.result;
 
@@ -1248,6 +1324,12 @@ sl_status_t sl_bt_past_receiver_set_default_sync_receive_parameters(uint8_t mode
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&skip, 2);
+        reverse_endian((uint8_t *)&timeout, 2);
+    }
+
     cmd->data.cmd_past_receiver_set_default_sync_receive_parameters.mode=mode;
     cmd->data.cmd_past_receiver_set_default_sync_receive_parameters.skip=skip;
     cmd->data.cmd_past_receiver_set_default_sync_receive_parameters.timeout=timeout;
@@ -1270,6 +1352,12 @@ sl_status_t sl_bt_past_receiver_set_sync_receive_parameters(uint8_t connection,
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&skip, 2);
+        reverse_endian((uint8_t *)&timeout, 2);
+    }
+
     cmd->data.cmd_past_receiver_set_sync_receive_parameters.connection=connection;
     cmd->data.cmd_past_receiver_set_sync_receive_parameters.mode=mode;
     cmd->data.cmd_past_receiver_set_sync_receive_parameters.skip=skip;
@@ -1291,6 +1379,11 @@ sl_status_t sl_bt_advertiser_past_transfer(uint8_t connection,
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&service_data, 2);
+    }
+
     cmd->data.cmd_advertiser_past_transfer.connection=connection;
     cmd->data.cmd_advertiser_past_transfer.service_data=service_data;
     cmd->data.cmd_advertiser_past_transfer.advertising_set=advertising_set;
@@ -1309,6 +1402,12 @@ sl_status_t sl_bt_sync_past_transfer(uint8_t connection,
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&service_data, 2);
+        reverse_endian((uint8_t *)&sync, 2);
+    }
 
     cmd->data.cmd_sync_past_transfer.connection=connection;
     cmd->data.cmd_sync_past_transfer.service_data=service_data;
@@ -1331,6 +1430,16 @@ sl_status_t sl_bt_connection_set_default_parameters(uint16_t min_interval,
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&min_interval, 2);
+        reverse_endian((uint8_t *)&max_interval, 2);
+        reverse_endian((uint8_t *)&latency, 2);
+        reverse_endian((uint8_t *)&timeout, 2);
+        reverse_endian((uint8_t *)&min_ce_length, 2);
+        reverse_endian((uint8_t *)&max_ce_length, 2);
+    }
 
     cmd->data.cmd_connection_set_default_parameters.min_interval=min_interval;
     cmd->data.cmd_connection_set_default_parameters.max_interval=max_interval;
@@ -1395,6 +1504,16 @@ sl_status_t sl_bt_connection_set_parameters(uint8_t connection,
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&min_interval, 2);
+        reverse_endian((uint8_t *)&max_interval, 2);
+        reverse_endian((uint8_t *)&latency, 2);
+        reverse_endian((uint8_t *)&timeout, 2);
+        reverse_endian((uint8_t *)&min_ce_length, 2);
+        reverse_endian((uint8_t *)&max_ce_length, 2);
+    }
 
     cmd->data.cmd_connection_set_parameters.connection=connection;
     cmd->data.cmd_connection_set_parameters.min_interval=min_interval;
@@ -1613,12 +1732,23 @@ sl_status_t sl_bt_gatt_set_max_mtu(uint16_t max_mtu, uint16_t *max_mtu_out) {
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&max_mtu, 2);
+    }
+
     cmd->data.cmd_gatt_set_max_mtu.max_mtu=max_mtu;
 
     cmd->header=sl_bt_cmd_gatt_set_max_mtu_id+(((2)&0xff)<<8)+(((2)&0x700)>>8);
 
 
     sl_bt_host_handle_command();
+
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&rsp->data.rsp_gatt_set_max_mtu.max_mtu_out, 2);
+    }
+    
     *max_mtu_out = rsp->data.rsp_gatt_set_max_mtu.max_mtu_out;
     return rsp->data.rsp_gatt_set_max_mtu.result;
 
@@ -1668,6 +1798,11 @@ sl_status_t sl_bt_gatt_find_included_services(uint8_t connection,
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&service, 4);
+    }
+
     cmd->data.cmd_gatt_find_included_services.connection=connection;
     cmd->data.cmd_gatt_find_included_services.service=service;
 
@@ -1709,6 +1844,11 @@ sl_status_t sl_bt_gatt_discover_characteristics_by_uuid(uint8_t connection,
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&service, 4);
+    }
+
     cmd->data.cmd_gatt_discover_characteristics_by_uuid.connection=connection;
     cmd->data.cmd_gatt_discover_characteristics_by_uuid.service=service;
     if ((6+uuid_len) > SL_BGAPI_MAX_PAYLOAD_SIZE )
@@ -1731,6 +1871,11 @@ sl_status_t sl_bt_gatt_discover_descriptors(uint8_t connection,
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&characteristic, 2);
+    }
 
     cmd->data.cmd_gatt_discover_descriptors.connection=connection;
     cmd->data.cmd_gatt_discover_descriptors.characteristic=characteristic;
@@ -1811,6 +1956,13 @@ sl_status_t sl_bt_gatt_read_characteristic_value_from_offset(uint8_t connection,
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&characteristic, 2);
+        reverse_endian((uint8_t *)&offset, 2);
+        reverse_endian((uint8_t *)&maxlen, 2);
+    }
 
     cmd->data.cmd_gatt_read_characteristic_value_from_offset.connection=connection;
     cmd->data.cmd_gatt_read_characteristic_value_from_offset.characteristic=characteristic;
@@ -1935,6 +2087,12 @@ sl_status_t sl_bt_gatt_write_characteristic_value_without_response(uint8_t conne
 
 
     sl_bt_host_handle_command();
+
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&rsp->data.rsp_gatt_write_characteristic_value_without_response.sent_len, 2);
+    }
+
     *sent_len = rsp->data.rsp_gatt_write_characteristic_value_without_response.sent_len;
     return rsp->data.rsp_gatt_write_characteristic_value_without_response.result;
 
@@ -1950,6 +2108,12 @@ sl_status_t sl_bt_gatt_prepare_characteristic_value_write(uint8_t connection,
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&characteristic, 2);
+        reverse_endian((uint8_t *)&offset, 2);
+    }
+
     cmd->data.cmd_gatt_prepare_characteristic_value_write.connection=connection;
     cmd->data.cmd_gatt_prepare_characteristic_value_write.characteristic=characteristic;
     cmd->data.cmd_gatt_prepare_characteristic_value_write.offset=offset;
@@ -1964,6 +2128,12 @@ sl_status_t sl_bt_gatt_prepare_characteristic_value_write(uint8_t connection,
 
 
     sl_bt_host_handle_command();
+
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&rsp->data.rsp_gatt_prepare_characteristic_value_write.sent_len, 2);
+    }
+
     *sent_len = rsp->data.rsp_gatt_prepare_characteristic_value_write.sent_len;
     return rsp->data.rsp_gatt_prepare_characteristic_value_write.result;
 
@@ -1979,6 +2149,12 @@ sl_status_t sl_bt_gatt_prepare_characteristic_value_reliable_write(uint8_t conne
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&characteristic, 2);
+        reverse_endian((uint8_t *)&offset, 2);
+    }
+
     cmd->data.cmd_gatt_prepare_characteristic_value_reliable_write.connection=connection;
     cmd->data.cmd_gatt_prepare_characteristic_value_reliable_write.characteristic=characteristic;
     cmd->data.cmd_gatt_prepare_characteristic_value_reliable_write.offset=offset;
@@ -1993,6 +2169,12 @@ sl_status_t sl_bt_gatt_prepare_characteristic_value_reliable_write(uint8_t conne
 
 
     sl_bt_host_handle_command();
+
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&rsp->data.rsp_gatt_prepare_characteristic_value_reliable_write.sent_len, 2);
+    }
+
     *sent_len = rsp->data.rsp_gatt_prepare_characteristic_value_reliable_write.sent_len;
     return rsp->data.rsp_gatt_prepare_characteristic_value_reliable_write.result;
 
@@ -2021,6 +2203,11 @@ sl_status_t sl_bt_gatt_read_descriptor_value(uint8_t connection,
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&descriptor, 2);
+    }
+
     cmd->data.cmd_gatt_read_descriptor_value.connection=connection;
     cmd->data.cmd_gatt_read_descriptor_value.descriptor=descriptor;
 
@@ -2039,6 +2226,11 @@ sl_status_t sl_bt_gatt_write_descriptor_value(uint8_t connection,
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&descriptor, 2);
+    }
 
     cmd->data.cmd_gatt_write_descriptor_value.connection=connection;
     cmd->data.cmd_gatt_write_descriptor_value.descriptor=descriptor;
@@ -2067,6 +2259,12 @@ sl_status_t sl_bt_gattdb_new_session(uint16_t *session) {
 
 
     sl_bt_host_handle_command();
+
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&rsp->data.rsp_gattdb_new_session.session, 2);
+    }
+
     *session = rsp->data.rsp_gattdb_new_session.session;
     return rsp->data.rsp_gattdb_new_session.result;
 
@@ -2102,6 +2300,12 @@ sl_status_t sl_bt_gattdb_add_service(uint16_t session,
 
 
     sl_bt_host_handle_command();
+
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&rsp->data.rsp_gattdb_add_service.service, 2);
+    }
+
     *service = rsp->data.rsp_gattdb_add_service.service;
     return rsp->data.rsp_gattdb_add_service.result;
 
@@ -2137,6 +2341,13 @@ sl_status_t sl_bt_gattdb_add_included_service(uint16_t session,
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&session, 2);
+        reverse_endian((uint8_t *)&service, 2);
+        reverse_endian((uint8_t *)&included_service, 2);
+    }
+
     cmd->data.cmd_gattdb_add_included_service.session=session;
     cmd->data.cmd_gattdb_add_included_service.service=service;
     cmd->data.cmd_gattdb_add_included_service.included_service=included_service;
@@ -2145,6 +2356,12 @@ sl_status_t sl_bt_gattdb_add_included_service(uint16_t session,
 
 
     sl_bt_host_handle_command();
+
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&rsp->data.rsp_gattdb_add_included_service.attribute, 2);
+    }
+
     *attribute = rsp->data.rsp_gattdb_add_included_service.attribute;
     return rsp->data.rsp_gattdb_add_included_service.result;
 
@@ -2155,6 +2372,12 @@ sl_status_t sl_bt_gattdb_remove_included_service(uint16_t session,
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&session, 2);
+        reverse_endian((uint8_t *)&attribute, 2);
+    }
 
     cmd->data.cmd_gattdb_remove_included_service.session=session;
     cmd->data.cmd_gattdb_remove_included_service.attribute=attribute;
@@ -2212,6 +2435,12 @@ sl_status_t sl_bt_gattdb_add_uuid16_characteristic(uint16_t session,
 
 
     sl_bt_host_handle_command();
+
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&rsp->data.rsp_gattdb_add_uuid16_characteristic.characteristic, 2);
+    }
+
     *characteristic = rsp->data.rsp_gattdb_add_uuid16_characteristic.characteristic;
     return rsp->data.rsp_gattdb_add_uuid16_characteristic.result;
 
@@ -2262,6 +2491,12 @@ sl_status_t sl_bt_gattdb_add_uuid128_characteristic(uint16_t session,
 
 
     sl_bt_host_handle_command();
+
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&rsp->data.rsp_gattdb_add_uuid128_characteristic.characteristic, 2);
+    }
+
     *characteristic = rsp->data.rsp_gattdb_add_uuid128_characteristic.characteristic;
     return rsp->data.rsp_gattdb_add_uuid128_characteristic.result;
 
@@ -2272,6 +2507,12 @@ sl_status_t sl_bt_gattdb_remove_characteristic(uint16_t session,
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&session, 2);
+        reverse_endian((uint8_t *)&characteristic, 2);
+    }
 
     cmd->data.cmd_gattdb_remove_characteristic.session=session;
     cmd->data.cmd_gattdb_remove_characteristic.characteristic=characteristic;
@@ -2327,6 +2568,12 @@ sl_status_t sl_bt_gattdb_add_uuid16_descriptor(uint16_t session,
 
 
     sl_bt_host_handle_command();
+
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&rsp->data.rsp_gattdb_add_uuid16_descriptor.descriptor, 2);
+    }
+
     *descriptor = rsp->data.rsp_gattdb_add_uuid16_descriptor.descriptor;
     return rsp->data.rsp_gattdb_add_uuid16_descriptor.result;
 
@@ -2375,6 +2622,12 @@ sl_status_t sl_bt_gattdb_add_uuid128_descriptor(uint16_t session,
 
 
     sl_bt_host_handle_command();
+
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&rsp->data.rsp_gattdb_add_uuid128_descriptor.descriptor, 2);
+    }
+
     *descriptor = rsp->data.rsp_gattdb_add_uuid128_descriptor.descriptor;
     return rsp->data.rsp_gattdb_add_uuid128_descriptor.result;
 
@@ -2385,6 +2638,12 @@ sl_status_t sl_bt_gattdb_remove_descriptor(uint16_t session,
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&session, 2);
+        reverse_endian((uint8_t *)&descriptor, 2);
+    }
 
     cmd->data.cmd_gattdb_remove_descriptor.session=session;
     cmd->data.cmd_gattdb_remove_descriptor.descriptor=descriptor;
@@ -2424,6 +2683,12 @@ sl_status_t sl_bt_gattdb_stop_service(uint16_t session, uint16_t service) {
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&session, 2);
+        reverse_endian((uint8_t *)&service, 2);
+    }
+
     cmd->data.cmd_gattdb_stop_service.session=session;
     cmd->data.cmd_gattdb_stop_service.service=service;
 
@@ -2441,6 +2706,12 @@ sl_status_t sl_bt_gattdb_start_characteristic(uint16_t session,
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&session, 2);
+        reverse_endian((uint8_t *)&characteristic, 2);
+    }
+
     cmd->data.cmd_gattdb_start_characteristic.session=session;
     cmd->data.cmd_gattdb_start_characteristic.characteristic=characteristic;
 
@@ -2457,6 +2728,12 @@ sl_status_t sl_bt_gattdb_stop_characteristic(uint16_t session,
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&session, 2);
+        reverse_endian((uint8_t *)&characteristic, 2);
+    }
 
     cmd->data.cmd_gattdb_stop_characteristic.session=session;
     cmd->data.cmd_gattdb_stop_characteristic.characteristic=characteristic;
@@ -2515,12 +2792,23 @@ sl_status_t sl_bt_gatt_server_set_max_mtu(uint16_t max_mtu,
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&max_mtu, 2);
+    }
+
     cmd->data.cmd_gatt_server_set_max_mtu.max_mtu=max_mtu;
 
     cmd->header=sl_bt_cmd_gatt_server_set_max_mtu_id+(((2)&0xff)<<8)+(((2)&0x700)>>8);
 
 
     sl_bt_host_handle_command();
+
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&rsp->data.rsp_gatt_server_set_max_mtu.max_mtu_out, 2);
+    }
+
     *max_mtu_out = rsp->data.rsp_gatt_server_set_max_mtu.max_mtu_out;
     return rsp->data.rsp_gatt_server_set_max_mtu.result;
 
@@ -2537,6 +2825,12 @@ sl_status_t sl_bt_gatt_server_get_mtu(uint8_t connection, uint16_t *mtu) {
 
 
     sl_bt_host_handle_command();
+
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&rsp->data.rsp_gatt_server_get_mtu.mtu, 2);
+    }
+
     *mtu = rsp->data.rsp_gatt_server_get_mtu.mtu;
     return rsp->data.rsp_gatt_server_get_mtu.result;
 
@@ -2567,6 +2861,12 @@ sl_status_t sl_bt_gatt_server_find_attribute(uint16_t start,
 
 
     sl_bt_host_handle_command();
+
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&rsp->data.rsp_gatt_server_find_attribute.attribute, 2);
+    }
+
     *attribute = rsp->data.rsp_gatt_server_find_attribute.attribute;
     return rsp->data.rsp_gatt_server_find_attribute.result;
 
@@ -2637,6 +2937,12 @@ sl_status_t sl_bt_gatt_server_write_attribute_value(uint16_t attribute,
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&attribute, 2);
+        reverse_endian((uint8_t *)&offset, 2);
+    }
+
     cmd->data.cmd_gatt_server_write_attribute_value.attribute=attribute;
     cmd->data.cmd_gatt_server_write_attribute_value.offset=offset;
     if ((5+value_len) > SL_BGAPI_MAX_PAYLOAD_SIZE )
@@ -2664,6 +2970,11 @@ sl_status_t sl_bt_gatt_server_send_user_read_response(uint8_t connection,
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&characteristic, 2);
+    }
+
     cmd->data.cmd_gatt_server_send_user_read_response.connection=connection;
     cmd->data.cmd_gatt_server_send_user_read_response.characteristic=characteristic;
     cmd->data.cmd_gatt_server_send_user_read_response.att_errorcode=att_errorcode;
@@ -2678,6 +2989,12 @@ sl_status_t sl_bt_gatt_server_send_user_read_response(uint8_t connection,
 
 
     sl_bt_host_handle_command();
+
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&rsp->data.rsp_gatt_server_send_user_read_response.sent_len, 2);
+    }
+
     *sent_len = rsp->data.rsp_gatt_server_send_user_read_response.sent_len;
     return rsp->data.rsp_gatt_server_send_user_read_response.result;
 
@@ -2689,6 +3006,11 @@ sl_status_t sl_bt_gatt_server_send_user_write_response(uint8_t connection,
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if (ENDIAN)
+    {
+        reverse_endian((uint8_t *)&characteristic, 2);
+    }
 
     cmd->data.cmd_gatt_server_send_user_write_response.connection=connection;
     cmd->data.cmd_gatt_server_send_user_write_response.characteristic=characteristic;
@@ -2709,6 +3031,11 @@ sl_status_t sl_bt_gatt_server_send_notification(uint8_t connection,
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&characteristic, 2);
+    }
 
     cmd->data.cmd_gatt_server_send_notification.connection=connection;
     cmd->data.cmd_gatt_server_send_notification.characteristic=characteristic;
@@ -2735,6 +3062,11 @@ sl_status_t sl_bt_gatt_server_send_indication(uint8_t connection,
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&characteristic, 2);
+    }
+
     cmd->data.cmd_gatt_server_send_indication.connection=connection;
     cmd->data.cmd_gatt_server_send_indication.characteristic=characteristic;
     if ((4+value_len) > SL_BGAPI_MAX_PAYLOAD_SIZE )
@@ -2759,6 +3091,11 @@ sl_status_t sl_bt_gatt_server_notify_all(uint16_t characteristic,
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&characteristic, 2);
+    }
+
     cmd->data.cmd_gatt_server_notify_all.characteristic=characteristic;
     if ((3+value_len) > SL_BGAPI_MAX_PAYLOAD_SIZE )
     {
@@ -2782,13 +3119,23 @@ sl_status_t sl_bt_gatt_server_read_client_configuration(uint8_t connection,
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&characteristic, 2);
+    }
+
     cmd->data.cmd_gatt_server_read_client_configuration.connection=connection;
     cmd->data.cmd_gatt_server_read_client_configuration.characteristic=characteristic;
 
     cmd->header=sl_bt_cmd_gatt_server_read_client_configuration_id+(((3)&0xff)<<8)+(((3)&0x700)>>8);
 
-
     sl_bt_host_handle_command();
+
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&rsp->data.rsp_gatt_server_read_client_configuration.client_config_flags, 2);
+    }
+
     *client_config_flags = rsp->data.rsp_gatt_server_read_client_configuration.client_config_flags;
     return rsp->data.rsp_gatt_server_read_client_configuration.result;
 
@@ -2803,6 +3150,12 @@ sl_status_t sl_bt_gatt_server_send_user_prepare_write_response(uint8_t connectio
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&characteristic, 2);
+        reverse_endian((uint8_t *)&offset, 2);
+    }
 
     cmd->data.cmd_gatt_server_send_user_prepare_write_response.connection=connection;
     cmd->data.cmd_gatt_server_send_user_prepare_write_response.characteristic=characteristic;
@@ -2829,6 +3182,12 @@ sl_status_t sl_bt_gatt_server_set_capabilities(uint32_t caps,
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&caps, 4);
+        reverse_endian((uint8_t *)&reserved, 4);
+    }
+
     cmd->data.cmd_gatt_server_set_capabilities.caps=caps;
     cmd->data.cmd_gatt_server_set_capabilities.reserved=reserved;
 
@@ -2845,6 +3204,11 @@ sl_status_t sl_bt_gatt_server_enable_capabilities(uint32_t caps) {
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&caps, 4);
+    }
+
     cmd->data.cmd_gatt_server_enable_capabilities.caps=caps;
 
     cmd->header=sl_bt_cmd_gatt_server_enable_capabilities_id+(((4)&0xff)<<8)+(((4)&0x700)>>8);
@@ -2859,6 +3223,11 @@ sl_status_t sl_bt_gatt_server_disable_capabilities(uint32_t caps) {
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&caps, 4);
+    }
 
     cmd->data.cmd_gatt_server_disable_capabilities.caps=caps;
 
@@ -2880,6 +3249,12 @@ sl_status_t sl_bt_gatt_server_get_enabled_capabilities(uint32_t *caps) {
 
 
     sl_bt_host_handle_command();
+
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&rsp->data.rsp_gatt_server_get_enabled_capabilities.caps, 4);
+    }
+
     *caps = rsp->data.rsp_gatt_server_get_enabled_capabilities.caps;
     return rsp->data.rsp_gatt_server_get_enabled_capabilities.result;
 
@@ -2909,6 +3284,11 @@ sl_status_t sl_bt_nvm_save(uint16_t key,
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&key, 2);
+    }
+
     cmd->data.cmd_nvm_save.key=key;
     if ((3+value_len) > SL_BGAPI_MAX_PAYLOAD_SIZE )
     {
@@ -2933,6 +3313,11 @@ sl_status_t sl_bt_nvm_load(uint16_t key,
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&key, 2);
+    }
+
     cmd->data.cmd_nvm_load.key=key;
 
     cmd->header=sl_bt_cmd_nvm_load_id+(((2)&0xff)<<8)+(((2)&0x700)>>8);
@@ -2951,6 +3336,11 @@ sl_status_t sl_bt_nvm_erase(uint16_t key) {
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&key, 2);
+    }
 
     cmd->data.cmd_nvm_erase.key=key;
 
@@ -3006,6 +3396,11 @@ sl_status_t sl_bt_test_dtm_tx_cw(uint8_t packet_type,
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&power_level, 2);
+    }
 
     cmd->data.cmd_test_dtm_tx_cw.packet_type=packet_type;
     cmd->data.cmd_test_dtm_tx_cw.channel=channel;
@@ -3148,6 +3543,11 @@ sl_status_t sl_bt_sm_set_passkey(int32_t passkey) {
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&passkey, 4);
+    }
+
     cmd->data.cmd_sm_set_passkey.passkey=passkey;
 
     cmd->header=sl_bt_cmd_sm_set_passkey_id+(((4)&0xff)<<8)+(((4)&0x700)>>8);
@@ -3177,6 +3577,11 @@ sl_status_t sl_bt_sm_enter_passkey(uint8_t connection, int32_t passkey) {
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&passkey, 4);
+    }
 
     cmd->data.cmd_sm_enter_passkey.connection=connection;
     cmd->data.cmd_sm_enter_passkey.passkey=passkey;
@@ -3259,12 +3664,23 @@ sl_status_t sl_bt_sm_get_bonding_handles(uint32_t reserved,
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&reserved, 4);
+    }
+
     cmd->data.cmd_sm_get_bonding_handles.reserved=reserved;
 
     cmd->header=sl_bt_cmd_sm_get_bonding_handles_id+(((4)&0xff)<<8)+(((4)&0x700)>>8);
 
 
     sl_bt_host_handle_command();
+
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&rsp->data.rsp_sm_get_bonding_handles.num_bondings, 4);
+    }
+
     *num_bondings = rsp->data.rsp_sm_get_bonding_handles.num_bondings;
     *bondings_len = rsp->data.rsp_sm_get_bonding_handles.bondings.len;
     if (rsp->data.rsp_sm_get_bonding_handles.bondings.len <= max_bondings_size) {
@@ -3282,6 +3698,11 @@ sl_status_t sl_bt_sm_get_bonding_details(uint32_t bonding,
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&bonding, 4);
+    }
 
     cmd->data.cmd_sm_get_bonding_details.bonding=bonding;
 
@@ -3311,6 +3732,12 @@ sl_status_t sl_bt_sm_find_bonding_by_address(bd_addr address,
 
 
     sl_bt_host_handle_command();
+
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&rsp->data.rsp_sm_find_bonding_by_address.bonding, 4);
+    }
+
     *bonding = rsp->data.rsp_sm_find_bonding_by_address.bonding;
     *security_mode = rsp->data.rsp_sm_find_bonding_by_address.security_mode;
     *key_size = rsp->data.rsp_sm_find_bonding_by_address.key_size;
@@ -3324,6 +3751,11 @@ sl_status_t sl_bt_sm_set_bonding_key(uint32_t bonding,
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&bonding, 4);
+    }
 
     cmd->data.cmd_sm_set_bonding_key.bonding=bonding;
     cmd->data.cmd_sm_set_bonding_key.key_type=key_type;
@@ -3464,6 +3896,11 @@ sl_status_t sl_bt_ota_set_configuration(uint32_t flags) {
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&flags, 4);
+    }
+
     cmd->data.cmd_ota_set_configuration.flags=flags;
 
     cmd->header=sl_bt_cmd_ota_set_configuration_id+(((4)&0xff)<<8)+(((4)&0x700)>>8);
@@ -3494,6 +3931,12 @@ sl_status_t sl_bt_coex_set_options(uint32_t mask, uint32_t options) {
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&mask, 4);
+        reverse_endian((uint8_t *)&options, 4);
+    }
 
     cmd->data.cmd_coex_set_options.mask=mask;
     cmd->data.cmd_coex_set_options.options=options;
@@ -3595,6 +4038,14 @@ sl_status_t sl_bt_l2cap_open_le_channel(uint8_t connection,
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&spsm, 2);
+        reverse_endian((uint8_t *)&max_sdu, 2);
+        reverse_endian((uint8_t *)&max_pdu, 2);
+        reverse_endian((uint8_t *)&credit, 2);
+    }
+
     cmd->data.cmd_l2cap_open_le_channel.connection=connection;
     cmd->data.cmd_l2cap_open_le_channel.spsm=spsm;
     cmd->data.cmd_l2cap_open_le_channel.max_sdu=max_sdu;
@@ -3605,6 +4056,12 @@ sl_status_t sl_bt_l2cap_open_le_channel(uint8_t connection,
 
 
     sl_bt_host_handle_command();
+
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&rsp->data.rsp_l2cap_open_le_channel.cid, 2);
+    }
+
     *cid = rsp->data.rsp_l2cap_open_le_channel.cid;
     return rsp->data.rsp_l2cap_open_le_channel.result;
 
@@ -3619,6 +4076,15 @@ sl_status_t sl_bt_l2cap_send_le_channel_open_response(uint8_t connection,
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&cid, 2);
+        reverse_endian((uint8_t *)&max_sdu, 2);
+        reverse_endian((uint8_t *)&max_pdu, 2);
+        reverse_endian((uint8_t *)&credit, 2);
+        reverse_endian((uint8_t *)&errorcode, 2);
+    }
 
     cmd->data.cmd_l2cap_send_le_channel_open_response.connection=connection;
     cmd->data.cmd_l2cap_send_le_channel_open_response.cid=cid;
@@ -3642,6 +4108,11 @@ sl_status_t sl_bt_l2cap_channel_send_data(uint8_t connection,
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&cid, 2);
+    }
 
     cmd->data.cmd_l2cap_channel_send_data.connection=connection;
     cmd->data.cmd_l2cap_channel_send_data.cid=cid;
@@ -3667,6 +4138,12 @@ sl_status_t sl_bt_l2cap_channel_send_credit(uint8_t connection,
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&cid, 2);
+        reverse_endian((uint8_t *)&credit, 2);
+    }
+
     cmd->data.cmd_l2cap_channel_send_credit.connection=connection;
     cmd->data.cmd_l2cap_channel_send_credit.cid=cid;
     cmd->data.cmd_l2cap_channel_send_credit.credit=credit;
@@ -3683,6 +4160,11 @@ sl_status_t sl_bt_l2cap_close_channel(uint8_t connection, uint16_t cid) {
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&cid, 2);
+    }
 
     cmd->data.cmd_l2cap_close_channel.connection=connection;
     cmd->data.cmd_l2cap_close_channel.cid=cid;
@@ -3927,6 +4409,12 @@ sl_status_t sl_bt_cte_receiver_set_default_sync_receive_parameters(uint8_t mode,
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&skip, 2);
+        reverse_endian((uint8_t *)&timeout, 2);
+    }
+
     cmd->data.cmd_cte_receiver_set_default_sync_receive_parameters.mode=mode;
     cmd->data.cmd_cte_receiver_set_default_sync_receive_parameters.skip=skip;
     cmd->data.cmd_cte_receiver_set_default_sync_receive_parameters.timeout=timeout;
@@ -3950,6 +4438,12 @@ sl_status_t sl_bt_cte_receiver_set_sync_receive_parameters(uint8_t connection,
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&skip, 2);
+        reverse_endian((uint8_t *)&timeout, 2);
+    }
 
     cmd->data.cmd_cte_receiver_set_sync_receive_parameters.connection=connection;
     cmd->data.cmd_cte_receiver_set_sync_receive_parameters.mode=mode;
@@ -3991,6 +4485,11 @@ sl_status_t sl_bt_cte_receiver_enable_connection_cte(uint8_t connection,
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&interval, 2);
+    }
 
     cmd->data.cmd_cte_receiver_enable_connection_cte.connection=connection;
     cmd->data.cmd_cte_receiver_enable_connection_cte.interval=interval;
@@ -4036,6 +4535,11 @@ sl_status_t sl_bt_cte_receiver_enable_connectionless_cte(uint16_t sync,
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
 
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&sync, 2);
+    }
+
     cmd->data.cmd_cte_receiver_enable_connectionless_cte.sync=sync;
     cmd->data.cmd_cte_receiver_enable_connectionless_cte.slot_durations=slot_durations;
     cmd->data.cmd_cte_receiver_enable_connectionless_cte.cte_count=cte_count;
@@ -4058,6 +4562,11 @@ sl_status_t sl_bt_cte_receiver_disable_connectionless_cte(uint16_t sync) {
     struct sl_bt_packet *cmd = (struct sl_bt_packet *)sl_bt_cmd_msg;
 
     struct sl_bt_packet *rsp = (struct sl_bt_packet *)sl_bt_rsp_msg;
+
+    if(ENDIAN)
+    {
+        reverse_endian((uint8_t *)&sync, 2);
+    }
 
     cmd->data.cmd_cte_receiver_disable_connectionless_cte.sync=sync;
 
