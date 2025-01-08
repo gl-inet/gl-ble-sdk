@@ -207,6 +207,16 @@ static int ble_gatt_cb(gl_ble_gatt_event_t event, gl_ble_gatt_data_t *data)
 		printf("GATT_CB_MSG >> %s\n", temp);
 
 		json_object_put(o);
+
+		if(data->local_characteristic_status.client_config_flags & GATT_NOTIFICATION)
+		{
+			GL_RET ret = gl_ble_send_notify(data->local_characteristic_status.address,
+											data->local_characteristic_status.characteristic, "546869732069732061206e6f74696669636174696f6e2e");
+			if (GL_SUCCESS != ret)
+			{
+				printf("gl_ble_send_notify %d failed: %d\n", data->local_characteristic_status.characteristic, ret);
+			}
+		}
 		break;
 	}
 
